@@ -83,6 +83,8 @@ public class FruEngineConfig {
 
      pap_0.exe [options] <report file with cursor data> [<ufs file>]
 
+     [options]
+
      -C<num> Copies
      -E Allow editing
      -G[D|F|P] Generate to Display, File or Printer

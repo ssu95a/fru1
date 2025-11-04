@@ -59,6 +59,20 @@ public class FruEngine {
         }
     }
 
+    /** */
+    public static void print( String[] args ) throws Exception
+    {
+        final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
+
+        final FruEngine engine = new FruEngine();
+        final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
+
+        try(FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() );
+        ) {
+            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset()) );
+        }
+    }
+
 
     /**
      * Основной метод для запуска из командной строки
@@ -66,18 +80,7 @@ public class FruEngine {
     public static void main( String[] args )
     {
         try {
-
-            final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
-
-            final FruEngine engine = new FruEngine();
-            final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
-
-            try(FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() );
-            ) {
-                 engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset()) );
-            }
-
-
+            print( args );
         }
         catch( FruCommandLineException fcle ) {
             System.err.println( "Ошибка при запуске: " + fcle.getMessage() );
@@ -92,14 +95,23 @@ public class FruEngine {
 
     private static void printUsage()
     {
-        System.out.println("Использование: [options] <report file with cursor data> <fru-file> <data-file> <output-file>");
+        System.out.println("Использование: [options] <report file with cursor data> <fru-form-file> <output-file>");
         System.out.println( );
         System.out.println("Параметры:");
         System.out.println("   fru-file    - FRU файл с описанием формы отчета");
         System.out.println("   data-file   - файл с данными для отчета");
         System.out.println("   output-file - файл для сохранения результата");
         System.out.println( );
+        System.out.println("[options]");
+        System.out.println("-C<num> Copies");
+        System.out.println("-E Allow editing");
+        System.out.println("-G[D|F|P] Generate to Display, File or Printer");
+        System.out.println("-L Light view");
+        System.out.println("-O OEM encoding");
+        System.out.println("-P<idx> Printer index");
+        System.out.println("-S Silent mode");
+        System.out.println( );
         System.out.println("Пример:");
-        System.out.println("   FruEngine report.fru data.dat result.txt");
+        System.out.println("   FruEngine -O report.fru data.dat result.txt");
     }
 }
