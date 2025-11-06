@@ -30,12 +30,21 @@
     </properties>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>ru.inversion</groupId>-->
+<!--            <artifactId>ALT_Print</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>ru.inversion</groupId>
-            <artifactId>JInvCommon</artifactId>
-            <version>1.0.0</version>
+            <artifactId>JInvFore</artifactId>
+            <version>1.0.1</version>
+            <scope>provided</scope>
         </dependency>
-        <!-- Логирование -->
+
+        <!-- Логирование
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -51,7 +60,7 @@
             <artifactId>logback-core</artifactId>
             <version>${logback.version}</version>
         </dependency>
-
+ -->
         <!-- Тестирование -->
         <dependency>
             <groupId>junit</groupId>
@@ -69,6 +78,7 @@
     </dependencies>
 
     <build>
+        <finalName>fru</finalName>
         <plugins>
             <!-- Компилятор Java 8 -->
             <plugin>
@@ -84,6 +94,25 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ru.inversion.fru.api.FruEngine</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <!-- Указываем относительный путь к JInvFore -->
+                            <classpathPrefix>./</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <!-- Явно указываем JAR в Class-Path -->
+                            <Class-Path>JInvFore.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
             <!-- Запуск тестов -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
