@@ -7,12 +7,40 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.NoSuchElementException;
 
 import static ru.inversion.fru.api.FruEngine.csDos866;
 import static ru.inversion.fru.api.FruEngine.csWin1251;
 
 /** */
 public class FruEngineConfig {
+
+    public enum GenerateModeEnum {
+
+        //G[D|F|P] Generate to Display, File or Printer
+
+        Display('D'),
+        File('F'),
+        Printer('P');
+
+        private final char ch;
+
+        GenerateModeEnum( char ch) {
+            this.ch = ch;
+        }
+
+        /** */
+        public static GenerateModeEnum of( char ch )
+        {
+            switch ( ch ) {
+                case 'D': return Display;
+                case 'F': return File;
+                case 'P': return Printer;
+            }
+            throw new NoSuchElementException("GenerateModeEnum for " + ch );
+        }
+
+    }
 
     /** */
     private int copies = 1;
@@ -24,7 +52,7 @@ public class FruEngineConfig {
     private boolean lightView = false;
 
     /** */
-    private Charset charset = csDos866;
+    private Charset charset = csWin1251;
 
     /** */
     private int printerIndex = 0;
@@ -41,6 +69,8 @@ public class FruEngineConfig {
     /** */
     private Path outFile = null;
 
+    /** */
+    private GenerateModeEnum generateMode;
 
     private FruEngineConfig()
     { }
@@ -79,6 +109,15 @@ public class FruEngineConfig {
 
     public Path getOutFile() {
         return outFile;
+    }
+
+    public boolean isOem()
+    {
+        return charset == csDos866;
+    }
+
+    public GenerateModeEnum getGenerateMode() {
+        return generateMode;
     }
 
     /**
@@ -123,6 +162,9 @@ public class FruEngineConfig {
             break;
             case 'S':
                 config.silentMode = true;
+            break;
+            case 'G':
+                config.generateMode = GenerateModeEnum.of( option.charAt(2) );
             break;
         }
 

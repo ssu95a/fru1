@@ -9,6 +9,7 @@ import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.parser.FruParser;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -70,24 +71,10 @@ public class FruEngine {
             engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), Charset.forName("Cp866")) );
         }
 
-        System.out.println("Файл с отчетом сформирован: " + config.getOutFile().toString() );
+        if( config.getGenerateMode() != FruEngineConfig.GenerateModeEnum.File )
+            FruLaunchViewer.showReport(config);
 
-/*
-        SwingUtilities.invokeLater(() -> {
-
-            ALTRunner altRunner = new ALTRunner( args ); // args любой массив String
-            altRunner.printReport( config.getOutFile().toString(), false, altRunner.getDefaultPrinterID(), 2, "d:\\temp", config.getCopies() );
-
-//            int  altRunner.printReport(
-//                    String fileName, // фал который печатать
-//            boolean isOEM, // в ДОС кодировке иль нет
-//            int printerID,     // какимпринтером (см. ниже)
-//            int previewMode, // предварительно казать иль нет, 0 – нет, 1,2 да (разные режимы)
-//            String tempPath, // путь до темп (хз зачем)
-//            int copies ); // скока копий
-
-        });
- */
+        //System.out.println("Файл с отчетом сформирован: " + config.getOutFile().toString() );
     }
 
 
