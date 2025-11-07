@@ -1,9 +1,9 @@
 package ru.inversion.fru.parser.tokenizer.states;
 
-import ru.inversion.parser.nprsr.ITokenHandler;
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.AbstractTokenHandler;
+import ru.inversion.utils.parser.ITokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.AbstractTokenHandler;
 
 /**
  *
@@ -20,7 +20,7 @@ public class FruCommentHandler extends AbstractTokenHandler<String>
 	}
 
     @Override
-    public NewToken<String> apply( Tokenizer.IContext t ) {
+    public Token<String> apply(Tokenizer.IContext t ) {
 
 		final StringBuilder commentText = new StringBuilder();
 
@@ -32,14 +32,14 @@ public class FruCommentHandler extends AbstractTokenHandler<String>
         t.shift( );
 
 		if( commentText.length() == 0 )
-			return NewToken.EmptyComment;
+			return Token.EmptyComment;
 
 		final String comment = commentText.toString().trim();
 
 		if( comment.isEmpty() )
-			return NewToken.EmptyComment;
+			return Token.EmptyComment;
 
-        return new NewToken<>( NewToken.TypeEnum.COMMENT, comment );
+        return new Token<>( Token.TypeEnum.COMMENT, comment );
 	}
 
 	@Override

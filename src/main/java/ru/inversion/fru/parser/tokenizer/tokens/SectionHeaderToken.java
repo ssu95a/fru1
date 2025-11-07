@@ -1,16 +1,16 @@
 package ru.inversion.fru.parser.tokenizer.tokens;
 
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
-import ru.inversion.parser.nprsr.NewToken;
+import ru.inversion.utils.parser.Token;
 
-public class SectionHeaderToken extends NewToken<String> {
+public class SectionHeaderToken extends Token<String> {
 
     /** */
     final private SectionTypeEnum sectionTypeEnum;
 
     /** */
     public SectionHeaderToken( String value, SectionTypeEnum type ) {
-        super(NewToken.TypeEnum.FRU_SECTION_HEADER, value);
+        super(Token.TypeEnum.FRU_SECTION_HEADER, value);
         this.sectionTypeEnum = type;
     }
 

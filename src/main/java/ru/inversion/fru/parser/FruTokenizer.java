@@ -6,13 +6,13 @@ import ru.inversion.fru.parser.tokenizer.states.FruOnStartHandle;
 import ru.inversion.fru.parser.tokenizer.states.FruSectionHeaderHandler;
 import ru.inversion.fru.parser.tokenizer.tokens.SectionHeaderToken;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
-import ru.inversion.parser.nprsr.ITokenHandler;
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.ExpressionHandler;
-import ru.inversion.parser.nprsr.state.OperatorHandler;
-import ru.inversion.parser.nprsr.state.QuotesHandler;
-import ru.inversion.parser.nprsr.state.SyntaxSymbolHandler;
+import ru.inversion.utils.parser.ITokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.ExpressionHandler;
+import ru.inversion.utils.parser.state.OperatorHandler;
+import ru.inversion.utils.parser.state.QuotesHandler;
+import ru.inversion.utils.parser.state.SyntaxSymbolHandler;
 import ru.inversion.property.BooleanProperty;
 import ru.inversion.property.IProperty;
 import ru.inversion.utils.U;
@@ -50,12 +50,12 @@ public class FruTokenizer extends Tokenizer {
     }
 
     /** */
-    private static Iterable< NewToken<?> > tokenize( Reader r )
+    private static Iterable<Token<?>> tokenize(Reader r )
     {
         final FruTokenizer ep = new FruTokenizer(r);
         final IContext ctx = ep.context();
 
-        final Iterator<NewToken<?>> iter = new Iterator< NewToken<?>>() {
+        final Iterator<Token<?>> iter = new Iterator<Token<?>>() {
 
             final private BooleanProperty entryOn = new BooleanProperty(false);
 
@@ -89,9 +89,9 @@ public class FruTokenizer extends Tokenizer {
 
             /** */
             @Override
-            public NewToken<?> next() {
+            public Token<?> next() {
 
-                final NewToken<?> newToken = nextToken();
+                final Token<?> newToken = nextToken();
 
                 if( newToken instanceof SectionHeaderToken)
                     entryOn.setValue( ((SectionHeaderToken)newToken).getSectionType() == SectionTypeEnum.ENTRY );
@@ -103,7 +103,7 @@ public class FruTokenizer extends Tokenizer {
             }
 
             /** */
-            private NewToken<?> nextToken() {
+            private Token<?> nextToken() {
 
                 try {
 
@@ -111,7 +111,7 @@ public class FruTokenizer extends Tokenizer {
                         while( ITokenHandler.isSpace( ctx.current() ) && ctx.shift() ) { }
 
                     if( ctx.eof() )
-                        return NewToken.End;
+                        return Token.End;
 
                     for( ITokenHandler<?> state : ep.states() )
                     {
@@ -135,13 +135,13 @@ public class FruTokenizer extends Tokenizer {
     }
 
     /** */
-    public static Iterable<NewToken<?>> parse( Reader r )
+    public static Iterable<Token<?>> parse(Reader r )
     {
         return U.iterable ( tokenize(r).iterator() );
     }
 
     /** */
-    public static Iterable<NewToken<?>> parse( String s )
+    public static Iterable<Token<?>> parse(String s )
     {
         return parse( new StringReader(s) );
     }

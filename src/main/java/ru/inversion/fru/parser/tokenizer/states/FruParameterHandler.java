@@ -1,8 +1,8 @@
 package ru.inversion.fru.parser.tokenizer.states;
 
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.AbstractTokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.AbstractTokenHandler;
 
 public class FruParameterHandler extends AbstractTokenHandler<String> {
     @Override
@@ -16,7 +16,7 @@ public class FruParameterHandler extends AbstractTokenHandler<String> {
     }
 
     @Override
-    public NewToken<String> apply( Tokenizer.IContext t ) {
+    public Token<String> apply(Tokenizer.IContext t ) {
 
         final StringBuilder text = new StringBuilder();
 
@@ -26,6 +26,6 @@ public class FruParameterHandler extends AbstractTokenHandler<String> {
 
         t.shift();
 
-        return new NewToken<>( NewToken.TypeEnum.FRU_PARAMETER, text.toString() );
+        return new Token<>( Token.TypeEnum.FRU_PARAMETER, text.toString() );
     }
 }

@@ -1,9 +1,9 @@
 package ru.inversion.fru.parser.tokenizer.states;
 
-import ru.inversion.parser.nprsr.ITokenHandler;
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.AbstractTokenHandler;
+import ru.inversion.utils.parser.ITokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.AbstractTokenHandler;
 
 /** */
 public class FruOnStartHandle extends AbstractTokenHandler<String> {
@@ -21,7 +21,7 @@ public class FruOnStartHandle extends AbstractTokenHandler<String> {
 
     /** */
     @Override
-    public NewToken<String> apply( Tokenizer.IContext ctx ) {
+    public Token<String> apply(Tokenizer.IContext ctx ) {
 
         do {
             if( ctx.current() == '#' && !ITokenHandler.isSpace( ctx.next() ) )

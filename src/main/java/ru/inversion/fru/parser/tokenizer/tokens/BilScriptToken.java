@@ -1,13 +1,13 @@
 package ru.inversion.fru.parser.tokenizer.tokens;
 
 import ru.inversion.fru.model.script.FruScript;
-import ru.inversion.parser.nprsr.NewToken;
+import ru.inversion.utils.parser.Token;
 
 
 import java.util.List;
 
 /** */
-public class BilScriptToken extends NewToken<String> {
+public class BilScriptToken extends Token<String> {
 
     private final List<String> expList;
     private final List<String> impList;

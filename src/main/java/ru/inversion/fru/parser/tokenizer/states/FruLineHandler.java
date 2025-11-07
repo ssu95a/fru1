@@ -1,10 +1,10 @@
 package ru.inversion.fru.parser.tokenizer.states;
 
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.AbstractTokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.AbstractTokenHandler;
 
-import static ru.inversion.parser.nprsr.NewToken.TypeEnum;
+import static ru.inversion.utils.parser.Token.TypeEnum;
 /**
  *
  * @author ssu @
@@ -15,14 +15,14 @@ public class FruLineHandler extends AbstractTokenHandler<String> {
 	}
 
     @Override
-    public NewToken<String> apply( Tokenizer.IContext t ) {
+    public Token<String> apply(Tokenizer.IContext t ) {
 
         char ch = t.current();
 
         if( ch == '\n' )
         {
             t.shift();
-            return NewToken.Nls;
+            return Token.Nls;
         }
 
         final StringBuilder text = new StringBuilder();
@@ -40,7 +40,7 @@ public class FruLineHandler extends AbstractTokenHandler<String> {
 
         } while( t.shift() );
 
-        return new NewToken<>( TypeEnum.FRU_LINE, text.toString() );
+        return new Token<>( TypeEnum.FRU_LINE, text.toString() );
     }
 
     /** */

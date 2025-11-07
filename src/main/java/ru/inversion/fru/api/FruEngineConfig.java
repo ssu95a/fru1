@@ -3,6 +3,8 @@ package ru.inversion.fru.api;
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -22,7 +24,7 @@ public class FruEngineConfig {
     private boolean lightView = false;
 
     /** */
-    private Charset charset = csWin1251;
+    private Charset charset = csDos866;
 
     /** */
     private int printerIndex = 0;
@@ -129,9 +131,8 @@ public class FruEngineConfig {
     /** */
     public static FruEngineConfig fromCommandLine( String[] args )
     {
-        if( args.length < 3 ) {
+        if( args.length < 2 )
             throw new FruCommandLineException("Отсутствуют обязательные параметры в командной строке.");
-        }
 
         FruEngineConfig config = new FruEngineConfig();
 
@@ -150,6 +151,23 @@ public class FruEngineConfig {
                 else
                     config.outFile = file;
             }
+        }
+
+        if( config.datFile == null )
+            throw new FruCommandLineException("Не задано имя файла с данными для отчета");
+
+        if( !Files.exists(config.datFile) || !Files.isRegularFile(config.datFile) || !Files.isReadable(config.datFile) )
+            throw new FruCommandLineException("Переданное имя файла с данными не является файлом или не существует!", new NoSuchFileException( config.datFile.getFileName().toString()) );
+
+
+        if( config.outFile == null )
+        {
+            String fileName = config.datFile.getFileName().toString();
+            int index = fileName.lastIndexOf('.');
+            if( index > 0 )
+                config.outFile = config.datFile.resolveSibling(fileName.substring(0, index ) + ".txt");
+            else
+                config.outFile = config.datFile.resolveSibling(fileName + ".txt");
         }
 
         return config;

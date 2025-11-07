@@ -1,6 +1,5 @@
 package ru.inversion.fru.api;
 
-
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import ru.inversion.fru.api.exceptions.FruException;
 import ru.inversion.fru.data.FruDataFile;
@@ -17,7 +16,7 @@ import java.nio.file.Path;
 
 /**
  * Основной движок для генерации отчетов FRU
- * Объединяет парсинг форм, обработку данных и рендеринг
+ * парсинг форм, обработка данных и рендеринг
  */
 public class FruEngine {
 
@@ -46,9 +45,7 @@ public class FruEngine {
     }
 
 
-    /**
-     * Парсит FRU форму из файла
-     */
+    /** Парсит FRU форму из файла */
     private static Fru parseFru( Path fruFile, Charset charset ) throws Exception {
 
         try( Reader reader = Files.newBufferedReader( fruFile, charset) )
@@ -67,10 +64,30 @@ public class FruEngine {
         final FruEngine engine = new FruEngine();
         final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
 
-        try(FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() );
-        ) {
-            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset()) );
+        try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() );
+        )
+        {
+            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), Charset.forName("Cp866")) );
         }
+
+        System.out.println("Файл с отчетом сформирован: " + config.getOutFile().toString() );
+
+/*
+        SwingUtilities.invokeLater(() -> {
+
+            ALTRunner altRunner = new ALTRunner( args ); // args любой массив String
+            altRunner.printReport( config.getOutFile().toString(), false, altRunner.getDefaultPrinterID(), 2, "d:\\temp", config.getCopies() );
+
+//            int  altRunner.printReport(
+//                    String fileName, // фал который печатать
+//            boolean isOEM, // в ДОС кодировке иль нет
+//            int printerID,     // какимпринтером (см. ниже)
+//            int previewMode, // предварительно казать иль нет, 0 – нет, 1,2 да (разные режимы)
+//            String tempPath, // путь до темп (хз зачем)
+//            int copies ); // скока копий
+
+        });
+ */
     }
 
 
@@ -80,7 +97,9 @@ public class FruEngine {
     public static void main( String[] args )
     {
         try {
+
             print( args );
+
         }
         catch( FruCommandLineException fcle ) {
             System.err.println( "Ошибка при запуске: " + fcle.getMessage() );

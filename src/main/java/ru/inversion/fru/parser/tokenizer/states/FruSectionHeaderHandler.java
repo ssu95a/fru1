@@ -3,10 +3,10 @@ package ru.inversion.fru.parser.tokenizer.states;
 import ru.inversion.fru.parser.tokenizer.tokens.BilScriptToken;
 import ru.inversion.fru.parser.tokenizer.tokens.SectionHeaderToken;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
-import ru.inversion.parser.nprsr.ITokenHandler;
-import ru.inversion.parser.nprsr.NewToken;
-import ru.inversion.parser.nprsr.Tokenizer;
-import ru.inversion.parser.nprsr.state.AbstractTokenHandler;
+import ru.inversion.utils.parser.ITokenHandler;
+import ru.inversion.utils.parser.Token;
+import ru.inversion.utils.parser.Tokenizer;
+import ru.inversion.utils.parser.state.AbstractTokenHandler;
 import ru.inversion.utils.io.SegmentedCAW;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static ru.inversion.fru.parser.model.AbstractSectionNode.SCRIPT_PATTERN;
 import static ru.inversion.fru.utils.constants.SectionTypeEnum.END;
-import static ru.inversion.parser.nprsr.NewToken.End;
+import static ru.inversion.utils.parser.Token.End;
 
 public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
 
@@ -36,7 +36,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
 
     /** */
     @Override
-    public NewToken<String> apply(Tokenizer.IContext t)
+    public Token<String> apply(Tokenizer.IContext t)
     {
         final StringBuilder text = new StringBuilder();
 
@@ -120,7 +120,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
                 {
                     if (ITokenHandler.isSpace(t.next()))
                     {
-                        NewToken<String> cmntr = new FruCommentHandler().apply(t);
+                        Token<String> cmntr = new FruCommentHandler().apply(t);
                         caw.write("//");
                         caw.write(cmntr.getValue());
                         caw.write('\n');

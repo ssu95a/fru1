@@ -7,7 +7,7 @@ import ru.inversion.fru.parser.model.SectionNode;
 import ru.inversion.fru.parser.tokenizer.tokens.BilScriptToken;
 import ru.inversion.fru.parser.tokenizer.tokens.SectionHeaderToken;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
-import ru.inversion.parser.nprsr.NewToken;
+import ru.inversion.utils.parser.Token;
 import ru.inversion.utils.S;
 
 
@@ -17,17 +17,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static ru.inversion.parser.nprsr.NewToken.*;
-import static ru.inversion.parser.nprsr.NewToken.TypeEnum.*;
+import static ru.inversion.utils.parser.Token.*;
+import static ru.inversion.utils.parser.Token.TypeEnum.*;
 
 /** */
 public class FruParser implements Iterator<AbstractSectionNode> {
 
     /** */
-    final protected Iterator<NewToken<?>> base;
+    final protected Iterator<Token<?>> base;
 
     /** */
-    final protected NewToken<?>[] buffer = new NewToken[5];
+    final protected Token<?>[] buffer = new Token[5];
 
     /** */
     private AbstractSectionNode currentSection;
@@ -39,7 +39,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     private boolean insideEntry = false;
 
     /** */
-    public FruParser( Iterator<NewToken<?>> base ) {
+    public FruParser( Iterator<Token<?>> base ) {
 
         this.base = Objects.requireNonNull( base, "'base' is null" );
 
@@ -97,7 +97,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     /** */
     private boolean tryFormatOrString()
     {
-        if( ( buffer[0] == Format || buffer[0] == NewToken.Str ) && buffer[1].isExpression() && buffer[2] == Equals && buffer[3].getType() == TEXT_IN_QUOTES )
+        if( ( buffer[0] == Format || buffer[0] == Token.Str ) && buffer[1].isExpression() && buffer[2] == Equals && buffer[3].getType() == TEXT_IN_QUOTES )
         {
               if( buffer[0] == Format )
                   currentSection.addFormat( buffer[1].getValue().toString(), buffer[3].getValue().toString() );
@@ -127,7 +127,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
 
                 final StringBuilder sb = new StringBuilder();
 
-                while( shift(1) && buffer[0] != NewToken.Semicolon )
+                while( shift(1) && buffer[0] != Token.Semicolon )
                 {
                     sb.append( (buffer[0].getValue()).toString() );
                 }
