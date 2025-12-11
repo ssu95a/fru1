@@ -21,7 +21,7 @@
     </appender>
 
     <!-- Логгеры для FRU модуля -->
-    <logger name="ru.inversion.utils.fru" level="DEBUG" additivity="false">
+    <logger name="ru.inversion.fru" level="DEBUG" additivity="false">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </logger>

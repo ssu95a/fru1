@@ -1,8 +1,12 @@
 package ru.inversion.fru.model;
 
+import ru.inversion.fru.model.formats.AlignEnum;
 import ru.inversion.fru.model.formats.FruFormat;
+import ru.inversion.fru.model.formats.FruFormatter;
+import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.FruSection;
+import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
@@ -29,10 +33,6 @@ public class Fru {
 
     final private Set<Character> excludeSymbols;
 
-    /** Определяет строку, которая будет печататься в конце каждой страницы
-        string PAGE_END = "Строка" */
-    final private String pageEnd;
-
     /** */
     final private List<FruSection> sections;
 
@@ -47,6 +47,9 @@ public class Fru {
 
     /** */
     final private int width;
+
+    /** */
+    final FruPaging paging;
 
     public Fru (
         Path fruFile,
@@ -74,10 +77,6 @@ public class Fru {
             else
                 excludeSymbols = Collections.emptySet();
         }
-        {
-            String s = (String) parameters.get("PAGE_END");
-            pageEnd = S.isNullOrEmpty(s) ? null : s;
-        }
 
         {
             final AtomicInteger index = new AtomicInteger(0);
@@ -89,7 +88,33 @@ public class Fru {
             width = !parameters.containsKey("width") ? - 1 : Integer.parseInt( (String) parameters.get("width") );
         }
 
+        if( lines > 0 )
+        {
+            final String paging_s = (String)parameters.get("paging");
+            if( S.isNullOrEmpty(paging_s) )
+                paging = null;
+            else
+            {
+                final String pageEnd = (String) parameters.get("PAGE_END");
+                final String pageLine = U.nvl((String) parameters.get("PAGELINE"), "- @ /0 @- ");
+
+                final String first_s = (String) parameters.get("first");
+                boolean first = !S.isNullOrEmpty(first_s) && !"off".equals(first_s);
+
+                Pair<Boolean, AlignEnum> p = FruPaging.parsePaging(paging_s);
+
+                paging = new FruPaging( p.second, p.first, first, pageEnd, FruFormatter.make(pageLine), lines );
+            }
+        }
+        else
+            paging = null;
+
         this.sections = sections;
+    }
+
+    /** */
+    public FruPaging getPaging() {
+        return paging;
     }
 
     /** */

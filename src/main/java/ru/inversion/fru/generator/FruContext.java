@@ -6,16 +6,18 @@ import ru.inversion.fru.data.FruDataRow;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.formats.FruFormat;
+import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.script.FruScriptContext;
 import ru.inversion.fru.model.sections.FruSection;
 import ru.inversion.property.IProperty;
 import ru.inversion.utils.S;
 
-
 import javax.script.*;
 
+import java.io.Writer;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /** */
@@ -42,11 +44,10 @@ public class FruContext implements AutoCloseable {
     private FruSection currentSection;
 
     /** */
-    public FruContext( Fru fru, FruWriter writer, FruDataFile dataFile ) {
+    public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
 
         this.fru    = fru;
         this.data   = new FruData(dataFile);
-        this.writer = writer;
 
         this.data.rowProperty().addListener(new IProperty.ChangeListener<FruDataRow>() {
             @Override
@@ -57,6 +58,24 @@ public class FruContext implements AutoCloseable {
 
         final ScriptEngineManager engineManager = new ScriptEngineManager();
         scriptEngine = engineManager.getEngineByName("bil");
+
+        final FruPaging paging = fru.getPaging();
+
+        FruWriter fruWriter;
+
+        if( paging != null )
+        {
+            fruWriter = new FruWriter(output, paging, new BiConsumer<Integer, FruPaging>() {
+                @Override
+                public void accept( Integer pageNum, FruPaging paging ) {
+                    renderers.render( FruContext.this, paging );
+                }
+            });
+        }
+        else
+            fruWriter = new FruWriter(output);
+
+        this.writer = fruWriter;
 
         globalScriptContext = new FruScriptContext();
         globalScriptContext.setWriter( this.writer );
@@ -123,27 +142,13 @@ public class FruContext implements AutoCloseable {
                 renderers.render( this, currentSection );
 
             rowCount++;
-
-            if( rowCount == fru.getLines() )
-            {
-                printPageNum();
-            }
         }
-    }
-
-    int pageNum = 0;
-
-    /** */
-    private void printPageNum( )
-    {
-        pageNum ++;
-
     }
 
     /** */
     public int getCurrentPageNum( )
     {
-        return pageNum;
+        return writer.getCurrentPage();
     }
 
     /** */
@@ -162,7 +167,7 @@ public class FruContext implements AutoCloseable {
     }
 
     /** */
-    public String getArgument(String name) {
+    public String getArgument( String name ) {
         return globalScriptContext.getAttribute(name, ScriptContext.GLOBAL_SCOPE).toString();
     }
 

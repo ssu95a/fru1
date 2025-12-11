@@ -55,7 +55,7 @@ public class FruEngineConfig {
     private Charset charset = csWin1251;
 
     /** */
-    private int printerIndex = 0;
+    private int printerIndex = -1;
 
     /** */
     private boolean silentMode = false;

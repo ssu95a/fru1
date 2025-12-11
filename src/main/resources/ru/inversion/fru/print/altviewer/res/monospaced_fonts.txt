@@ -1,0 +1,27 @@
+mono
+monospace
+typewriter
+console
+terminal
+fixed
+courier
+consolas
+menlo
+source code
+dejavu
+liberation
+ubuntu mono
+roboto mono
+fira code
+hack
+droid sans
+noto sans
+sf mono
+cascadia
+jetbrains
+cascadia code
+jetbrains mono
+liberation mono
+dejavu sans mono
+noto mono
+droid sans mono

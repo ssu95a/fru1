@@ -4,12 +4,13 @@ import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import ru.inversion.fru.api.exceptions.FruException;
 import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.generator.FruContext;
-import ru.inversion.fru.generator.FruWriter;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.parser.FruParser;
+import ru.inversion.fru.print.altprint.ALTDoc;
+import ru.inversion.fru.print.altprint.AltPrinter;
+import ru.inversion.fru.print.altviewer.FruApp;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -33,8 +34,7 @@ public class FruEngine {
      */
     public void generate( Fru fru, FruDataFile dataFile, Writer output )
     {
-        try ( FruWriter fruWriter = new FruWriter(output);
-              FruContext context = new FruContext(fru, fruWriter, dataFile)) {
+        try ( FruContext context  = new FruContext( fru, output, dataFile ) ) {
 
             // Запускаем процесс генерации
             while(!context.data().eof()) {
@@ -44,7 +44,6 @@ public class FruEngine {
             throw new FruException("Ошибка генерации отчета", e);
         }
     }
-
 
     /** Парсит FRU форму из файла */
     private static Fru parseFru( Path fruFile, Charset charset ) throws Exception {
@@ -65,16 +64,23 @@ public class FruEngine {
         final FruEngine engine = new FruEngine();
         final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
 
-        try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() );
-        )
+        try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() ))
         {
-            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), Charset.forName("Cp866")) );
+            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset() ) );
         }
 
-        if( config.getGenerateMode() != FruEngineConfig.GenerateModeEnum.File )
-            FruLaunchViewer.showReport(config);
+        final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
 
-        //System.out.println("Файл с отчетом сформирован: " + config.getOutFile().toString() );
+        final AltPrinter altPrinter = new AltPrinter(config);
+
+        if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.File )
+            altPrinter.saveTo();
+        else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
+            altPrinter.print(altDoc);
+        else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
+        {
+            FruApp.launch();
+        }
     }
 
 
@@ -84,9 +90,7 @@ public class FruEngine {
     public static void main( String[] args )
     {
         try {
-
             print( args );
-
         }
         catch( FruCommandLineException fcle ) {
             System.err.println( "Ошибка при запуске: " + fcle.getMessage() );

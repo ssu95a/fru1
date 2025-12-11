@@ -2,10 +2,7 @@ package ru.inversion.fru.generator.renderer;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.fields.FruField;
-import ru.inversion.fru.model.items.FruFormatCall;
-import ru.inversion.fru.model.items.FruItem;
-import ru.inversion.fru.model.items.FruLine;
-import ru.inversion.fru.model.items.FruText;
+import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.FruSectionTable;
 
@@ -46,6 +43,8 @@ public class Renderers {
 
     private final IRenderer<FruFormatCall> formatCallIRenderer = new FormatCallRenderer();
 
+    private final IRenderer<FruPaging> pagingRenderer =new PageNumRenderer();
+
     public <T extends FruItem> void render( FruContext context, T item ) {
 
         if( item == null )
@@ -76,6 +75,8 @@ public class Renderers {
             return (IRenderer<T>) formatCallIRenderer;
         else if (clazz == FruScript.class)
             return (IRenderer<T>) scriptRenderer;
+        else if (clazz == FruPaging.class)
+            return (IRenderer<T>) pagingRenderer;
 
         throw new IllegalArgumentException("No renderer registered for: " + clazz );
     }
