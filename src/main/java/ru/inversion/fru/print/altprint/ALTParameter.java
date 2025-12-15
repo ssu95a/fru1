@@ -291,11 +291,11 @@ public abstract class ALTParameter<T>
         {
         }
 
-        public void toPrintParam(ALTDocPrintable.PrintParameters printParam, Object param)
+        public void toPrintParam( ALTDocPrintable.PrintParameters printParam, Object param)
         {
             try
             {
-                float p1 = (param == null ? getFirst() : (Float)param);
+                float p1 = ( param == null ? getFirst() : (Float)param);
                 float p2 = getSecond();
 
                 float result = p1 * 72.0F / p2;
@@ -304,7 +304,7 @@ public abstract class ALTParameter<T>
             }
             catch (Exception ex)
             {
-                throw new RuntimeException("prm: " + getType().toString(), ex);
+                throw new RuntimeException( "prm: " + getType().toString(), ex);
             }
         }
     }

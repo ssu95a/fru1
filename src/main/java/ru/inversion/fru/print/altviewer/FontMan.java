@@ -17,7 +17,7 @@ public class FontMan {
     private static final String RESOURCE_PATH = "res/monospaced_fonts.txt";
 
     /** */
-    private static Set<String> monospacedFamilies;
+    private static final Set<String> monospacedFamilies;
 
     static {
         monospacedFamilies = Collections.unmodifiableSet(loadMonospaced());
@@ -35,7 +35,7 @@ public class FontMan {
     /** */
     private static Set<String> loadMonospaced( )
     {
-        final Set<String> familes;
+        final Set<String> families;
 
         try( InputStream inputStream = FontMan.class.getResourceAsStream(RESOURCE_PATH) )
         {
@@ -46,15 +46,15 @@ public class FontMan {
 
             try( BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8) ) ) {
 
-                familes = reader.lines().map(String::trim)
+                families = reader.lines().map(String::trim)
                             .filter(S::isNotNullOrEmpty).filter(s->s.charAt(0) != '#')
                                 .map(String::toLowerCase).collect(Collectors.toSet());
 
             }
 
-            System.out.println("Loaded " + familes.size() + " monospaced from resources");
+            System.out.println("Loaded " + families.size() + " monospaced from resources");
 
-            return familes;
+            return families;
 
         } catch (IOException e) {
             System.err.println("Error loading monospaced from resources: " + e.getMessage() );
@@ -81,11 +81,11 @@ public class FontMan {
 
     /** */
     private static boolean isMonospacedByWidth(String fontFamily) {
+
         try {
 
             Font testFont = Font.font(fontFamily, 12);
 
-            // Для Java 8 используем javafx.scene.text.Text для измерения ширины
             javafx.scene.text.Text textW = new javafx.scene.text.Text("W");
             textW.setFont(testFont);
 
@@ -98,12 +98,10 @@ public class FontMan {
             javafx.scene.text.Text textSpace = new javafx.scene.text.Text(" ");
             textSpace.setFont(testFont);
 
-            // В моноширинном шрифте все символы имеют одинаковую ширину
-            // Допускаем небольшую погрешность
             double tolerance = 0.1;
             return Math.abs(textW.getLayoutBounds().getWidth() - textI.getLayoutBounds().getWidth()) < tolerance &&
-                    Math.abs(textW.getLayoutBounds().getWidth() - textDot.getLayoutBounds().getWidth()) < tolerance &&
-                    Math.abs(textW.getLayoutBounds().getWidth() - textSpace.getLayoutBounds().getWidth()) < tolerance;
+                   Math.abs(textW.getLayoutBounds().getWidth() - textDot.getLayoutBounds().getWidth()) < tolerance &&
+                   Math.abs(textW.getLayoutBounds().getWidth() - textSpace.getLayoutBounds().getWidth()) < tolerance;
 
         } catch (Exception e) {
             // Если не удалось проверить алгоритмически, полагаемся на список

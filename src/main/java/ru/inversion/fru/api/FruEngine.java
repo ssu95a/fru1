@@ -32,7 +32,7 @@ public class FruEngine {
     /**
      * Основной метод генерации отчета из готовых объектов
      */
-    public void generate( Fru fru, FruDataFile dataFile, Writer output )
+    private void generate( Fru fru, FruDataFile dataFile, Writer output )
     {
         try ( FruContext context  = new FruContext( fru, output, dataFile ) ) {
 
@@ -69,18 +69,18 @@ public class FruEngine {
             engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset() ) );
         }
 
-        final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
-
         final AltPrinter altPrinter = new AltPrinter(config);
+
+        final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
 
         if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.File )
             altPrinter.saveTo();
+
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
             altPrinter.print(altDoc);
+
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
-        {
-            FruApp.launch();
-        }
+            FruApp.run( altPrinter, altDoc );
     }
 
 
@@ -102,6 +102,7 @@ public class FruEngine {
             System.exit(1);
         }
     }
+
 
     private static void printUsage()
     {

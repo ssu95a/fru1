@@ -4,13 +4,12 @@ import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.print.Printable;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** */
+/** Документ альтернативной печати */
 public class ALTDoc {
 
     final private Path altFile;
@@ -51,8 +50,6 @@ public class ALTDoc {
     public Copies getCopies() {
         return copies;
     }
-
-    /** */
     public void setCopies(Copies copies) {
         this.copies = copies;
     }
@@ -83,7 +80,7 @@ public class ALTDoc {
 
     /** */
     public Printable makePrintable() throws IOException {
-        return ALTDocPrintable.load(this);
+        return ALTDocPrintable.load( this );
     }
 
     /** */
@@ -92,13 +89,10 @@ public class ALTDoc {
         try
         {
             ALTInitCommand initCommand = ALTSettings.INSTANCE().commandDict().getInitCommand();
-
             return new ALTDoc( file, charset, initCommand.getOrientation(), initCommand.getCopies() );
         }
-        catch (Exception ex)
-        {
-            throw new ALTException("Ошибка при загрузке файла с отчетом " + file, ex);
+        catch (Exception ex) {
+            throw new ALTException( "Ошибка при загрузке файла с отчетом " + file, ex );
         }
     }
-
 }

@@ -5,24 +5,28 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.print.PageOrientation;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.transform.Scale;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.controlsfx.control.StatusBar;
+import org.controlsfx.dialog.ExceptionDialog;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
-import ru.inversion.fx.app.BaseApp;
-import ru.inversion.fx.form.FXFormLauncher;
-import ru.inversion.fx.form.FileChooserDialog;
-import ru.inversion.fx.form.JInvFXFormController;
-import ru.inversion.fx.form.ViewContext;
-import ru.inversion.fx.form.controls.*;
-import ru.inversion.tc.TaskContext;
+import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.utils.MemoryURL;
 import ru.inversion.utils.S;
 import ru.inversion.fru.print.altprint.ALTDoc;
@@ -30,16 +34,18 @@ import ru.inversion.fru.print.altprint.ALTSettings;
 
 import javax.print.attribute.standard.Copies;
 import java.io.File;
+
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /** */
-public class FruViewController extends JInvFXFormController<Void> {
+public class FruViewController implements Initializable {
 
     private enum StateEnum {
         Start,
@@ -54,17 +60,20 @@ public class FruViewController extends JInvFXFormController<Void> {
 
     /** Доступные кодировки */
     private static final Charset[] charsets = {
-            Charset.forName("windows-1251"),
-            Charset.forName("IBM866"),
-            StandardCharsets.UTF_8
+        Charset.forName("windows-1251"),
+        Charset.forName("IBM866"),
+        StandardCharsets.UTF_8
     };
 
     /** Уровни масштабирования */
     private static final String[] zoomLevels = {"50%", "75%", "100%", "125%", "150%", "200%"};
 
+    /** Размер шрифта */
+    private static final String[] fontSize = {"8", "9", "10", "12", "14", "16", "20", "22", "24"};
+
 
     @FXML
-    private JInvToolBar toolBar;
+    private ToolBar toolBar;
 
     @FXML
     private StatusBar statusBar;
@@ -72,25 +81,24 @@ public class FruViewController extends JInvFXFormController<Void> {
     @FXML
     private VBox rootBox;
 
-    @FXML
-    private JInvLabel stub;
-
     private boolean isApplyingFormatting = false;
 
     private CodeArea fruArea;
 
     private ComboBox<String> fontComboBox;
     private ComboBox<String> zoomComboBox;
-
-    private JInvLongField    fontSizeField;
-
-    final private Scale      currentScale = new Scale(1.0, 1.0);;
+    private ComboBox<String> sizeComboBox;
 
     /** */
-    private JInvComboBox<Charset,Charset> encodingComboBox;
+    final private Scale currentScale = new Scale( 1.0, 1.0 );
+
+    /** */
+    private ComboBox<Charset> encodingComboBox;
+
 
     /** */
     private ALTDoc altDoc;
+    private AltPrinter altPrinter;
 
     /** */
     final private ObjectProperty<ViewModeEnum> viewModeProperty = new SimpleObjectProperty<>( this, "viewModeProperty", ViewModeEnum.Plain );
@@ -102,6 +110,19 @@ public class FruViewController extends JInvFXFormController<Void> {
     private boolean isFormattedMode()
     {
         return viewModeProperty.get() == ViewModeEnum.Formatted;
+    }
+
+    public ALTDoc getAltDoc() {
+        return altDoc;
+    }
+
+    public void setAltDoc(ALTDoc altDoc) {
+        this.altDoc = altDoc;
+    }
+
+    /** */
+    private void setAltPrinter(AltPrinter altPrinter) {
+        this.altPrinter = altPrinter;
     }
 
     /** */
@@ -121,7 +142,7 @@ public class FruViewController extends JInvFXFormController<Void> {
     /** */
     private void onFontName( ) {
         String font = fontComboBox.getValue();
-        String size = fontSizeField.getText();
+        String size = sizeComboBox.getValue();
         if( font != null )
             fruArea.setStyle( "-fx-font-family: '" + font + "'; -fx-font-size: " + size + "px;" );
     }
@@ -129,7 +150,7 @@ public class FruViewController extends JInvFXFormController<Void> {
     /** */
     private void onFontSize( ) {
         try {
-            int size = fontSizeField.getValue().intValue();
+            int size = Integer.parseInt( sizeComboBox.getValue() );
             if (size > 0 && size <= 72)
                 onFontName();
         } catch (NumberFormatException ignore ) {
@@ -220,21 +241,17 @@ public class FruViewController extends JInvFXFormController<Void> {
         fontComboBox.setOnAction(e -> onFontName());
 
         // Размер шрифта
-        fontSizeField = new JInvLongField(12L);
-        fontSizeField.setPrefWidth(35);
-        fontSizeField.valueProperty().addListener(new ChangeListener<Long>() {
-            @Override
-            public void changed(ObservableValue<? extends Long> observable, Long oldValue, Long newValue) {
-                onFontSize();
-            }
-        });
+        sizeComboBox = new ComboBox<>();
+        sizeComboBox.getItems().addAll( fontSize );
+        sizeComboBox.setValue( fontSize[3] );
+        sizeComboBox.setOnAction( e-> onFontSize() );
 
         // Кодировка
-        encodingComboBox = new JInvComboBox<>();
+        encodingComboBox = new ComboBox<>();
         encodingComboBox.getItems().addAll(charsets);
         encodingComboBox.setValue(charsets[0]);
         encodingComboBox.setPrefWidth(120);
-        //encodingComboBox.setOnAction(e -> updateEncoding());
+        encodingComboBox.setOnAction(this::updateEncoding);
 
         // Масштаб
         zoomComboBox = new ComboBox<>();
@@ -254,10 +271,29 @@ public class FruViewController extends JInvFXFormController<Void> {
         toolBar.getItems().addAll (
             printButton, loadButton,
             new Label("Шрифт:"), fontComboBox,
-            new Label("Размер:"), fontSizeField,
+            new Label("Размер:"), sizeComboBox,
             new Label("Кодировка:"), encodingComboBox,
             new Label("Масштаб:"), zoomComboBox
         );
+    }
+
+
+    /** */
+    private void updateEncoding( ActionEvent e )
+    {
+        try {
+            ALTDoc ad = ALTDoc.loadFile( altDoc.getAltFile(), encodingComboBox.getValue());
+            loadFile(ad);
+            altDoc = ad;
+        } catch (Exception ex) {
+          handleException(ex);
+        }
+    }
+
+    /** */
+    private Stage getStage()
+    {
+        return (Stage) toolBar.getScene().getWindow();
     }
 
     /** */
@@ -284,34 +320,9 @@ public class FruViewController extends JInvFXFormController<Void> {
     private void printDocument( )
     {
         try {
-//            AltPrinter altPrinter = new AltPrinter( getPrintSettings() );
-//            altPrinter.print( getViewContext(), altDoc );
+            altPrinter.print( altDoc );
         } catch ( Throwable th ) {
             handleException(th);
-        }
-    }
-
-    /** */
-    private void initStyles( Scene scene ) {
-
-        try {
-
-            scene.getStylesheets().add( getClass().getResource("res/base.css").toExternalForm() );
-
-            final String cssStyles = ALTSettings.INSTANCE().commandDict().getCSSStylesList();
-
-            if( cssStyles != null)
-            {
-                final URL cssUrl = MemoryURL.create("/styles/altprnt5ini.css", cssStyles );
-                scene.getStylesheets().add( cssUrl.toExternalForm() );
-            }
-            else {
-                System.err.println("No CSS styles found in command dictionary");
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error setting up styles: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -320,21 +331,21 @@ public class FruViewController extends JInvFXFormController<Void> {
 
         statusBar.textProperty().bind( stateProperty.asString() );
 
-        JInvLabel fontLabel     = new JInvLabel( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
-        JInvLabel encodingLabel = new JInvLabel( S.EMPTY_STRING ); encodingLabel.textProperty().bind( encodingComboBox.valueProperty().asString() );
-        JInvLabel modeLabel     = new JInvLabel( S.EMPTY_STRING ); modeLabel.textProperty().bind( viewModeProperty.asString() );
-        JInvLabel zoomLabel     = new JInvLabel( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
+        Label fontLabel     = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
+        Label encodingLabel = new Label( S.EMPTY_STRING ); encodingLabel.textProperty().bind( encodingComboBox.valueProperty().asString() );
+        Label modeLabel     = new Label( S.EMPTY_STRING ); modeLabel.textProperty().bind( viewModeProperty.asString() );
+        Label zoomLabel     = new Label( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
 
         statusBar.getRightItems().addAll (
-            new JInvLabel("Режим: "),     modeLabel, new Separator(Orientation.VERTICAL),
-            new JInvLabel("Шрифт: "),     fontLabel, new Separator(Orientation.VERTICAL),
-            new JInvLabel("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL),
-            new JInvLabel("Масштаб: "),   zoomLabel
+            new Label("Режим: "),     modeLabel,     new Separator(Orientation.VERTICAL),
+            new Label("Шрифт: "),     fontLabel,     new Separator(Orientation.VERTICAL),
+            new Label("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL),
+            new Label("Масштаб: "),   zoomLabel
         );
 
-        JInvLabel fileLabel     = new JInvLabel( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
+        Label fileLabel    = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
 
-        //statusBar.getLeftItems().addAll( new JInvLabel("Файл: "), fileLabel );
+        //statusBar.getLeftItems().addAll( new Label("Файл: "), fileLabel );
     }
 
     /** */
@@ -345,8 +356,9 @@ public class FruViewController extends JInvFXFormController<Void> {
         fruArea.getTransforms().add(currentScale);
         fruArea.setEditable(false);
         fruArea.setWrapText(false);
-        VirtualizedScrollPane<CodeArea> v = new VirtualizedScrollPane<>(fruArea);
+        final VirtualizedScrollPane<CodeArea> v = new VirtualizedScrollPane<>(fruArea);
         VBox.setVgrow( v, Priority.ALWAYS );
+        fruArea.setPadding(new Insets(5.0) );
         rootBox.getChildren().set( 1, v   );
     }
 
@@ -406,7 +418,8 @@ public class FruViewController extends JInvFXFormController<Void> {
 
             Platform.runLater(() -> {
                 try {
-                    fruArea.replaceText(result.text);
+
+                    fruArea.replaceText  (result.text);
                     fruArea.setStyleSpans(0, result.styleSpans);
 
                     viewModeProperty.setValue( ViewModeEnum.Plain );
@@ -443,11 +456,21 @@ public class FruViewController extends JInvFXFormController<Void> {
     }
 
     /** */
-    private void loadFile( File file)
+    private void setTitle( String title )
+    {
+        ((Stage)toolBar.getScene().getWindow()).setTitle( title );
+    }
+
+    /** */
+    private ALTDoc loadFile( Path file)
+    {
+        return ALTDoc.loadFile( file, encodingComboBox.getValue() );
+    }
+
+    /** */
+    private void loadFile( ALTDoc ad )
     {
         // statusBar.setText("Загрузка файла...");
-
-        ALTDoc ad = ALTDoc.loadFile( file.toPath(), encodingComboBox.getValue() );
 
         final TagProcessor.ParseResult result;
 
@@ -456,49 +479,48 @@ public class FruViewController extends JInvFXFormController<Void> {
         else
             result = TagProcessor.parseForPlainTextMode( ad.readFile() );
 
-        this.altDoc = ad;
+        fruArea.replaceText  ( result.text );
+        fruArea.setStyleSpans( 0, result.styleSpans );
 
-        Platform.runLater(() -> {
-
-            try {
-
-                fruArea.replaceText  ( result.text );
-                fruArea.setStyleSpans( 0, result.styleSpans );
-
-                setTitle( "Предварительный просмотр - " + file.getName() );
-
+        Platform.runLater( ()->
+            setTitle( "Предварительный просмотр - " + altDoc.getAltFile().toString() )
+        );
 //                statusBar.setText("Файл загружен: " + file.getName());
 
-            } catch( Exception e ) {
-                handleException(e);
-                //statusBar.setText("Ошибка обновления интерфейса");
-            }
-        });
     }
+
+
+    /** */
+    private void handleException( Throwable th )
+    {
+        ExceptionDialog dialog = new ExceptionDialog(th);
+        dialog.initOwner( getStage() );
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.setTitle("Ошибка");
+        dialog.showAndWait();
+    }
+
 
     /** */
     private void onLoadDocument() {
 
         try {
 
-            final File file = new FileChooserDialog("fru.viewer.file").title("Выберите файл для просмотра").showOpenDialog(getViewContext().getWindow());
+            final FileChooser fc = new FileChooser();
+            fc.setTitle("Выберите файл для просмотра");
+            final File file = fc.showOpenDialog(getStage());
 
             if( file != null )
-                loadFile(file);
+                loadFile( file.toPath() );
         }
         catch ( Throwable th ) {
             handleException(th);
         }
     }
 
-    @Override
-    protected void beforeInit() throws Exception {
-        initStyles( rootBox.getScene() );
-    }
-
     /** */
     @Override
-    protected void init()
+    public void initialize( URL location, ResourceBundle resources )
     {
         initToolbar();
 
@@ -507,13 +529,58 @@ public class FruViewController extends JInvFXFormController<Void> {
         initFonts();
 
         initStatusBar();
+
+        loadFile(altDoc);
+    }
+
+    /** */
+    private static void initStyles( Scene scene ) throws Exception {
+
+        scene.getStylesheets().add( FruViewController.class.getResource("res/base.css").toExternalForm() );
+
+        final String cssStyles = ALTSettings.INSTANCE().commandDict().getCSSStylesList();
+
+        if( cssStyles != null)
+        {
+            final URL cssUrl = MemoryURL.create("/styles/altprnt5ini.css", cssStyles );
+            scene.getStylesheets().add( cssUrl.toExternalForm() );
+        }
+        else {
+            System.err.println("No CSS styles found in command dictionary");
+        }
     }
 
 
     /** */
-    public static void showViewer( ViewContext vc, TaskContext tc, Map<String,Object> parameters )
+    public static void showViewer(Stage primaryStage, AltPrinter altPrinter, ALTDoc altDoc )
     {
-        new FXFormLauncher<>( tc, vc, FruViewController.class, BaseApp.APP().getCommonResourceBundle() ).show ();
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation( FruApp.class.getResource("fxml/FruView.fxml"));
+            loader.setControllerFactory(new Callback<Class<?>, Object>() {
+                @Override
+                public Object call(Class<?> type) {
+                    try {
+                        FruViewController controller = (FruViewController) type.newInstance();
+                        controller.setAltDoc(altDoc);
+                        controller.setAltPrinter(altPrinter);
+                        return controller;
+                    }
+                    catch ( Throwable th ) {
+                        throw new RuntimeException(th);
+                    }
+                }
+            });
+
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            initStyles(scene);
+            primaryStage.setScene(scene);
+            primaryStage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

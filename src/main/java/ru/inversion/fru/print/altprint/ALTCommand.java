@@ -18,13 +18,12 @@ public class ALTCommand
     public String getCssStyleValue( ) {
         return cssStyleValue;
     }
-
     /** */
     public boolean isCssSupported()
     {
         return cssStyleValue != null;
     }
-
+    /** */
     public String getCssStyleName() {
         return cssStyleName;
     }
@@ -46,7 +45,6 @@ public class ALTCommand
 
         /** */
         public abstract void toCSStyle( StringBuilder sb, Object paramObject );
-
         /** */
         public abstract void toPrintParam(ALTDocPrintable.PrintParameters paramPrintParam, Object paramObject);
 
@@ -134,31 +132,33 @@ public class ALTCommand
     /** */
     public static class ALTMatrixData
     {
-        private ALTCommand parent;
-        private final String printerCommand;
+        final private ALTCommand command;
+        final private String     printerCommand;
 
         public ALTMatrixData(String command)
         {
-            this.printerCommand = command;
+            this( command, null );
         }
 
-        public ALTMatrixData(String command, ALTCommand parent)
+        public ALTMatrixData( String command, ALTCommand parent )
         {
             this.printerCommand = command;
-            this.parent = parent;
+            this.command = parent;
         }
 
-        public ALTCommand getParent()
+        public ALTCommand getCommand()
         {
-            return this.parent;
+            return this.command;
         }
 
+        /** */
         public String getPrinterCommand()
         {
-            return this.printerCommand;
+            return command == null || command.matrixData == null ? this.printerCommand : command.matrixData.printerCommand + this.printerCommand;
         }
     }
 
+    /** */
     public ALTCommand(String name, String note)
     {
         this.name = name;
@@ -185,16 +185,19 @@ public class ALTCommand
         return this.graphicData;
     }
 
-    public void setMatrixData(String command, String printerCommand, ALTCommand parent)
+    /** */
+    public void setMatrixData( String printerCommand, ALTCommand parent )
     {
-        this.matrixData = new ALTMatrixData(printerCommand, parent);
+        this.matrixData = new ALTMatrixData( printerCommand, parent );
     }
 
+    /** */
     public void setGraphicData(String command, ALTParameter<?>[] parameters)
     {
         this.graphicData = (parameters.length == 1 ? new ALTGraphicDataParam(command, parameters[0]) : new ALTGraphicData(command, parameters));
     }
 
+    /** */
     public void toPrintParam(ALTDocPrintable.PrintParameters printParam, Object param)
     {
         getGraphicData().toPrintParam(printParam, param);
@@ -242,16 +245,5 @@ public class ALTCommand
             this.cssStyleValue = sb.toString();
             this.cssStyleName  = normalizeTagName(name);
         }
-    }
-
-    /** */
-    public void dump(Writer writer)
-            throws IOException
-    {
-        writer.write("\n     cmd: ");
-        writer.write(getName());
-        writer.write("\n");
-
-        getGraphicData().dump(writer);
     }
 }

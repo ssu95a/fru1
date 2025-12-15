@@ -70,6 +70,7 @@ public class AltPrinter {
             else
                 pageFormat.setOrientation( U.decode( altDoc.getOrientation(), OrientationRequested.LANDSCAPE, 0, 1) );
 
+
             awtJob.setJobName( "ALT: " + altDoc.getAltFile() );
             awtJob.setCopies ( altDoc.getCopies().getValue() );
             awtJob.setPrintService( awtPrinter );

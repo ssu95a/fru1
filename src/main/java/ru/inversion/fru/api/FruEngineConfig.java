@@ -2,6 +2,7 @@ package ru.inversion.fru.api;
 
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -204,12 +205,22 @@ public class FruEngineConfig {
 
         if( config.outFile == null )
         {
-            String fileName = config.datFile.getFileName().toString();
-            int index = fileName.lastIndexOf('.');
-            if( index > 0 )
-                config.outFile = config.datFile.resolveSibling(fileName.substring(0, index ) + ".txt");
-            else
-                config.outFile = config.datFile.resolveSibling(fileName + ".txt");
+            if( config.generateMode == GenerateModeEnum.File )
+            {
+                String fileName = config.datFile.getFileName().toString();
+                int index = fileName.lastIndexOf('.');
+                if (index > 0)
+                    config.outFile = config.datFile.resolveSibling(fileName.substring(0, index) + ".txt");
+                else
+                    config.outFile = config.datFile.resolveSibling(fileName + ".txt");
+            }
+            else {
+                try {
+                    config.outFile = Files.createTempFile("alt", "fru");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         return config;

@@ -3,8 +3,6 @@
 /* Базовые стили для CodeArea */
 .code-area {
     -fx-background-color: white;
-    -fx-font-family: 'Monospaced';
-    -fx-font-size: 12px;
 }
 
 /* Стили для подсветки тегов в Plain Text режиме */
@@ -15,18 +13,8 @@
     -fx-background-radius: 2px;
 }
 
-/* Стили для номеров строк */
-.lineno {
-    -fx-background-color: #e0e0e0;
-    -fx-text-fill: #666;
-    -fx-padding: 0 5 0 5;
-    -fx-border-color: #ccc;
-    -fx-border-width: 0 1 0 0;
-}
-
-/*StatusBar*/
 .status-bar {
-    -fx-pref-height: -fx-height-of-toolbar !important;
+    -fx-pref-height: 30 !important;
 }
 
 .status-bar > .left-items,

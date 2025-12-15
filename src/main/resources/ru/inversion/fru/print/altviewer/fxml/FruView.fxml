@@ -1,22 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+
+<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.VBox?>
-<?import ru.inversion.fx.form.controls.JInvToolBar?>
 
 <?import org.controlsfx.control.StatusBar?>
-<?import ru.inversion.fx.form.controls.JInvLabel?>
-<VBox fx:id="rootBox"
-      prefHeight="700.0" prefWidth="800.0" spacing="5.0" xmlns="http://javafx.com/javafx/8.0.111"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="ru.inversion.fru.print.altviewer.FruViewController">
-   <children>
-      <JInvToolBar fx:id="toolBar" />
+
+<?import javafx.scene.control.Label?>
+<VBox fx:id="rootBox" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.inversion.fru.print.altviewer.FruViewController">
+      <ToolBar fx:id="toolBar" />
+<Label fx:id="stub"/>
 <!--      <CodeArea fx:id="fruArea" editable="false"  />-->
-      <JInvLabel fx:id="stub"/>
       <StatusBar fx:id="statusBar"/>
-   </children>
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-   </padding>
 </VBox>

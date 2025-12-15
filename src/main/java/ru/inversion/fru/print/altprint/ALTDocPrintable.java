@@ -74,10 +74,10 @@ public class ALTDocPrintable implements Printable
         /** */
         public void setItalic(boolean b)
         {
-            if (((b) && (isItalic())) || ((!b) && (!isItalic()))) {
+            if( ( b && isItalic() ) || ( !b && !isItalic() ) )
                 return;
-            }
-            if (b) {
+
+            if(b) {
                 this.fontStyle |= 0x2;
             } else {
                 this.fontStyle &= 0xFFFFFFFD;
@@ -151,7 +151,7 @@ public class ALTDocPrintable implements Printable
         public ALTDocStyle(ALTCommand command, Object param)
         {
             this.command = command;
-            this.param = param;
+            this.param   = param;
         }
         /** */
         public ALTDocStyle(ALTCommand command)
@@ -263,12 +263,12 @@ public class ALTDocPrintable implements Printable
         if( pageIndex >= pages().size() )
             return NO_SUCH_PAGE;
 
-        final Graphics2D g2d = (Graphics2D)graphics;//.create();
+        final Graphics2D g2d = (Graphics2D)graphics;
         final Rectangle rectangle = new Rectangle( 0, 0, (int)pageFormat.getWidth(), (int)pageFormat.getHeight() );
         g2d.clip(rectangle);
         g2d.translate( pageFormat.getImageableX(), pageFormat.getImageableY() );
 
-        Map<AttributedCharacterIterator.Attribute, Object> attributes = new HashMap<>();
+        final Map<AttributedCharacterIterator.Attribute, Object> attributes = new HashMap<>();
 
         float xStep = 0.0F;float yStep = 5.0F;
 
@@ -290,31 +290,29 @@ public class ALTDocPrintable implements Printable
                 as = null;
                 for( ALTDocElem elem : line.getElemList())
                 {
-                    lengths.add(Pair.makePair(sb.length(), sb.length() + elem.getText().length()));
+                    lengths.add( Pair.makePair(sb.length(), sb.length() + elem.getText().length()) );
                     sb.append(elem.getText());
                 }
 
-                if (sb.length() > 0) {
-                    as = new AttributedString(sb.toString());
-                }
+                if( sb.length() > 0 )
+                    as = new AttributedString( sb.toString() );
 
                 int i = 0;
 
-                for( ALTDocElem elem : line.getElemList())
+                for( ALTDocElem elem : line.getElemList() )
                 {
                     if( elem.getStyles() != null )
                     {
-                        for( ALTDocStyle s : elem.getStyles()) {
-                            s.toPrintParam( this.printParameters );
-                        }
-
-                        this.printParameters.toTextAttributes(attributes);
-
-                        if( as != null )
-                            as.addAttributes(attributes, lengths.get(i).first, lengths.get(i).second );
-
-                        i++;
+                        for( ALTDocStyle s : elem.getStyles() )
+                             s.toPrintParam( this.printParameters );
                     }
+
+                    this.printParameters.toTextAttributes(attributes);
+
+                    if( as != null )
+                        as.addAttributes(attributes, lengths.get(i).first, lengths.get(i).second );
+
+                    i++;
                 }
 
                 xStep = this.printParameters.getLeftIndent();
@@ -344,17 +342,20 @@ public class ALTDocPrintable implements Printable
 
         final StringBuilder sb = new StringBuilder();
 
-        for (ALTDocPage page : pages()) {
-            for (ALTDocLine line : page.lines()) {
-                if (!line.isEmpty()) {
-                    for (ALTDocElem elem : line.getElemList())
+        for (ALTDocPage page : pages())
+        {
+            for( ALTDocLine line : page.lines())
+            {
+                if( !line.isEmpty() )
+                {
+                    for( ALTDocElem elem : line.getElemList() )
                     {
-                        if (elem.getStyles() != null) {
-                            for( ALTDocStyle s : elem.getStyles()) {
-                                 sb.append(s.getCommand().getMatrixData().getPrinterCommand());
-                            }
+                        if( elem.getStyles() != null )
+                        {
+                            for( ALTDocStyle s : elem.getStyles())
+                                 sb.append( s.getCommand().getMatrixData().getPrinterCommand() );
                         }
-                        sb.append(elem.getText());
+                        sb.append( elem.getText() );
                     }
                 }
             }
@@ -462,9 +463,12 @@ public class ALTDocPrintable implements Printable
             String commandName = null;
 
             pageList.add(currentPage);
+
             currentPage.add(currentLine);
-            for (Pair<String, Boolean> pair : itemList) {
-                if (!pair.second.booleanValue()) {
+
+            for (Pair<String, Boolean> pair : itemList)
+            {
+                if (!pair.second ) {
                     if (styleList.isEmpty()) {
                         currentLine.add(new ALTDocElem(pair.first));
                     } else {
@@ -474,17 +478,26 @@ public class ALTDocPrintable implements Printable
                 } else if (pair.first == null) {
                     currentLine = new ALTDocLine();
                     currentPage.add(currentLine);
-                } else {
+                }
+                else
+                {
                     ix = pair.first.indexOf(',');
-                    if (ix == -1) {
+
+                    if(ix == -1)
+                    {
                         commandName = pair.first;
                         paramValue = null;
-                    } else {
+                    }
+                    else
+                    {
                         commandName = pair.first.substring(0, ix);
                         paramValue  = pair.first.substring(ix + 1);
                     }
-                    ALTCommand cmd = dict.getCommand(commandName);
-                    if ((cmd != null) && (cmd.getGraphicData() != null)) {
+
+                    final ALTCommand cmd = dict.getCommand(commandName);
+
+                    if( cmd != null && cmd.getGraphicData() != null )
+                    {
                         doIt = true;
                         ALTParameter<?>[] p = cmd.getGraphicData().getParameters();
                         if (p.length == 1) {

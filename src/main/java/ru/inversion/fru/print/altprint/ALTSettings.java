@@ -1,10 +1,12 @@
 package ru.inversion.fru.print.altprint;
 
 
-import ru.inversion.fx.form.FileChooserDialog;
+
+import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.prefs.Preferences;
 
 
@@ -16,7 +18,7 @@ public class ALTSettings
 
     private DefSettings defSettings = new DefSettings();
     private ALTCommandDict commandDict;
-    private File altprnt5File;
+    private Path altprnt5File;
 
     /** */
     private static File getINIFilePath()
@@ -50,7 +52,7 @@ public class ALTSettings
 
         if( file == null || !file.exists() )
         {
-            final FileChooserDialog fcd = new FileChooserDialog("ALTPRNT5.INI");
+            final FileChooser fcd = new FileChooser();
             fcd.setTitle("Выберите файл с параметрами ALTPRNT5.INI");
             file = fcd.showOpenDialog(null);
 
@@ -83,7 +85,7 @@ public class ALTSettings
             altSettings = new ALTSettings();
             altSettings.commandDict  = ALTCommandDict.load( iniFile );
 
-            altSettings.altprnt5File = fileName;
+            altSettings.altprnt5File = fileName.toPath();
         }
         catch (Exception ex)
         {
@@ -121,8 +123,11 @@ public class ALTSettings
         return this.commandDict;
     }
 
-    public File getINIFileName()
+    public Path getINIFileName()
     {
         return this.altprnt5File;
     }
+
+    public
+
 }

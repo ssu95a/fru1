@@ -121,9 +121,10 @@ ALTCommandDict
                 commandValue = p.getValue();
 
                 ix = commandValue.indexOf('`');
+
                 if( ix == -1 )
                 {
-                    command.setMatrixData( commandValue, commandValue, null );
+                    command.setMatrixData( commandValue, null );
                 }
                 else
                 {
@@ -138,7 +139,7 @@ ALTCommandDict
                         commandName  = commandValue.substring(ix + 1, ix2);
                         commandValue = commandValue.substring(ix2 + 1);
 
-                        command.setMatrixData( p.getValue(), commandValue, dict.getCommand( commandName, true));
+                        command.setMatrixData( commandValue, dict.getCommand( commandName, true) );
                     }
                 }
             }
