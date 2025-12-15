@@ -1,7 +1,5 @@
 package ru.inversion.fru.print.altprint;
 
-
-
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -127,7 +125,4 @@ public class ALTSettings
     {
         return this.altprnt5File;
     }
-
-    public
-
 }

@@ -297,26 +297,6 @@ public class FruViewController implements Initializable {
     }
 
     /** */
-    private Function<String,Object> getPrintSettings()
-    {
-        return new Function<String, Object>() {
-            @Override
-            public Object apply(String s) {
-                switch (s.toLowerCase()) {
-                    case "orientation":
-                    case "pageorientation":
-                        return PageOrientation.PORTRAIT;
-                    case "copies":
-                        return new Copies(1);
-                    case "printjobname":
-                        return "ALT: " + altDoc.getAltFile();
-                }
-                return null;
-            }
-        };
-    }
-
-    /** */
     private void printDocument( )
     {
         try {
@@ -368,38 +348,21 @@ public class FruViewController implements Initializable {
         if( altDoc == null )
             return;
 
-        isApplyingFormatting = true;
-
         try {
 
             TagProcessor.ParseResult result = TagProcessor.parseForFormattedMode( altDoc.readFile() );
 
-            Platform.runLater(() -> {
-                try {
+            fruArea.replaceText  (    result.text );
+            fruArea.setStyleSpans( 0, result.styleSpans );
 
-                    fruArea.replaceText  (    result.text );
-                    fruArea.setStyleSpans( 0, result.styleSpans );
-
-                    viewModeProperty.setValue( ViewModeEnum.Formatted );
+            viewModeProperty.setValue( ViewModeEnum.Formatted );
 
                     //updateStatusBar();
                     //statusBar.setText("Форматирование применено");
 
-                } catch (Exception e) {
-                    System.err.println("Error: " + e.getMessage());
-                    //statusBar.setText("Ошибка применения стилей");
-                    showTextWithoutStyles(result.text);
-                } finally {
-                }
-            });
 
         } catch (Exception e) {
-            //System.err.println("Parsing error: " + e.getMessage());
-            e.printStackTrace();
-            //statusBar.setText("Ошибка парсинга");
-            //showTextWithoutStyles(originalText);
-        } finally {
-            isApplyingFormatting = false;
+            handleException(e);
         }
     }
 
@@ -408,7 +371,6 @@ public class FruViewController implements Initializable {
         if( altDoc == null )
             return;
 
-        isApplyingFormatting = true;
 
         try {
 
@@ -416,28 +378,17 @@ public class FruViewController implements Initializable {
 
             TagProcessor.ParseResult result = TagProcessor.parseForPlainTextMode( altDoc.readFile() );
 
-            Platform.runLater(() -> {
-                try {
+            fruArea.replaceText  (result.text);
+            fruArea.setStyleSpans(0, result.styleSpans);
 
-                    fruArea.replaceText  (result.text);
-                    fruArea.setStyleSpans(0, result.styleSpans);
+            viewModeProperty.setValue( ViewModeEnum.Plain );
 
-                    viewModeProperty.setValue( ViewModeEnum.Plain );
+            //updateStatusBar();
+            //statusBar.setText("Plain Text режим");
 
-                    //updateStatusBar();
-                    //statusBar.setText("Plain Text режим");
-
-                } catch (Exception e) {
-                    System.err.println("Error in plain text mode: " + e.getMessage());
-                    //statusBar.setText("Ошибка переключения режима");
-                }
-            });
 
         } catch (Exception e) {
-            System.err.println("Error showing plain text: " + e.getMessage());
-            //statusBar.setText("Ошибка: " + e.getMessage());
-        } finally {
-            isApplyingFormatting = false;
+            handleException(e);
         }
     }
 
@@ -472,23 +423,15 @@ public class FruViewController implements Initializable {
     {
         // statusBar.setText("Загрузка файла...");
 
-        final TagProcessor.ParseResult result;
-
-        if( viewModeProperty.get() == ViewModeEnum.Formatted )
-            result = TagProcessor.parseForFormattedMode( ad.readFile() );
+        if( viewModeProperty.getValue() == ViewModeEnum.Formatted )
+            applyFormattingMode();
         else
-            result = TagProcessor.parseForPlainTextMode( ad.readFile() );
-
-        fruArea.replaceText  ( result.text );
-        fruArea.setStyleSpans( 0, result.styleSpans );
+            applyPlainMode();
 
         Platform.runLater( ()->
             setTitle( "Предварительный просмотр - " + altDoc.getAltFile().toString() )
         );
-//                statusBar.setText("Файл загружен: " + file.getName());
-
     }
-
 
     /** */
     private void handleException( Throwable th )
@@ -500,6 +443,8 @@ public class FruViewController implements Initializable {
         dialog.showAndWait();
     }
 
+    /** */
+    transient private File lastDirectory;
 
     /** */
     private void onLoadDocument() {
@@ -508,10 +453,15 @@ public class FruViewController implements Initializable {
 
             final FileChooser fc = new FileChooser();
             fc.setTitle("Выберите файл для просмотра");
+            if( lastDirectory != null )
+                fc.setInitialDirectory(lastDirectory);
             final File file = fc.showOpenDialog(getStage());
 
-            if( file != null )
-                loadFile( file.toPath() );
+            if( file != null ) {
+                loadFile(file.toPath());
+                lastDirectory = file.getParentFile();
+            }
+
         }
         catch ( Throwable th ) {
             handleException(th);

@@ -15,6 +15,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  * Основной движок для генерации отчетов FRU
@@ -60,6 +61,8 @@ public class FruEngine {
     public static void print( String[] args ) throws Exception
     {
         final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
+
+System.out.println(Arrays.toString(args));
 
         final FruEngine engine = new FruEngine();
         final Fru fru = parseFru( config.getFruFile(), config.getCharset() );

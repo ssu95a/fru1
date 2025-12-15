@@ -172,6 +172,17 @@ public class FruEngineConfig {
     }
 
     /** */
+    private static String normalizeFru( String s ) {
+
+        if( s.length() > 3 ) {
+            String s1 = s.substring( s.length() - 4 );
+            if (".UFS".equalsIgnoreCase( s1 ))
+                return s.replace(".UFS", ".fru");
+        }
+        return s;
+    }
+
+    /** */
     public static FruEngineConfig fromCommandLine( String[] args )
     {
         if( args.length < 2 )
@@ -185,7 +196,7 @@ public class FruEngineConfig {
                 parseOption( config, s );
             else
             {
-                final Path file = Paths.get(s);
+                final Path file = Paths.get(normalizeFru(s));
 
                 if (config.datFile == null)
                     config.datFile = file;

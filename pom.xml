@@ -110,13 +110,13 @@
                     <archive>
                         <manifest>
                             <mainClass>ru.inversion.fru.api.FruEngine</mainClass>
-                            <addClasspath>true</addClasspath>
+                            <addClasspath>false</addClasspath>
                             <!-- Указываем относительный путь к JInvFore -->
                             <classpathPrefix>./</classpathPrefix>
                         </manifest>
                         <manifestEntries>
                             <!-- Явно указываем JAR в Class-Path -->
-                            <Class-Path>JInvFore.jar</Class-Path>
+                            <Class-Path>JInvFore.jar, bil.jar</Class-Path>
                         </manifestEntries>
                     </archive>
                 </configuration>
