@@ -12,20 +12,19 @@ import java.nio.file.Path;
 /** Документ альтернативной печати */
 public class ALTDoc {
 
+    /** Путь до */
     final private Path altFile;
 
+    /** Кодировка */
     final private Charset charset;
 
-    private OrientationRequested orientation;
-
-    private Copies copies;
+    /** Настройки печати */
+    final private PrintSettings printSettings = new PrintSettings( ALTSettings.INSTANCE().defSetting() );
 
     /** */
-    private ALTDoc( Path altFile, Charset charset, OrientationRequested orientation, Copies copies) {
+    private ALTDoc( Path altFile, Charset charset ) {
         this.altFile     = altFile;
         this.charset     = charset;
-        this.orientation = orientation;
-        this.copies      = copies;
     }
 
     /** */
@@ -40,18 +39,23 @@ public class ALTDoc {
 
     /** */
     public OrientationRequested getOrientation() {
-        return orientation;
+        return printSettings.getOrientation();
     }
     public void setOrientation(OrientationRequested orientation) {
-        this.orientation = orientation;
+        this.printSettings.setOrientation(orientation );
     }
 
     /** */
     public Copies getCopies() {
-        return copies;
+        return printSettings.getCopies();
     }
     public void setCopies(Copies copies) {
-        this.copies = copies;
+        this.printSettings.setCopies( copies );
+    }
+
+    /** */
+    public void setPageParameter( ALTParameter<?> parameter, Object value ) {
+
     }
 
     /** */
@@ -79,7 +83,7 @@ public class ALTDoc {
     }
 
     /** */
-    public Printable makePrintable() throws IOException {
+    public ALTDocPrintable makePrintable() throws IOException {
         return ALTDocPrintable.load( this );
     }
 
@@ -88,8 +92,7 @@ public class ALTDoc {
     {
         try
         {
-            ALTInitCommand initCommand = ALTSettings.INSTANCE().commandDict().getInitCommand();
-            return new ALTDoc( file, charset, initCommand.getOrientation(), initCommand.getCopies() );
+            return new ALTDoc( file, charset );
         }
         catch (Exception ex) {
             throw new ALTException( "Ошибка при загрузке файла с отчетом " + file, ex );

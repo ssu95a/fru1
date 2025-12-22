@@ -29,7 +29,7 @@ public class TagProcessor {
     private static final char tagChar = '`';
 
     /** */
-    private static final Pattern TAG_PATTERN = Pattern.compile("(`\\w+[+|-]?`)|([^`]+)");
+    private static final Pattern TAG_PATTERN = Pattern.compile("(`[\\w,]+[+|-]?`)|([^`]+)");
 
 
     /**
@@ -67,7 +67,7 @@ public class TagProcessor {
             {
                 cleanText.append(segment);
                 Collection<String> styles = new ArrayList<>(currentStyles);
-                spansBuilder.add(styles, segment.length());
+                spansBuilder.add( styles, segment.length() );
             }
         }
 
@@ -149,9 +149,9 @@ public class TagProcessor {
                     }
 
                     if( remove )
-                        currentStyles.remove( getCorrectStyleName(command.getCssStyleName()) );
+                        currentStyles.remove( getCorrectStyleName( command.getCssStyleName() ) );
                     else
-                        currentStyles.add( getCorrectStyleName(command.getCssStyleName()));
+                        currentStyles.add( getCorrectStyleName( command.getCssStyleName() ) );
                 }
                 else
                 {

@@ -127,7 +127,7 @@ public class ALTPrnt5Ini
         }
     }
 
-    private final Map<String, INISection> sectionMap = new LinkedHashMap();
+    private final Map<String, INISection> sectionMap = new LinkedHashMap<>();
 
     public void saveFile(String fileName)
             throws ALTPrnt5Ini.INIFileException

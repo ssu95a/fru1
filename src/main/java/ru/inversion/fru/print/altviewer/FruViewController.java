@@ -11,28 +11,36 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.print.PageOrientation;
+import javafx.print.*;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.transform.Scale;
+import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import org.controlsfx.control.StatusBar;
 import org.controlsfx.dialog.ExceptionDialog;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.controlsfx.glyphfont.GlyphFont;
+import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
+import ru.inversion.fru.print.altprint.ALTPrintException;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.utils.MemoryURL;
 import ru.inversion.utils.S;
 import ru.inversion.fru.print.altprint.ALTDoc;
 import ru.inversion.fru.print.altprint.ALTSettings;
+import ru.inversion.utils.U;
 
-import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.OrientationRequested;
 import java.io.File;
 
 import java.net.URL;
@@ -42,16 +50,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 /** */
 public class FruViewController implements Initializable {
-
-    private enum StateEnum {
-        Start,
-        LoadFile,
-        ApplyFormatting
-    }
 
     /** */
     private enum ViewModeEnum {
@@ -71,6 +72,7 @@ public class FruViewController implements Initializable {
     /** Размер шрифта */
     private static final String[] fontSize = {"8", "9", "10", "12", "14", "16", "20", "22", "24"};
 
+    final private GlyphFont fontAwesome = GlyphFontRegistry.font("FontAwesome");
 
     @FXML
     private ToolBar toolBar;
@@ -95,16 +97,15 @@ public class FruViewController implements Initializable {
     /** */
     private ComboBox<Charset> encodingComboBox;
 
-
     /** */
-    private ALTDoc altDoc;
+    private ALTDoc     altDoc;
     private AltPrinter altPrinter;
 
     /** */
     final private ObjectProperty<ViewModeEnum> viewModeProperty = new SimpleObjectProperty<>( this, "viewModeProperty", ViewModeEnum.Plain );
 
     /** */
-    final private ObjectProperty<StateEnum> stateProperty = new SimpleObjectProperty<>( this, "stateProperty", StateEnum.Start );
+    //final private ObjectProperty<StateEnum> stateProperty = new SimpleObjectProperty<>( this, "stateProperty", StateEnum.Start );
 
     /** */
     private boolean isFormattedMode()
@@ -181,8 +182,8 @@ public class FruViewController implements Initializable {
     {
         // Режим просмотра
         final ToggleGroup viewModeGroup    = new ToggleGroup();
-        final ToggleButton formattedToggle = new ToggleButton("G"); formattedToggle.setUserData(ViewModeEnum.Formatted);
-        final ToggleButton plainTextToggle = new ToggleButton("M"); plainTextToggle.setUserData(ViewModeEnum.Plain    );
+        final ToggleButton formattedToggle = new ToggleButton(S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.FILE_IMAGE_ALT ) ); formattedToggle.setUserData(ViewModeEnum.Formatted);
+        final ToggleButton plainTextToggle = new ToggleButton(S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.FILE_TEXT_ALT  ) ); plainTextToggle.setUserData(ViewModeEnum.Plain    );
         formattedToggle.setToggleGroup(viewModeGroup);
         plainTextToggle.setToggleGroup(viewModeGroup);
         plainTextToggle.setSelected(true);
@@ -199,7 +200,7 @@ public class FruViewController implements Initializable {
                 inToggle.set(true);
 
                 try {
-                    viewModeProperty.setValue((ViewModeEnum) newValue.getUserData());
+                    viewModeProperty.setValue( (ViewModeEnum) newValue.getUserData() );
                 }
                 finally {
                     inToggle.set(false);
@@ -264,16 +265,19 @@ public class FruViewController implements Initializable {
         Button loadButton = new Button("Загрузить файл");
         loadButton.setOnAction(e -> onLoadDocument());
 
-        Button printButton = new Button("Печать");
+        Button printButton = new Button("Печать", fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.WHITE) );
         printButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         printButton.setOnAction(e -> printDocument());
 
+        Button printButton2 = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.BLUEVIOLET) );
+        printButton2.setOnAction(e -> printWysiwygDoc());
+
         toolBar.getItems().addAll (
-            printButton, loadButton,
-            new Label("Шрифт:"), fontComboBox,
-            new Label("Размер:"), sizeComboBox,
-            new Label("Кодировка:"), encodingComboBox,
-            new Label("Масштаб:"), zoomComboBox
+            printButton, printButton2, new Separator(), loadButton,
+            new Label("Шрифт:"),    fontComboBox,
+            new Label("Размер:"),   sizeComboBox,
+            new Label("Кодировка:"),encodingComboBox,
+            new Label("Масштаб:"),  zoomComboBox
         );
     }
 
@@ -286,7 +290,7 @@ public class FruViewController implements Initializable {
             loadFile(ad);
             altDoc = ad;
         } catch (Exception ex) {
-          handleException(ex);
+          handleException( getStage(), ex);
         }
     }
 
@@ -300,16 +304,93 @@ public class FruViewController implements Initializable {
     private void printDocument( )
     {
         try {
-            altPrinter.print( altDoc );
+            altPrinter.print( getStage(), altDoc );
         } catch ( Throwable th ) {
-            handleException(th);
+            handleException( getStage(), th );
         }
     }
+
+    /** **/
+     private Transform configure( CodeArea codeArea, PageLayout pageLayout )
+     {
+         double contentWidth = codeArea.getTotalWidthEstimate();
+         double pageWidth    = pageLayout.getPrintableWidth();
+
+         if( contentWidth <= 0 || contentWidth > 10000 )
+             ;//throw new ALTPrintException("Ширина не определена, печать без масштабирования");
+
+         if( Math.abs(contentWidth - pageWidth) >= 0.1d )
+         {
+            double scale = pageWidth / contentWidth;
+            scale = Math.max(scale, 0.3);
+
+            Transform t = null;
+            if( !codeArea.getTransforms().isEmpty())
+                t = codeArea.getTransforms().get(0);
+
+            final Scale scaleTransform = new Scale(scale, scale);
+            codeArea.getTransforms().add(scaleTransform);
+
+            codeArea.applyCss();
+            codeArea.layout();
+
+            return t;
+         }
+         return null;
+     }
+
+
+    /** */
+    private void printWysiwygDoc( )
+    {
+        Transform t = null;
+
+        try {
+
+            final PrinterJob job = PrinterJob.createPrinterJob();
+            if( job == null )
+                throw new ALTPrintException("Невозможно проинициализировать службу печати");
+
+            final JobSettings jobSettings = job.getJobSettings( );
+            jobSettings.setJobName( altDoc.getAltFile().toString() );
+            jobSettings.setCopies ( altDoc.getCopies().getValue()  );
+
+            if( !job.showPrintDialog( fruArea.getScene().getWindow()) )
+                return;
+
+            Printer printer              = job.getPrinter();
+            PageLayout defaultPageLayout = printer.getDefaultPageLayout();
+            PageLayout pageLayout        = printer.createPageLayout (
+                defaultPageLayout.getPaper(),
+                U.decode( altDoc.getOrientation(), OrientationRequested.LANDSCAPE, PageOrientation.LANDSCAPE, PageOrientation.PORTRAIT ),
+                Printer.MarginType.DEFAULT
+            );
+
+            t = configure( fruArea, pageLayout );
+
+            // Печатаем
+            boolean printResult = job.printPage(pageLayout, fruArea);
+            if( printResult )
+                job.endJob();
+
+        } catch ( Throwable  th ) {
+            handleException( getStage(), th );
+        }
+        finally {
+            fruArea.getTransforms().clear();
+            if( t != null ) {
+                fruArea.getTransforms().add(t);
+                fruArea.applyCss();
+                fruArea.layout();
+            }
+        }
+    }
+
 
     /** */
     private void initStatusBar() {
 
-        statusBar.textProperty().bind( stateProperty.asString() );
+        //statusBar.textProperty().bind( stateProperty.asString() );
 
         Label fontLabel     = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
         Label encodingLabel = new Label( S.EMPTY_STRING ); encodingLabel.textProperty().bind( encodingComboBox.valueProperty().asString() );
@@ -323,9 +404,10 @@ public class FruViewController implements Initializable {
             new Label("Масштаб: "),   zoomLabel
         );
 
-        Label fileLabel    = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
+        Label iniLabel = new Label( ALTSettings.INSTANCE().getINIFileName().toString() );
+        //fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
 
-        //statusBar.getLeftItems().addAll( new Label("Файл: "), fileLabel );
+        statusBar.getLeftItems().addAll( new Label(ALTSettings.INI_FILE_NAME + ": " ),  iniLabel );
     }
 
     /** */
@@ -339,7 +421,7 @@ public class FruViewController implements Initializable {
         final VirtualizedScrollPane<CodeArea> v = new VirtualizedScrollPane<>(fruArea);
         VBox.setVgrow( v, Priority.ALWAYS );
         fruArea.setPadding(new Insets(5.0) );
-        rootBox.getChildren().set( 1, v   );
+        rootBox.getChildren().set( 1, v );
     }
 
     /** */
@@ -357,15 +439,14 @@ public class FruViewController implements Initializable {
 
             viewModeProperty.setValue( ViewModeEnum.Formatted );
 
-                    //updateStatusBar();
-                    //statusBar.setText("Форматирование применено");
-
-
-        } catch (Exception e) {
-            handleException(e);
+            //updateStatusBar();
+            //statusBar.setText("Форматирование применено");
+        } catch( Throwable th ) {
+            handleException( getStage(), th );
         }
     }
 
+    /* */
     private void applyPlainMode() {
 
         if( altDoc == null )
@@ -387,11 +468,10 @@ public class FruViewController implements Initializable {
             //statusBar.setText("Plain Text режим");
 
 
-        } catch (Exception e) {
-            handleException(e);
+        } catch( Throwable th ) {
+            handleException( getStage(), th );
         }
     }
-
 
     /**
      * Показывает текст без стилей (аварийный режим)
@@ -434,10 +514,13 @@ public class FruViewController implements Initializable {
     }
 
     /** */
-    private void handleException( Throwable th )
+    static public void handleException( Window window, Throwable th )
     {
+        th.printStackTrace();
+
         ExceptionDialog dialog = new ExceptionDialog(th);
-        dialog.initOwner( getStage() );
+        if( window != null )
+            dialog.initOwner( window );
         dialog.initModality(Modality.WINDOW_MODAL);
         dialog.setTitle("Ошибка");
         dialog.showAndWait();
@@ -453,18 +536,19 @@ public class FruViewController implements Initializable {
 
             final FileChooser fc = new FileChooser();
             fc.setTitle("Выберите файл для просмотра");
+
             if( lastDirectory != null )
                 fc.setInitialDirectory(lastDirectory);
+
             final File file = fc.showOpenDialog(getStage());
 
             if( file != null ) {
-                loadFile(file.toPath());
+                loadFile( file.toPath() );
                 lastDirectory = file.getParentFile();
             }
-
         }
         catch ( Throwable th ) {
-            handleException(th);
+            handleException( getStage(), th );
         }
     }
 
@@ -482,6 +566,7 @@ public class FruViewController implements Initializable {
 
         loadFile(altDoc);
     }
+
 
     /** */
     private static void initStyles( Scene scene ) throws Exception {
@@ -505,6 +590,7 @@ public class FruViewController implements Initializable {
     public static void showViewer(Stage primaryStage, AltPrinter altPrinter, ALTDoc altDoc )
     {
         try {
+
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation( FruApp.class.getResource("fxml/FruView.fxml"));
             loader.setControllerFactory(new Callback<Class<?>, Object>() {

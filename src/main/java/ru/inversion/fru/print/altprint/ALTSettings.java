@@ -5,6 +5,8 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.prefs.Preferences;
 
 
@@ -14,8 +16,10 @@ public class ALTSettings
 
     private static ALTSettings instance;
 
-    private DefSettings defSettings = new DefSettings();
+    private final PrintSettings defSettings = new PrintSettings();
     private ALTCommandDict commandDict;
+    private Map<String,Boolean> printerMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
     private Path altprnt5File;
 
     /** */
@@ -83,6 +87,8 @@ public class ALTSettings
             altSettings = new ALTSettings();
             altSettings.commandDict  = ALTCommandDict.load( iniFile );
 
+            ALTPrnt5Ini.INISection printerSection = iniFile.getSection("DriverRef");
+
             altSettings.altprnt5File = fileName.toPath();
         }
         catch (Exception ex)
@@ -90,6 +96,19 @@ public class ALTSettings
             throw new ALTException("���������� ��������� ��������� �� ����� �������� ALTPRNT5.INI", ex);
         }
         return altSettings;
+    }
+
+    /** */
+    private void initPrinterMap( ALTPrnt5Ini.INISection section )
+    {
+        for( ALTPrnt5Ini.INIParameter p : section.getParameterList() )
+        {
+            String name = p.getName();
+            name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
+            String value = p.getValue();
+
+            printerMap.put( name, "CodeText".equalsIgnoreCase(value) );
+        }
     }
 
     /** */
@@ -111,7 +130,7 @@ public class ALTSettings
         return instance;
     }
 
-    public DefSettings defSetting()
+    public PrintSettings defSetting()
     {
         return this.defSettings;
     }
@@ -124,5 +143,12 @@ public class ALTSettings
     public Path getINIFileName()
     {
         return this.altprnt5File;
+    }
+
+    /** */
+    public boolean isMatrixPrinter( String name )
+    {
+        name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
+        return printerMap.getOrDefault( name, Boolean.FALSE );
     }
 }

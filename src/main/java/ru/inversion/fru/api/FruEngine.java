@@ -19,7 +19,7 @@ import java.util.Arrays;
 
 /**
  * Основной движок для генерации отчетов FRU
- * парсинг форм, обработка данных и рендеринг
+ * парсинг форм, обработка данных и рендеринг в принтер
  */
 public class FruEngine {
 
@@ -30,9 +30,7 @@ public class FruEngine {
     public FruEngine() {
     }
 
-    /**
-     * Основной метод генерации отчета из готовых объектов
-     */
+    /** Основной метод генерации отчета из готовых объектов */
     private void generate( Fru fru, FruDataFile dataFile, Writer output )
     {
         try ( FruContext context  = new FruContext( fru, output, dataFile ) ) {
@@ -62,8 +60,6 @@ public class FruEngine {
     {
         final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
 
-System.out.println(Arrays.toString(args));
-
         final FruEngine engine = new FruEngine();
         final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
 
@@ -77,10 +73,10 @@ System.out.println(Arrays.toString(args));
         final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
 
         if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.File )
-            altPrinter.saveTo();
+            ;//altPrinter.saveTo();
 
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
-            altPrinter.print(altDoc);
+            ;//altPrinter.print(altDoc);
 
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
             FruApp.run( altPrinter, altDoc );
@@ -112,8 +108,8 @@ System.out.println(Arrays.toString(args));
         System.out.println("Использование: [options] <report file with cursor data> <fru-form-file> <output-file>");
         System.out.println( );
         System.out.println("Параметры:");
-        System.out.println("   fru-file    - FRU файл с описанием формы отчета");
-        System.out.println("   data-file   - файл с данными для отчета");
+        System.out.println("      fru-file - FRU файл с описанием формы отчета");
+        System.out.println("     data-file - файл с данными для отчета");
         System.out.println("   output-file - файл для сохранения результата");
         System.out.println( );
         System.out.println("[options]");
