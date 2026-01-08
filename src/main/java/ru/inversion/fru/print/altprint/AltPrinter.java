@@ -1,18 +1,19 @@
 package ru.inversion.fru.print.altprint;
 
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.EventHandler;
-import javafx.stage.Window;
 import ru.inversion.fru.api.FruEngineConfig;
-import ru.inversion.fru.print.altviewer.FruViewController;
-import ru.inversion.fru.print.altviewer.PrintAwtContext;
-import ru.inversion.fru.print.altviewer.PrintableTask;
+import ru.inversion.fru.print.altprint.doc.ALTDoc;
+import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
+import ru.inversion.fru.print.naltprn.AltSettings;
 
 import javax.print.*;
+import javax.print.attribute.standard.OrientationRequested;
+import java.awt.print.PageFormat;
+import java.awt.print.PrinterJob;
 
 /** */
 public class AltPrinter {
 
+    /** */
     final private FruEngineConfig engineConfig;
 
     /** */
@@ -20,8 +21,45 @@ public class AltPrinter {
         engineConfig = ec;
     }
 
+    public void print(ALTDoc doc, IAltPrintListener listener ) throws Exception {
+
+        final PrintService awtPrinter = findAWTPrinterByIndex(engineConfig.getPrinterIndex() );
+
+        final boolean matrix = isMatrix(awtPrinter);
+
+        ALTDocPrintable printable = doc.makePrintable( listener, null );
+
+        if( matrix ) {
+            printable.printToMatrix( awtPrinter );
+            return;
+        }
+
+        PrinterJob job = PrinterJob.getPrinterJob();
+
+        PageFormat pf = job.defaultPage();
+        pf.setOrientation( decodeOrientation( doc.getOrientation()) );
+
+        job.setJobName("ALT: " + doc.getAltFile());
+        job.setCopies(doc.getCopies().getValue());
+        job.setPrintService(awtPrinter);
+        job.setPrintable(printable, pf);
+
+        job.print();
+    }
+
     /** */
-    private PrintService findAWTPrinterByName(String fxPrinterName)
+    private static int decodeOrientation(OrientationRequested o) {
+        return o == OrientationRequested.LANDSCAPE ? PageFormat.LANDSCAPE : PageFormat.PORTRAIT;
+    }
+
+    /** */
+    public static boolean isMatrix( PrintService awtPrinter )
+    {
+        return AltSettings.INSTANCE().isMatrixPrinter(awtPrinter.getName());
+    }
+
+    /** */
+    public static PrintService findAWTPrinterByName(String fxPrinterName)
     {
         final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
 
@@ -34,7 +72,7 @@ public class AltPrinter {
     }
 
     /** */
-    private PrintService findAWTPrinterByIndex(int index ) {
+    public static PrintService findAWTPrinterByIndex(int index ) {
 
         final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
 
@@ -47,58 +85,6 @@ public class AltPrinter {
         }
 
         return services[index];
-    }
-
-
-    /** */
-    public void print( Window window, ALTDoc altDoc )
-    {
-        try {
-
-            javafx.print.PrinterJob fxJob = javafx.print.PrinterJob.createPrinterJob();
-            if( fxJob == null )
-                throw new IllegalStateException("Не удалось инициализировать печать");
-
-            fxJob.getJobSettings().setJobName( altDoc.getAltFile().toString() );
-
-            if( !fxJob.showPrintDialog(window) ) {
-                return;
-            }
-
-            PrintService awtPrinter = findAWTPrinterByName( fxJob.getPrinter().getName() );
-
-            if( awtPrinter == null ) {
-
-                awtPrinter = findAWTPrinterByIndex(engineConfig.getPrinterIndex());
-
-                if( awtPrinter == null )
-                    throw new IllegalStateException("Невозможно определить принтер для печати");
-            }
-
-            final PrintAwtContext context = new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, window );
-
-            final PrintableTask printTask = new PrintableTask( context );
-
-            printTask.setOnFailed( new EventHandler<WorkerStateEvent>() {
-                @Override
-                public void handle( WorkerStateEvent event ) {
-                    FruViewController.handleException( window, printTask.getException() );
-                }
-            });
-
-            Thread thread = new Thread(printTask);
-            thread.setDaemon(true);
-            thread.start();
-        }
-        catch( Throwable th ) {
-            throw new ALTPrintException( "Ошибка при печати отчета", th );
-        }
-    }
-
-    /** */
-    private boolean isMatrix( PrintService awtPrinter )
-    {
-        return ALTSettings.INSTANCE().isMatrixPrinter(awtPrinter.getName());
     }
 
 }

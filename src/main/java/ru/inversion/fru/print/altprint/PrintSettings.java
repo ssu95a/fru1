@@ -6,52 +6,37 @@ import javax.print.attribute.standard.OrientationRequested;
 
 public class PrintSettings
 {
-    private Copies copies;
+    private Copies               copies;
     private OrientationRequested orientation;
-    private MediaPrintableArea printableArea;
-
-    private final PrintSettings defaultSettings;
+    private MediaPrintableArea   printableArea;
 
     public PrintSettings( ) {
-        this( null );
-        copies        = new Copies(1);
-        orientation   = OrientationRequested.PORTRAIT;
-        printableArea = new MediaPrintableArea(10,10,10,10,1000);
     }
 
-    public PrintSettings( PrintSettings defaultSettings) {
-        this.defaultSettings = defaultSettings;
+    public void setOrientation(OrientationRequested o) { this.orientation = o; }
+    public void setCopies(int c) { this.copies = new Copies(c); }
+    public void setCopies(Copies c) { this.copies = c; }
+    public void setPrintableArea(MediaPrintableArea a) { this.printableArea = a; }
+
+    public Copies resolveCopies( Copies def) {
+        return copies != null ? copies : def;
+    }
+    public OrientationRequested resolveOrientation(OrientationRequested def) {
+        return orientation != null ? orientation : def;
+    }
+    public MediaPrintableArea resolvePrintableArea(MediaPrintableArea def) {
+        return printableArea != null ? printableArea : def;
     }
 
-    public void setOrientation( OrientationRequested orientation)
-    {
-        this.orientation = orientation;
-    }
-    public OrientationRequested getOrientation()
-    {
-        return this.orientation == null ? defaultSettings.orientation : orientation;
+    public Copies getCopies() {
+        return copies;
     }
 
-    public void setCopies(int copies)
-    {
-        this.copies = new Copies(copies);
-    }
-    public void setCopies(Copies copies)
-    {
-        this.copies = copies;
+    public OrientationRequested getOrientation() {
+        return orientation;
     }
 
-    public Copies getCopies()
-    {
-        return this.copies == null ? defaultSettings.copies : copies;
-    }
-
-    public MediaPrintableArea getPrintableArea()
-    {
-        return this.printableArea == null ? defaultSettings.printableArea : this.printableArea;
-    }
-    public void setPrintableArea( MediaPrintableArea a )
-    {
-        this.printableArea = a;
+    public MediaPrintableArea getPrintableArea() {
+        return printableArea;
     }
 }

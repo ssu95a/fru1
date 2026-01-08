@@ -41,7 +41,7 @@ public class Renderers {
 
     private final IRenderer<FruSectionTable> tableRenderer = new TableSectionRenderer();
 
-    private final IRenderer<FruFormatCall> formatCallIRenderer = new FormatCallRenderer();
+    private final IRenderer<FruFormatCall> formatCallRenderer = new FormatCallRenderer();
 
     private final IRenderer<FruPaging> pagingRenderer =new PageNumRenderer();
 
@@ -55,9 +55,7 @@ public class Renderers {
         renderer.render(context, item);
     }
 
-
-    // Сложные рендереры как внутренние классы
-    //private final IRenderer<FruFormat> formatRenderer = new FormatRenderer();
+    //Рендереры как внутренние классы
     public <T extends FruItem> IRenderer<T> get( Class<T > clazz )
     {
         if( clazz == null)
@@ -72,7 +70,7 @@ public class Renderers {
          else if (clazz == FruSectionTable.class)
              return (IRenderer<T>) tableRenderer;
         else if (clazz == FruFormatCall.class)
-            return (IRenderer<T>) formatCallIRenderer;
+            return (IRenderer<T>) formatCallRenderer;
         else if (clazz == FruScript.class)
             return (IRenderer<T>) scriptRenderer;
         else if (clazz == FruPaging.class)

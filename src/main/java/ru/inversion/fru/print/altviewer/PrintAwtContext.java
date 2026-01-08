@@ -1,7 +1,8 @@
 package ru.inversion.fru.print.altviewer;
 
 import javafx.stage.Window;
-import ru.inversion.fru.print.altprint.ALTDoc;
+import ru.inversion.fru.print.altprint.doc.ALTDoc;
+import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 
 import javax.print.PrintService;
 
@@ -16,12 +17,15 @@ public class PrintAwtContext {
 
     final private Window window;
 
-    public PrintAwtContext( PrintService awtPrinter, boolean matrixPrinter, ALTDoc altDoc, Window window )
+    final private AltPrintPageConfig pageConfig;
+
+    public PrintAwtContext( PrintService awtPrinter, boolean matrixPrinter, ALTDoc altDoc, Window window, AltPrintPageConfig pageConfig )
     {
         this.awtPrinter    = awtPrinter;
         this.matrixPrinter = matrixPrinter;
         this.altDoc        = altDoc;
         this.window        = window;
+        this.pageConfig    = pageConfig;
     }
 
     public PrintService getAwtPrinter() {
@@ -38,5 +42,9 @@ public class PrintAwtContext {
 
     public Window getWindow() {
         return window;
+    }
+
+    public AltPrintPageConfig getPageConfig() {
+        return pageConfig;
     }
 }

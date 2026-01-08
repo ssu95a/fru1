@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static ru.inversion.utils.parser.Token.*;
 import static ru.inversion.utils.parser.Token.TypeEnum.*;
@@ -264,6 +265,10 @@ public class FruParser implements Iterator<AbstractSectionNode> {
         }
         finally {
             executor.shutdown();
+            try {
+                executor.awaitTermination( 1L, TimeUnit.SECONDS );
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 }

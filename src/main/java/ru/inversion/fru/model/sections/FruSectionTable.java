@@ -65,7 +65,7 @@ public class FruSectionTable extends FruSection {
     @Override
     public int getFieldNum( String name )
     {
-        return U.nvl( fieldMap.get(name), -1 );
+        return fieldMap.getOrDefault( name, -1 );
     }
 
     /* */

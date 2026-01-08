@@ -4,7 +4,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.utils.MemoryURL;
-import ru.inversion.fru.print.altprint.ALTDoc;
+import ru.inversion.fru.print.altprint.doc.ALTDoc;
 
 import java.net.URL;
 import java.util.Objects;
@@ -39,7 +39,7 @@ public class FruApp extends Application {
 
 
     /** */
-    public static void run(AltPrinter altPrinter, ALTDoc altDoc )
+    public static void run( AltPrinter altPrinter, ALTDoc altDoc )
     {
         new Thread(() -> {
             FruApp.altDoc = Objects.requireNonNull( altDoc, "'altDoc' is null" );

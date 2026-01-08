@@ -53,8 +53,8 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
                 return End;
 
             while( t.current() != ';' && t.shift()  ) {
-                   if( !ITokenHandler.isSpace( t.current() ) )
-                        text.append( t.current() );
+               if( !ITokenHandler.isSpace( t.current() ) )
+                    text.append( t.current() );
             }
 
             s = text.toString();

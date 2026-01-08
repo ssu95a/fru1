@@ -92,57 +92,84 @@ public class FruContext implements AutoCloseable {
     }
 
     /** */
-    private void runEntry(FruDataRow row) {
+    private void runEntry( FruDataRow row )
+    {
+        entryExecuted = true;
 
-        if( row.getSectionNum() == 0 ) {
+        if( row != null)
+        {
             int i = 0;
-
             for( String s : row.data() )
                  setArgumentValue( i++, s );
         }
 
-        FruScript script = fru.initScript( );
+        final FruScript script = fru.initScript();
 
-        if( script == null )
-            return;
+        if( script != null )
+            executeScript( script );
 
-        executeScript(script);
+//        try {
+//
+//            if( row == null  )
+//                return;
+//
+//            if( row.getSectionNum() == -1 )
+//            {
+//                int i = 0;
+//
+//                for( String s : row.data() )
+//                     setArgumentValue( i++, s );
+//            }
+//
+//            FruScript script = fru.initScript();
+//
+//            if( script == null )
+//                return;
+//
+//            executeScript(script);
+//
+//        } finally {
+//            entryExecuted = true;
+//        }
     }
 
     /** */
     private int rowCount = 0;
 
     /** */
+    private boolean entryExecuted = false;
+
+    /** */
     private void setCurrentRow( FruDataRow row )
     {
-
-        if( row.getSectionNum() == 0 )
+        if( !entryExecuted )
         {
-            runEntry(row);
-        }
-        else
-        {
-            if( rowCount == 0 )
-                runEntry(row);
-
-            if( currentSection == null || currentSection.getNum() != row.getSectionNum() )
+            if( row.getSectionNum() == -1 )
             {
-
-                if( currentSection != null )
-                    currentSection.afterUse( this );
-
-                currentSection = fru.sections()
-                                        .stream().filter(t -> t.getNum() == row.getSectionNum())
-                                            .findFirst().orElseThrow(() -> new RuntimeException( "Не найдена секция с номером " + row.getSectionNum()) );
-
-                currentSection.beforeUse( this );
+                runEntry(row);
+                return; // entry не рендерим
             }
-
-            if( currentSection != null )
-                renderers.render( this, currentSection );
-
-            rowCount++;
+            // entry отсутствует — всё равно считаем его завершённым
+            runEntry(null);
         }
+
+        if( currentSection == null || currentSection.getNum() != row.getSectionNum() )
+        {
+            if( currentSection != null )
+                currentSection.afterUse( this );
+
+            currentSection = fru.sections().get( row.getSectionNum() );
+
+            if( currentSection == null )
+                throw new RuntimeException( "Не найдена секция с номером " + row.getSectionNum() );
+
+            currentSection.beforeUse( this );
+        }
+
+        if( currentSection != null )
+            renderers.render( this, currentSection );
+
+        rowCount++;
     }
 
     /** */
@@ -167,8 +194,10 @@ public class FruContext implements AutoCloseable {
     }
 
     /** */
-    public String getArgument( String name ) {
-        return globalScriptContext.getAttribute(name, ScriptContext.GLOBAL_SCOPE).toString();
+    public String getArgument( String name )
+    {
+        Object v = globalScriptContext.getAttribute( name, ScriptContext.GLOBAL_SCOPE );
+        return v == null ? null : String.valueOf(v);
     }
 
     /** */
@@ -182,9 +211,9 @@ public class FruContext implements AutoCloseable {
     }
 
     /** */
-    public void setArgumentValue( int num, String value) {
+    public void setArgumentValue( int num, String value ) {
         final String arg = fru.arguments().get(num);
-        if (!S.isNullOrEmpty(arg))
+        if (!S.isNullOrEmpty(arg) )
             globalScriptContext.setAttribute( arg, value, ScriptContext.GLOBAL_SCOPE );
     }
 

@@ -1,7 +1,9 @@
 package ru.inversion.fru.print.altviewer;
 
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -32,14 +34,16 @@ import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
+import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.ALTPrintException;
+import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.AltPrinter;
+import ru.inversion.fru.print.naltprn.AltSettings;
 import ru.inversion.utils.MemoryURL;
 import ru.inversion.utils.S;
-import ru.inversion.fru.print.altprint.ALTDoc;
-import ru.inversion.fru.print.altprint.ALTSettings;
 import ru.inversion.utils.U;
 
+import javax.print.PrintService;
 import javax.print.attribute.standard.OrientationRequested;
 import java.io.File;
 
@@ -51,12 +55,15 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static ru.inversion.fru.print.altprint.AltPrinter.*;
+
 /** */
 public class FruViewController implements Initializable {
 
     /** */
     private enum ViewModeEnum {
-        Plain, Formatted
+        Plain,
+        Formatted
     }
 
     /** Доступные кодировки */
@@ -98,25 +105,21 @@ public class FruViewController implements Initializable {
     private ComboBox<Charset> encodingComboBox;
 
     /** */
-    private ALTDoc     altDoc;
+    private ALTDoc altDoc;
     private AltPrinter altPrinter;
 
     /** */
-    final private ObjectProperty<ViewModeEnum> viewModeProperty = new SimpleObjectProperty<>( this, "viewModeProperty", ViewModeEnum.Plain );
+    final private ObjectProperty<ViewModeEnum> viewModeProperty = new SimpleObjectProperty<>( this, "viewModeProperty", ViewModeEnum.Formatted );
 
     /** */
+    final private BooleanProperty textOnlyProperty = new SimpleBooleanProperty( this, "textOnly", false );
+
     //final private ObjectProperty<StateEnum> stateProperty = new SimpleObjectProperty<>( this, "stateProperty", StateEnum.Start );
 
-    /** */
-    private boolean isFormattedMode()
-    {
-        return viewModeProperty.get() == ViewModeEnum.Formatted;
-    }
 
     public ALTDoc getAltDoc() {
         return altDoc;
     }
-
     public void setAltDoc(ALTDoc altDoc) {
         this.altDoc = altDoc;
     }
@@ -218,6 +221,7 @@ public class FruViewController implements Initializable {
                 inToggle.set(false);
 
                 try {
+
                     if( newValue == ViewModeEnum.Formatted )
                         applyFormattingMode();
                     else
@@ -228,12 +232,17 @@ public class FruViewController implements Initializable {
                 }
             }
         });
+
+        formattedToggle.disableProperty().bind( textOnlyProperty );
+        plainTextToggle.disableProperty().bind( textOnlyProperty );
+
         toolBar.getItems().addAll( new Label("Режим:"), formattedToggle, plainTextToggle );
     }
 
     /** */
     private void initToolbar( )
     {
+        //
         initToggleMode( );
 
         // Выбор шрифта
@@ -272,12 +281,12 @@ public class FruViewController implements Initializable {
         Button printButton2 = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.BLUEVIOLET) );
         printButton2.setOnAction(e -> printWysiwygDoc());
 
-        toolBar.getItems().addAll (
+        toolBar.getItems( ).addAll (
             printButton, printButton2, new Separator(), loadButton,
-            new Label("Шрифт:"),    fontComboBox,
-            new Label("Размер:"),   sizeComboBox,
-            new Label("Кодировка:"),encodingComboBox,
-            new Label("Масштаб:"),  zoomComboBox
+            new Label("Шрифт:" ),    fontComboBox,
+            new Label("Размер:"),    sizeComboBox,
+            new Label("Кодировка:"), encodingComboBox,
+            new Label("Масштаб:"  ), zoomComboBox
         );
     }
 
@@ -286,8 +295,8 @@ public class FruViewController implements Initializable {
     private void updateEncoding( ActionEvent e )
     {
         try {
-            ALTDoc ad = ALTDoc.loadFile( altDoc.getAltFile(), encodingComboBox.getValue());
-            loadFile(ad);
+            ALTDoc ad = ALTDoc.loadFile( altDoc.getAltFile(), encodingComboBox.getValue() );
+            loadALTDoc(ad);
             altDoc = ad;
         } catch (Exception ex) {
           handleException( getStage(), ex);
@@ -301,11 +310,46 @@ public class FruViewController implements Initializable {
     }
 
     /** */
+    private AltPrintPageConfig createAndInitPageConfig()
+    {
+        return AltPrintPageConfig.builder().font(fontComboBox.getValue(), 0, Integer.parseInt( sizeComboBox.getValue() ) ).build();
+    }
+
+
+    /** */
     private void printDocument( )
     {
         try {
-            altPrinter.print( getStage(), altDoc );
-        } catch ( Throwable th ) {
+
+            javafx.print.PrinterJob fxJob = javafx.print.PrinterJob.createPrinterJob();
+            if( fxJob == null )
+                throw new IllegalStateException("Не удалось инициализировать печать");
+
+            fxJob.getJobSettings().setJobName( altDoc.getAltFile().toString() );
+
+            if( !fxJob.showPrintDialog(getStage()) ) {
+                fxJob.endJob();
+                return;
+            }
+
+            PrintService awtPrinter = findAWTPrinterByName( fxJob.getPrinter().getName() );
+
+            if( awtPrinter == null )
+            {
+                awtPrinter = findAWTPrinterByIndex( 0 );
+                if( awtPrinter == null )
+                    throw new IllegalStateException("Невозможно определить принтер для печати");
+            }
+
+            final PrintAwtContext context = new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage(), createAndInitPageConfig() );
+
+            final PrintableTask printTask = new PrintableTask ( context );
+
+            Thread thread = new Thread(printTask);
+            thread.setDaemon(true);
+            thread.start();
+        }
+        catch( Throwable th ) {
             handleException( getStage(), th );
         }
     }
@@ -404,10 +448,9 @@ public class FruViewController implements Initializable {
             new Label("Масштаб: "),   zoomLabel
         );
 
-        Label iniLabel = new Label( ALTSettings.INSTANCE().getINIFileName().toString() );
-        //fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
+        Label iniLabel = new Label( AltSettings.INSTANCE().getINIFileName().toString() );
 
-        statusBar.getLeftItems().addAll( new Label(ALTSettings.INI_FILE_NAME + ": " ),  iniLabel );
+        statusBar.getLeftItems().addAll( new Label(AltSettings.INI_FILE_NAME + ": " ),  iniLabel );
     }
 
     /** */
@@ -418,9 +461,12 @@ public class FruViewController implements Initializable {
         fruArea.getTransforms().add(currentScale);
         fruArea.setEditable(false);
         fruArea.setWrapText(false);
+        fruArea.setUseInitialStyleForInsertion(true);
+        fruArea.setAutoScrollOnDragDesired(false);
+
         final VirtualizedScrollPane<CodeArea> v = new VirtualizedScrollPane<>(fruArea);
         VBox.setVgrow( v, Priority.ALWAYS );
-        fruArea.setPadding(new Insets(5.0) );
+        fruArea.setPadding( new Insets(5.0) );
         rootBox.getChildren().set( 1, v );
     }
 
@@ -474,13 +520,15 @@ public class FruViewController implements Initializable {
     }
 
     /**
-     * Показывает текст без стилей (аварийный режим)
+     * Показывает текст без стилей
      */
-    private void showTextWithoutStyles(String text) {
+    private void applyTextOnlyMode( ) {
+
         try {
+
             fruArea.clear();
-            fruArea.appendText(text);
-            System.out.println("Text shown without styles (fallback mode)");
+            fruArea.appendText( altDoc.readFile().toString() );
+
         } catch (Exception e) {
             System.err.println("Even fallback mode failed: " + e.getMessage());
         }
@@ -498,15 +546,37 @@ public class FruViewController implements Initializable {
         return ALTDoc.loadFile( file, encodingComboBox.getValue() );
     }
 
-    /** */
-    private void loadFile( ALTDoc ad )
+    /**
+     * 0 - только текст, NO_PARAMS
+     * > 0 - текст, но с начала идут инструкции в параметрах, PARAMS_ONLY_AT_START
+     * -1 - файл с командами форматирования, TEXT_WITH_PARAMS
+     */
+    private void loadALTDoc( ALTDoc ad )
     {
+//
+//        if( ad.getContentState() > 0 )
+//        {
+//            viewModeProperty.setValue(ViewModeEnum.TextOnly);
+//        }
+
         // statusBar.setText("Загрузка файла...");
 
-        if( viewModeProperty.getValue() == ViewModeEnum.Formatted )
-            applyFormattingMode();
+        altDoc = ad;
+
+        if( ad.getContentState() >= 0 )
+        {
+            textOnlyProperty.setValue(true );
+            applyTextOnlyMode( );
+        }
         else
-            applyPlainMode();
+        {
+            textOnlyProperty.setValue(false);
+
+            if( viewModeProperty.getValue() == ViewModeEnum.Formatted )
+                applyFormattingMode( );
+            else
+                applyPlainMode( );
+        }
 
         Platform.runLater( ()->
             setTitle( "Предварительный просмотр - " + altDoc.getAltFile().toString() )
@@ -543,7 +613,8 @@ public class FruViewController implements Initializable {
             final File file = fc.showOpenDialog(getStage());
 
             if( file != null ) {
-                loadFile( file.toPath() );
+                ALTDoc ad = loadFile( file.toPath() );
+                loadALTDoc(ad);
                 lastDirectory = file.getParentFile();
             }
         }
@@ -564,7 +635,7 @@ public class FruViewController implements Initializable {
 
         initStatusBar();
 
-        loadFile(altDoc);
+        loadALTDoc(altDoc);
     }
 
 
@@ -573,7 +644,7 @@ public class FruViewController implements Initializable {
 
         scene.getStylesheets().add( FruViewController.class.getResource("res/base.css").toExternalForm() );
 
-        final String cssStyles = ALTSettings.INSTANCE().commandDict().getCSSStylesList();
+        final String cssStyles = AltSettings.INSTANCE().commandDict().getCSSStylesList();
 
         if( cssStyles != null)
         {

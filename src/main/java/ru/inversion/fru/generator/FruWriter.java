@@ -1,6 +1,5 @@
 package ru.inversion.fru.generator;
 
-import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.utils.S;
 
@@ -8,10 +7,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-// TrackPosition
+
 /** */
 public class FruWriter extends Writer {
 
@@ -76,10 +73,6 @@ public class FruWriter extends Writer {
         out.close();
     }
 
-    //public int getCurrentLine() {
-    //    return currentLine;
-    //}
-
     public int getCurrentCharInLine() {
         return currentCharInLine;
     }
@@ -107,13 +100,13 @@ public class FruWriter extends Writer {
         {
             if( paging.getLines() == currentLine )
             {
-                if( paging.isBottom() )
+                if( paging.isBottom() && pageConsumer != null )
                     this.pageConsumer.accept( currentPage, paging );
 
                 currentPage ++;
                 currentLine = 1;
 
-                if( paging.isTop() )
+                if( paging.isTop() && pageConsumer != null )
                     this.pageConsumer.accept( currentPage, paging );
             }
         }
@@ -129,13 +122,16 @@ public class FruWriter extends Writer {
     public FruWriter print( String value, boolean force )
     {
         try {
+
             if( force )
                 out.write(value);
             else
                 write( value == null ? S.EMPTY_STRING : value );
+
         } catch ( IOException e) {
-            throw new RuntimeException("Error on write value: " + value, e );
+            throw new RuntimeException( "Error on write value: " + value, e );
         }
+
         return this;
     }
 

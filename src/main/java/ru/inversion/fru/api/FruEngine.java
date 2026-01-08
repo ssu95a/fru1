@@ -7,7 +7,7 @@ import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.parser.FruParser;
-import ru.inversion.fru.print.altprint.ALTDoc;
+import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.fru.print.altviewer.FruApp;
 
@@ -15,7 +15,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 /**
  * Основной движок для генерации отчетов FRU
@@ -76,7 +75,7 @@ public class FruEngine {
             ;//altPrinter.saveTo();
 
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
-            ;//altPrinter.print(altDoc);
+            altPrinter.print( altDoc, null );
 
         else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
             FruApp.run( altPrinter, altDoc );
@@ -121,7 +120,7 @@ public class FruEngine {
         System.out.println("-P<idx> Printer index");
         System.out.println("-S Silent mode");
         System.out.println( );
-        System.out.println("Пример:");
+        System.out.println("Пример: ");
         System.out.println("   FruEngine -O report.fru data.dat result.txt");
     }
 }

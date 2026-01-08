@@ -3,14 +3,17 @@ package ru.inversion.fru.print.altviewer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import ru.inversion.fru.print.altprint.ALTDocPrintable;
+import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
 import ru.inversion.fru.print.altprint.ALTPrintException;
-import ru.inversion.utils.U;
+import ru.inversion.fru.print.altprint.IAltPrintListener;
+import ru.inversion.utils.Holder;
 
 
-import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.*;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
@@ -18,19 +21,26 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 /** */
-public class PrintableTask extends Task<Boolean> {
+public class PrintableTask extends Task<Boolean> implements IAltPrintListener {
 
     final private PrintAwtContext printContext;
 
     private Dialog<Boolean> progressDialog;
-    private final CountDownLatch dialogShownLatch = new CountDownLatch(1);
-    private final CountDownLatch completedPrintLatch = new CountDownLatch(1);
-
-    private volatile boolean dialogRun = false;
 
     /** */
     public PrintableTask( PrintAwtContext printContext ) {
+
         this.printContext = printContext;
+
+        setOnSucceeded(e -> closeProgressDialog(true) );
+        setOnFailed   (e -> handleException());
+        setOnCancelled(e -> closeProgressDialog(false));
+    }
+
+    /** */
+    private void handleException() {
+        FruViewController.handleException(printContext.getWindow(), getException() );
+        closeProgressDialog(false);
     }
 
     /** */
@@ -40,13 +50,12 @@ public class PrintableTask extends Task<Boolean> {
 
             progressDialog = new Dialog<>();
             progressDialog.initOwner     ( printContext.getWindow() );
-            progressDialog.setTitle      ( "Печать" );
-            progressDialog.setHeaderText ( "Выполняется печать документа" );
-            progressDialog.setContentText( printContext.getAltDoc().getAltFile().toString() );
-            progressDialog.initModality ( Modality.WINDOW_MODAL );
+            progressDialog.setTitle      ( "Выполняется печать документа" );
+            progressDialog.setHeaderText ( printContext.getAltDoc().getAltFile().toString() );
+            progressDialog.initModality  ( Modality.WINDOW_MODAL );
 
             final ProgressBar progressBar = new ProgressBar();
-            progressBar.setPrefWidth(300);
+            progressBar.setPrefWidth(500);
             progressBar.progressProperty().bind(progressProperty());
 
             final Label messageLabel = new Label();
@@ -57,116 +66,63 @@ public class PrintableTask extends Task<Boolean> {
             progressDialog.getDialogPane().getButtonTypes().add(cancelButton);
 
             Button cancelBtn = (Button) progressDialog.getDialogPane().lookupButton(cancelButton);
-            cancelBtn.setOnAction(e -> {
-                if( isRunning() ) {
-                    cancel();
-                }
-            });
+            cancelBtn.setOnAction(e ->  cancel() );
 
             VBox content = new VBox(10, messageLabel, progressBar );
-            content.setStyle("-fx-padding: 20;");
+            content.setStyle("-fx-padding: 10;");
 
             progressDialog.getDialogPane().setContent( content );
 
-            progressDialog.setOnShown(e -> {
-                dialogShownLatch.countDown();
-                dialogRun = true;
-            });
-
-            progressDialog.setOnCloseRequest(e -> {
-                if( isRunning() ) {
-                    cancel();
-                }
-            });
-
+            progressDialog.setOnCloseRequest(e -> cancel() );
             progressDialog.setResultConverter(buttonType -> false);
 
             progressDialog.show();
         }
         catch( Exception e ) {
-            dialogRun = false;
-            dialogShownLatch.countDown();
             throw e;
         }
     }
-
+    /** */
     private void closeProgressDialog( boolean success )
     {
-        if( progressDialog != null && progressDialog.isShowing() )
-        {
-            progressDialog.setResult(success);
-            progressDialog.close();
-            progressDialog = null;
+        final Dialog<Boolean> dlg = progressDialog;
+        progressDialog = null;
+        if (dlg != null && dlg.isShowing()) {
+            dlg.setResult(success);
+            dlg.close();
         }
-        completedPrintLatch.countDown();
     }
 
     /** */
     private void printMatrix( ) throws Exception {
-        final ALTDocPrintable altDocPrintable = printContext.getAltDoc().makePrintable();
-        altDocPrintable.printToMatrix( printContext.getAwtPrinter() );
+        try( ALTDocPrintable altDocPrintable = printContext.getAltDoc().makePrintable(this, printContext.getPageConfig() ) ) {
+             altDocPrintable.printToMatrix(printContext.getAwtPrinter());
+        }
     }
 
     /** */
     private Void printGraphic( ) throws Exception {
 
-        PrinterJob awtJob = PrinterJob.getPrinterJob();
 
-        PageFormat pageFormat = awtJob.defaultPage();
-        if(
-            (pageFormat.getOrientation() == 1 && printContext.getAltDoc().getOrientation() == OrientationRequested.PORTRAIT)
-            ||
-            (pageFormat.getOrientation() == 0 && printContext.getAltDoc().getOrientation() == OrientationRequested.LANDSCAPE)
-        )
-            ;
-        else
-            pageFormat.setOrientation( U.decode(printContext.getAltDoc().getOrientation(), OrientationRequested.LANDSCAPE, 0, 1) );
+        try( ALTDocPrintable printable = printContext.getAltDoc().makePrintable( this, printContext.getPageConfig()) ) {
 
+            final PrinterJob awtJob = PrinterJob.getPrinterJob();
 
-        awtJob.setJobName("ALT: " + printContext.getAltDoc().getAltFile() );
+            PageFormat pf = awtJob.defaultPage();
+            //PageFormat pf = printContext.getPageConfig().merge(pageFormat);
 
-        updateMessage( "Подготовка данных для печати ... " );
+            awtJob.setJobName("ALT: " + printContext.getAltDoc().getAltFile());
 
-        final ALTDocPrintable printable = printContext.getAltDoc().makePrintable();
+            updateMessage("Подготовка данных для печати ... ");
 
-        updateMessage( "Завершена" );
-        updateMessage( "Печать" );
+            awtJob.setCopies(printContext.getAltDoc().getCopies().getValue());
+            awtJob.setPrintService(printContext.getAwtPrinter());
+            awtJob.setPrintable(printable, pf);
 
-        awtJob.setCopies      ( printContext.getAltDoc().getCopies().getValue() );
-        awtJob.setPrintService( printContext.getAwtPrinter() );
-        awtJob.setPrintable   ( printable, pageFormat );
-        awtJob.print();
+            updateMessage("Передача страниц на печать ...");
+            awtJob.print();
 
-        return null;
-    }
-
-
-    /** */
-    private boolean print() throws Exception
-    {
-        try {
-
-            Platform.runLater( this::showProgressDialog );
-
-            dialogShownLatch.await();
-
-            if( !dialogRun )
-                 throw new ALTPrintException("Не удалось показать диалог печати");
-
-            if( printContext.isMatrixPrinter() )
-                printMatrix( );
-            else
-                PrintableTask.invokeAndWait( this::printGraphic );
-
-            return true;
-
-        } catch( Exception e ) {
-            throw new ALTPrintException( "ошибка при печати документа", e );
-        }
-        finally
-        {
-            Platform.runLater( () -> closeProgressDialog( getException() == null ) );
-            completedPrintLatch.await();
+            return null;
         }
     }
 
@@ -177,7 +133,7 @@ public class PrintableTask extends Task<Boolean> {
         final Exception[] exception = new Exception[1];
         final CountDownLatch latch = new CountDownLatch(1);
 
-        SwingUtilities.invokeLater(() -> {
+        SwingUtilities.invokeAndWait(() -> {
             try {
                 task.call();
             } catch (Exception e) {
@@ -193,11 +149,89 @@ public class PrintableTask extends Task<Boolean> {
             throw exception[0];
     }
 
-
-    @Override
-    protected Boolean call() throws Exception
+    /** */
+    private boolean print() throws Exception
     {
-        return print();
+        Platform.runLater( this::showProgressDialog );
+
+        if( printContext.isMatrixPrinter() )
+            printMatrix( );
+        else
+            printGraphic();
+        //PrintableTask.invokeAndWait( this::printGraphic );
+
+        return true;
     }
 
+
+    @Override
+    protected Boolean call() throws Exception {
+
+        Holder<Boolean> success = new Holder<>(false);
+
+        try {
+
+            print();
+
+            success.set(true);
+
+            return true;
+
+        }
+        catch ( Exception e ) {
+            throw new ALTPrintException( "Ошибка при печати документа", e ) {
+                @Override
+                public String getDetailedMessage() {
+                    return printContext.getAltDoc().getAltFile().toString();
+                }
+            };
+        }
+//        finally
+//        {
+//            onFinalPrint(success.get());
+//            Platform.runLater(() -> closeProgressDialog(success.get()));
+//        }
+    }
+
+    @Override
+    public void onBeginPrint() {
+        updateMessage("Начало печати");
+    }
+
+    @Override
+    public void onEndPrint() {
+        updateMessage("Ожидание завершения печати принтером!");
+    }
+
+    @Override
+    public void onPagePrinted(int pageIndex) {
+        updateMessage("Передача страницы " + (pageIndex + 1));
+    }
+
+    @Override
+    public void onFinalPrint( boolean success ) {
+
+        Platform.runLater(() -> {
+            final Alert alert;
+            if(success) {
+                alert = new Alert(
+                        Alert.AlertType.INFORMATION,
+                        printContext.getAltDoc().getAltFile().toString(),
+                        ButtonType.OK
+                );
+                alert.setHeaderText("Документ отправлен на печать");
+                alert.setTitle("Сообщение");
+            } else {
+                alert = new Alert(
+                        Alert.AlertType.ERROR,
+                        printContext.getAltDoc().getAltFile().toString(),
+                        ButtonType.OK
+                );
+                alert.setHeaderText("Ошибка при печати документа");
+                alert.setTitle("Ошибка");
+            }
+            alert.initOwner( printContext.getWindow());
+            alert.showAndWait();
+        });
+    }
 }

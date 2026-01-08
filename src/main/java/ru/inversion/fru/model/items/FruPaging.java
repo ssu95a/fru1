@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** */
+/** Простановка номеров страниц  */
 public class FruPaging extends FruItem {
 
     final private AlignEnum    align;
@@ -51,6 +51,7 @@ public class FruPaging extends FruItem {
         return !top;
     }
 
+    /** */
     public boolean isFirstOff() {
         return firstOff;
     }
@@ -72,6 +73,7 @@ public class FruPaging extends FruItem {
             return null;
 
         final List<String> items = Arrays.stream( pagingStr.split("/") ).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+
         boolean top;
 
         switch( items.get(0) ) {

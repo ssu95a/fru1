@@ -33,15 +33,15 @@ public class FruLine extends FruItem {
     /** */
     public void collectFieldLengths(Map<Integer,List<Integer>> fieldLengths )
     {
-            items.stream()
-                .filter(fruItem -> fruItem instanceof FruFieldVal && ((FruFieldVal)fruItem).hasFieldSplit() )
-                    .map( i->(FruFieldVal)i )
-                        .forEach(new Consumer<FruFieldVal>() {
-                            @Override
-                            public void accept( FruFieldVal fruField ) {
-                                fieldLengths.computeIfAbsent( fruField.getValIndex(), ArrayList::new ).add( fruField.getWidth() );
-                            }
-                        });
+        items.stream()
+            .filter(fruItem -> fruItem instanceof FruFieldVal && ((FruFieldVal)fruItem).hasFieldSplit() )
+                .map( i->(FruFieldVal)i )
+                    .forEach(new Consumer<FruFieldVal>() {
+                        @Override
+                        public void accept( FruFieldVal fruField ) {
+                            fieldLengths.computeIfAbsent( fruField.getValIndex(), ArrayList::new ).add( fruField.getWidth() );
+                        }
+                    });
     }
 
 

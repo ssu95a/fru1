@@ -1,26 +1,32 @@
-package ru.inversion.fru.print.altprint;
+package ru.inversion.fru.print.naltprn;
 
 import javafx.stage.FileChooser;
+import ru.inversion.fru.print.altprint.ALTException;
+import ru.inversion.fru.print.altprint.ALTLog;
+import ru.inversion.fru.print.altprint.PrintSettings;
+import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
-
-public class ALTSettings
+/** */
+public class AltSettings
 {
     public static final String INI_FILE_NAME = "ALTPRNT5.INI";
 
-    private static ALTSettings instance;
+    private static AltSettings instance;
 
     private final PrintSettings defSettings = new PrintSettings();
-    private ALTCommandDict commandDict;
-    private Map<String,Boolean> printerMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-    private Path altprnt5File;
+    private AltCommandDict commandDict;
+
+    private Map<String,Boolean> printerMap;
+
+    private Path altPrnt5File;
 
     /** */
     private static File getINIFilePath()
@@ -65,11 +71,11 @@ public class ALTSettings
         return file;
     }
 
+
     /** */
-    private static ALTSettings loadIniFile()
-            throws ALTException
+    private static AltSettings loadIniFile( ) throws ALTException
     {
-        ALTSettings altSettings = null;
+        AltSettings altSettings = null;
 
         try
         {
@@ -78,71 +84,61 @@ public class ALTSettings
             if( fileName == null )
                 throw new FileNotFoundException( "Путь до файла ALTPRNT5.INI не задан" );
 
-            ALTPrnt5Ini iniFile = ALTPrnt5Ini.loadFile(fileName);
+            AltPrnt5Ini iniFile = AltPrnt5Ini.loadFile( fileName );
 
-            ALTPrnt5Ini.INISection logSection = iniFile.getSection("ALTPRINTLOG");
+            AltPrnt5Ini.IniSection logSection = iniFile.getSection("ALTPRINTLOG");
 
             ALTLog.configure((logSection != null) && (logSection.getParameter("ALTPRINT_LOG", "NO").compareToIgnoreCase("YES") == 0));
 
-            altSettings = new ALTSettings();
-            altSettings.commandDict  = ALTCommandDict.load( iniFile );
-
-            ALTPrnt5Ini.INISection printerSection = iniFile.getSection("DriverRef");
-
-            altSettings.altprnt5File = fileName.toPath();
+            altSettings = new AltSettings();
+            altSettings.commandDict = AltCommandDict.load( iniFile );
+            altSettings.printerMap  = iniFile.getPrinterMap().entrySet().stream().collect( Collectors.toMap(Map.Entry::getKey, e -> "CodeText".equalsIgnoreCase( e.getValue() )));
+            altSettings.altPrnt5File= fileName.toPath();
         }
         catch (Exception ex)
         {
-            throw new ALTException("���������� ��������� ��������� �� ����� �������� ALTPRNT5.INI", ex);
+            throw new ALTException("Ошибка при разборе ALTPRNT5.INI", ex);
         }
         return altSettings;
     }
 
     /** */
-    private void initPrinterMap( ALTPrnt5Ini.INISection section )
-    {
-        for( ALTPrnt5Ini.INIParameter p : section.getParameterList() )
-        {
-            String name = p.getName();
-            name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
-            String value = p.getValue();
-
-            printerMap.put( name, "CodeText".equalsIgnoreCase(value) );
-        }
-    }
-
-    /** */
-    public static ALTSettings INSTANCE()
+    public static AltSettings INSTANCE()
     {
         if( instance == null )
         {
             ALTLog.tech_info("init: ALTSettings", null);
+
             try
             {
                 instance = loadIniFile();
             }
             catch (ALTException ex)
             {
-                ALTLog.tech_error("��������� ����� �� ���������", ex);
+                ALTLog.tech_error("Ошибка при загрузке файла с настройками", ex);
+                throw ex;
                 //ALTApp.APP().exit();
             }
         }
         return instance;
     }
 
+    /** */
     public PrintSettings defSetting()
     {
         return this.defSettings;
     }
 
-    public ALTCommandDict commandDict()
+    /** */
+    public AltCommandDict commandDict()
     {
         return this.commandDict;
     }
 
+    /** */
     public Path getINIFileName()
     {
-        return this.altprnt5File;
+        return this.altPrnt5File;
     }
 
     /** */

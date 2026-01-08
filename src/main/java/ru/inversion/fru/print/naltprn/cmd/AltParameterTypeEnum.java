@@ -1,14 +1,14 @@
-package ru.inversion.fru.print.altprint;
+package ru.inversion.fru.print.naltprn.cmd;
 
-public enum ALTParameterTypeEnum
+public enum AltParameterTypeEnum
 {
     FONT_NAME,  FONT_SIZE,  ITALIC,  BOLD,  UNDERLINE,  ORIENTATION,  LEFT,  COPIES,  SPACE_AFTER,  FRU_COMMAND,  PAGE_END,  LF;
 
-    ALTParameterTypeEnum() {}
+    AltParameterTypeEnum() {}
 
-    static ALTParameterTypeEnum fromString(String name)
+    static AltParameterTypeEnum fromString(String name)
     {
-        if (name.equalsIgnoreCase("Name Font")) {
+        if( name.equalsIgnoreCase("Name Font") ) {
             return FONT_NAME;
         }
         if (name.equalsIgnoreCase("Size Font")) {

@@ -34,7 +34,7 @@ public class Fru {
     final private Set<Character> excludeSymbols;
 
     /** */
-    final private List<FruSection> sections;
+    final private Map<Integer,FruSection> sections;
 
     /** */
     private FruScript initScript;
@@ -56,7 +56,7 @@ public class Fru {
         Map<String, FruFormat> formats,
         Map<String, String> strings,
         Map<String, Object> parameters,
-        List<FruSection> sections,
+        List<FruSection> sectionsList,
         List<String> argumetsList,
         FruScript initScript
     )
@@ -109,7 +109,8 @@ public class Fru {
         else
             paging = null;
 
-        this.sections = sections;
+        this.sections = new HashMap<>();
+        sectionsList.forEach( (fs)->sections.put( fs.getNum(), fs ) );
     }
 
     /** */
@@ -151,7 +152,7 @@ public class Fru {
     }
 
     /** */
-    public List<FruSection> sections()
+    public Map<Integer,FruSection> sections()
     {
         return sections;
     }
