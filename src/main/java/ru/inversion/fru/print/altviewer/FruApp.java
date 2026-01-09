@@ -41,9 +41,12 @@ public class FruApp extends Application {
     /** */
     public static void run( AltPrinter altPrinter, ALTDoc altDoc )
     {
-        new Thread(() -> {
-            FruApp.altDoc = Objects.requireNonNull( altDoc, "'altDoc' is null" );
-            FruApp.altPrinter = Objects.requireNonNull( altPrinter, "'altPrinter' is null" );
+        Objects.requireNonNull( altDoc, "'altDoc' is null" );
+        Objects.requireNonNull( altPrinter, "'altPrinter' is null" );
+
+        new Thread( () -> {
+            FruApp.altDoc = altDoc;
+            FruApp.altPrinter = altPrinter;
             launch();
         }).start();
     }

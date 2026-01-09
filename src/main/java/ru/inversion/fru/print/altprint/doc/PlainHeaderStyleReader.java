@@ -41,13 +41,14 @@ public final class PlainHeaderStyleReader {
 
                 if( ch == '`' )
                 {
-                    String cmdText = readCommand(reader, headerLength - read);
+                    String cmdText = readCommand( reader, headerLength - read );
                     read += cmdText.length() + 1; // +1 за закрывающий `
 
                     AltCommand cmd = dict.getCommand(cmdText);
-                    if (cmd != null) {
-                        style = cmd.applyTo(style, null);
-                    }
+
+                    if( cmd != null )
+                        style = cmd.applyTo( style, null );
+
                     continue;
                 }
 
@@ -112,10 +113,5 @@ public final class PlainHeaderStyleReader {
             }
         }
         return true;
-    }
-
-    /** */
-    private static StyleState defaultStyle() {
-        return new StyleState( "Monospaced", 10, java.awt.Font.PLAIN, false, 0.0f, 0.5f);
     }
 }

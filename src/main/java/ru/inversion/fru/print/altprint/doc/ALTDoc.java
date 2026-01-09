@@ -1,9 +1,11 @@
 package ru.inversion.fru.print.altprint.doc;
 
+import ru.inversion.fru.api.FruEngineConfig;
 import ru.inversion.fru.print.altprint.*;
 import ru.inversion.fru.print.naltprn.AltSettings;
 import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
+import ru.inversion.utils.U;
 import ru.inversion.utils.io.RawCAW;
 
 import javax.print.attribute.standard.Copies;
@@ -64,7 +66,7 @@ public class ALTDoc {
 
     /** */
     public Copies getCopies() {
-        return printSettings.getCopies();
+        return U.nvl( FruEngineConfig.instance().getCopies(), printSettings.getCopies() );
     }
     public void setCopies(Copies copies) {
         this.printSettings.setCopies( copies );
@@ -102,14 +104,10 @@ public class ALTDoc {
      * > 0 - текст, но с начала идут инструкции в параметрах, PARAMS_ONLY_AT_START
      * -1 - файл с командами форматирования, TEXT_WITH_PARAMS
      */
-    private static int getContentState(
-            Path file,
-            Charset charset,
-            AltCommandDict dict
-    ) throws IOException {
+    private static int getContentState( Path file, Charset charset, AltCommandDict dict ) throws IOException {
 
-        try (Reader br = Files.newBufferedReader(file, charset)) {
-
+        try( Reader br = Files.newBufferedReader(file, charset) )
+        {
             int ch;
             int offset = 0;
 
@@ -125,15 +123,17 @@ public class ALTDoc {
                 }
 
                 // команда
-                if (ch == '`') {
-                    String cmdText = readCommand(br, Integer.MAX_VALUE);
+                if (ch == '`')
+                {
+                    String cmdText = readCommand( br, Integer.MAX_VALUE );
                     offset += cmdText.length() + 1;
 
                     AltCommand cmd = dict.getCommand(cmdText);
                     if (cmd == null)
                         continue;
 
-                    if (cmd.isStyleChanging()) {
+                    if( cmd.isStyleChanging() )
+                    {
                         if (textStarted) {
                             //  style-команда ПОСЛЕ текста
                             return -1; // TEXT_WITH_PARAMS

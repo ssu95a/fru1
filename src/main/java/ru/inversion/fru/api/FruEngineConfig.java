@@ -2,6 +2,7 @@ package ru.inversion.fru.api;
 
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 
+import javax.print.attribute.standard.Copies;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -44,7 +45,7 @@ public class FruEngineConfig {
     }
 
     /** */
-    private int copies = 1;
+    private Copies copies = null;
 
     /** */
     private boolean allowEditing = false;
@@ -76,7 +77,7 @@ public class FruEngineConfig {
     private FruEngineConfig()
     { }
 
-    public int getCopies() {
+    public Copies getCopies() {
         return copies;
     }
 
@@ -121,6 +122,17 @@ public class FruEngineConfig {
         return generateMode;
     }
 
+    static private FruEngineConfig instance;
+
+    /** */
+    public static FruEngineConfig instance() {
+
+        if( instance == null )
+            throw new IllegalStateException( "FruEngineConfig is not initialized yet. instance is null." );
+
+        return instance;
+    }
+
     /**
 
      pap_0.exe [options] <report file with cursor data> [<ufs file>]
@@ -147,7 +159,7 @@ public class FruEngineConfig {
 
         switch( ch ) {
             case 'C':
-                config.copies = Integer.parseInt(option.substring(2));
+                config.copies = new Copies( Integer.parseInt(option.substring(2)) );
             break;
             case 'E':
                 config.allowEditing = true;
@@ -233,6 +245,8 @@ public class FruEngineConfig {
                 }
             }
         }
+
+        FruEngineConfig.instance = config;
 
         return config;
     }

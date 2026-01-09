@@ -20,11 +20,13 @@ public class AltCommand
     public String getCssStyleValue( ) {
         return cssStyleValue;
     }
+
     /** */
     public boolean isCssSupported ( )
     {
         return cssStyleValue != null;
     }
+
     /** */
     public String getCssStyleName ( ) {
         return cssStyleName;
@@ -52,7 +54,7 @@ public class AltCommand
         /** */
         public abstract AltParameter<?>[] getParameters();
 
-        public abstract StyleState applyTo( StyleState style, Object param);
+        public abstract StyleState applyTo( StyleState style, Object param );
     }
 
 
