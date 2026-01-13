@@ -93,6 +93,7 @@ public abstract class AbstractSectionNode {
     {
         if( lines == null )
             lines = new LinkedList<>();
+
         lines.add(line);
     }
 

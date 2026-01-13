@@ -33,26 +33,21 @@ public class SectionNode extends AbstractSectionNode {
 
 
     @Override
-    protected void parseContent(FruBuilder fruBuilder, FruSection section ) {
-
+    protected void parseContent( FruBuilder fruBuilder, FruSection section )
+    {
         if( section == null )
             throw new IllegalArgumentException("'section' is null");
 
         final LinkedList<String> l1 = (LinkedList<String>)lines;
+
         if( l1 == null )
-            throw new IllegalStateException("Секция " + section.getNum() + " пустая");
+            throw new IllegalStateException( "Секция " + section.getNum() + " пустая" );
 
         while( !l1.isEmpty() && l1.getLast() != null && l1.getLast().length() == 1 ) {
                 l1.removeLast();
         }
 
-        Function<String,Integer> dataIndex = section instanceof FruSectionTable ?
-                new Function<String, Integer>() {
-            @Override
-            public Integer apply(String s) {
-                return ((FruSectionTable)section).getFieldNum(s);
-            }
-        } : (s -> -1);
+        Function<String,Integer> dataIndex = section instanceof FruSectionTable ? s -> ((FruSectionTable)section).getFieldNum(s) : (s -> -1);
 
         for( String line : lines )
         {

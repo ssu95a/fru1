@@ -3,6 +3,7 @@ package ru.inversion.fru.generator;
 import ru.inversion.fru.data.FruData;
 import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.data.FruDataRow;
+import ru.inversion.fru.generator.exceptions.FruScriptException;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.formats.FruFormat;
@@ -99,6 +100,7 @@ public class FruContext implements AutoCloseable {
         if( row != null)
         {
             int i = 0;
+
             for( String s : row.data() )
                  setArgumentValue( i++, s );
         }
@@ -107,30 +109,6 @@ public class FruContext implements AutoCloseable {
 
         if( script != null )
             executeScript( script );
-
-//        try {
-//
-//            if( row == null  )
-//                return;
-//
-//            if( row.getSectionNum() == -1 )
-//            {
-//                int i = 0;
-//
-//                for( String s : row.data() )
-//                     setArgumentValue( i++, s );
-//            }
-//
-//            FruScript script = fru.initScript();
-//
-//            if( script == null )
-//                return;
-//
-//            executeScript(script);
-//
-//        } finally {
-//            entryExecuted = true;
-//        }
     }
 
     /** */
@@ -212,7 +190,9 @@ public class FruContext implements AutoCloseable {
 
     /** */
     public void setArgumentValue( int num, String value ) {
+
         final String arg = fru.arguments().get(num);
+
         if (!S.isNullOrEmpty(arg) )
             globalScriptContext.setAttribute( arg, value, ScriptContext.GLOBAL_SCOPE );
     }
@@ -239,24 +219,17 @@ public class FruContext implements AutoCloseable {
     }
 
     /** */
-    public void executeScript(FruScript script) {
-
+    public void executeScript( FruScript script )
+    {
         try {
 
             if( currentSection != null )
-            {
-                globalScriptContext.setValuesSupplier(new Function<String, Object>() {
-                    @Override
-                    public Object apply(String name) {
-                        return currentSection.getFieldValue(FruContext.this, name);
-                    }
-                });
-            }
+                globalScriptContext.setValuesSupplier(name -> currentSection.getFieldValue( FruContext.this, name ) );
 
             scriptEngine.eval( script.getBody() );
 
         } catch( ScriptException e ) {
-            throw new RuntimeException(e);
+            throw new FruScriptException( "Ошибка при выполнении скрипта", e, script.getBody() );
         }
         finally {
             if( globalScriptContext != null )

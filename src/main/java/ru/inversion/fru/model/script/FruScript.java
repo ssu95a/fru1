@@ -22,8 +22,4 @@ public class FruScript extends FruItem {
         return body;
     }
 
-    /**  */
-    public List<String> importArgs() {
-        return importArgs;
-    }
 }

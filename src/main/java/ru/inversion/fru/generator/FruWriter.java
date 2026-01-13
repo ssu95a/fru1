@@ -42,7 +42,7 @@ public class FruWriter extends Writer {
 
         if( len > 0 )
             for( int i = off; i < off + len; i++ )
-                updatePosition( cbuf[i] );
+                 updatePosition( cbuf[i] );
 
         out.write( cbuf, off, len );
     }

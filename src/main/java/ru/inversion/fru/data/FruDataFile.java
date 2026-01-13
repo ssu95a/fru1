@@ -1,6 +1,5 @@
 package ru.inversion.fru.data;
 
-import ru.inversion.fru.data.exceptions.FruDataException;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
@@ -10,7 +9,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /** */
@@ -81,12 +79,13 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
                 continue;
             }
 
-// Мусор/анонимные строки после entry: пропускаем до первого CURSOR<n>
-            if (currentNum < 1) {
+            // Мусор/анонимные строки после entry: пропускаем до первого CURSOR<n>
+            if (currentNum < 1)
+            {
                 if( warnLeft > 0 ) {
                     warnLeft--;
                     //log.warn("Skip garbage before first CURSOR: '{}'", safeSnippet(line));
-                    System.err.println("Skip garbage before first CURSOR: " + line );
+                    System.err.println( "Skip garbage before first CURSOR: " + line );
                 }
                 continue;
             }
@@ -107,10 +106,12 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
         List<String> rec;
 
         do {
-            rec = readRowSingle();
-        } while (reader != null && rec != null && rec.isEmpty() );
 
-        return (rec == null || rec.isEmpty()) ? null : rec;
+            rec = readRowSingle();
+
+        } while( reader != null && rec != null && rec.isEmpty() );
+
+        return( rec == null || rec.isEmpty() ) ? null : rec;
     }
 
     /** */
@@ -179,72 +180,16 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
         }
     }
 
-
-    /*
-    private List<String> nextLine( ) throws IOException {
-
-        if( reader == null )
-            return null;
-
-        final List<String> currentRec = new ArrayList<>();
-
-        String line;
-
-        while( ( line = reader.readLine() ) != null ) {
-
-            //ncount ++;
-
-            if( line.length() == 1 && line.charAt(0) == CURSOR_TERMINATOR )
-            {
-                break;
-            }
-
-            if( line.startsWith("CURSOR") )
-            {
-                try {
-                    currentNum = Integer.parseInt(line.substring("CURSOR".length()));
-                } catch (NumberFormatException n) {
-                    throw new IllegalStateException("Ошибочная строка '" + line + "' CURSOR - не корректный номер курсора");
-                }
-                continue;
-            }
-
-            if( S.lastChar(line) == FIELD_TERMINATOR )
-            {
-                currentRec.add( normalize( line ) );
-            }
-            else
-            {
-                final StringBuilder sb = new StringBuilder(line);
-                while( (line = reader.readLine()) != null) {
-                    sb.append(line).append('\n');
-                    if( S.lastChar(line) == FIELD_TERMINATOR )
-                        break;
-                }//
-                currentRec.add( normalize( sb.toString() ) );
-            }
-        }// end while
-
-        if( line == null )
-        {
-            reader.close();
-            reader = null;
-        }
-
-        return currentRec.isEmpty() ? null : currentRec;
-    }
-   */
-
     /** */
     @Override
-    public Pair<Integer, List<String>> next()
+    public Pair<Integer, List<String>> next( )
     {
         if( !hasNext() )
             throw new java.util.NoSuchElementException();
 
         try {
 
-            if( !entryEmitted )
+            if(!entryEmitted )
             {
                 entryEmitted = true;
                 return Pair.makePair( -1, entryFields );
@@ -252,10 +197,12 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
 
             List<String> a = currentLine;
             int cn         = currentNum;
+
             currentLine    = readRow();
+
             return Pair.makePair( cn,  a );
 
-        } catch (IOException e) {
+        } catch( IOException e ) {
             throw new RuntimeException(e);
         }
     }

@@ -10,9 +10,7 @@ public class FruSectionTail extends FruSection {
         super(num);
     }
 
-    /**
-     *
-     */
+    /** */
     @Override
     public SectionTypeEnum getType() {
         return SectionTypeEnum.TAIL;

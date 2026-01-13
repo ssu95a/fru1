@@ -209,11 +209,11 @@ public class PrintableTask extends Task<Boolean> implements IAltPrintListener {
     }
 
     @Override
-    public void onFinalPrint( boolean success ) {
+    public void onFinalPrint( Exception ex ) {
 
         Platform.runLater(() -> {
             final Alert alert;
-            if(success) {
+            if(ex == null) {
                 alert = new Alert(
                         Alert.AlertType.INFORMATION,
                         printContext.getAltDoc().getAltFile().toString(),
@@ -224,7 +224,7 @@ public class PrintableTask extends Task<Boolean> implements IAltPrintListener {
             } else {
                 alert = new Alert(
                         Alert.AlertType.ERROR,
-                        printContext.getAltDoc().getAltFile().toString(),
+                        ex.getLocalizedMessage(),
                         ButtonType.OK
                 );
                 alert.setHeaderText("Ошибка при печати документа");

@@ -17,7 +17,7 @@ public class FruScriptContext extends SimpleScriptContext {
     public void setBindings(Bindings bindings, int scope)
     {
         if( bindings != null )
-            globalScope.putAll(bindings);
+            globalScope.putAll( bindings );
     }
 
     @Override

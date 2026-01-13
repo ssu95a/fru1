@@ -85,6 +85,7 @@ public class FruSectionTable extends FruSection {
         final Map<Integer,List<Integer>> fl = new TreeMap<>();
 
         lines.forEach(l-> l.collectFieldLengths(fl));
+
         if(!fl.isEmpty() )
             fieldLengths = fl;
     }

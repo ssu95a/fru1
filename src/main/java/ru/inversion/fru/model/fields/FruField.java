@@ -68,7 +68,7 @@ public abstract class FruField extends FruItem {
     }
 
     /** */
-    public static FruField make(FruBuilder fruBuilder, String name, FruFormatter formatter, int dataIndex )
+    public static FruField make( FruBuilder fruBuilder, String name, FruFormatter formatter, int dataIndex )
     {
         try {
 
@@ -89,11 +89,12 @@ public abstract class FruField extends FruItem {
                 return new FruFieldVal( name, dataIndex, formatter );
 
             FruFormat f = fruBuilder.formats.get(name);
-            if( f.getItems().size() == 1 && f.getItems().get(0) instanceof FruText) {
+
+            if( f.getItems().size() == 1 && f.getItems().get(0) instanceof FruText )
+            {
                 fruBuilder.strings.put( name, ((FruText) f.getItems().get(0)).getText() );
                 return new FruFieldStr( name, null );
             }
-
 
             throw new FruFieldNotFoundException(name);
 
@@ -101,5 +102,4 @@ public abstract class FruField extends FruItem {
             throw new FruFieldFactoryException( name, e.getMessage() );
         }
     }
-
 }

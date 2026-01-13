@@ -4,7 +4,6 @@ import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
 import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
 import ru.inversion.utils.Pair;
-import ru.inversion.utils.converter.TypeConverter;
 
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.OrientationRequested;

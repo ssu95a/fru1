@@ -1,7 +1,5 @@
 package ru.inversion.fru.model.sections;
 
-
-
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
 
 import java.util.List;

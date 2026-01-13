@@ -11,5 +11,5 @@ public interface IAltPrintListener {
 
     boolean isCancelled();
 
-    void onFinalPrint(boolean success);
+    void onFinalPrint(Exception ex);
 }

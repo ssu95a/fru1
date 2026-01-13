@@ -8,20 +8,23 @@ import java.util.function.Function;
 public class FruBindings extends SimpleBindings {
 
     private Function<String,Object> valuesSupplier;
-    private Set<String> names = new HashSet<>();
+
+    //private final Set<String> names = new HashSet<>();
 
     @Override
-    public Object get(Object key) {
-
+    public Object get(Object key)
+    {
         Object v = super.get(key);
 
         if( v == null && !super.containsKey(key) )
-            if( valuesSupplier != null ) {
+        {
+            if( valuesSupplier != null )
+            {
                 v = valuesSupplier.apply((String) key);
-                if( v != null )
-                    names.add((String) key);
+//                if (v != null)
+//                    names.add((String) key);
             }
-
+        }
         return v;
     }
 
@@ -32,7 +35,6 @@ public class FruBindings extends SimpleBindings {
 
     /** */
     public void clearValuesSupplier( ) {
-        //names.forEach(this::remove);
         this.valuesSupplier = null;
     }
 
