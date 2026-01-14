@@ -22,12 +22,13 @@
 
         <!-- Версии зависимостей -->
         <slf4j.version>1.7.36</slf4j.version>
-        <logback.version>1.2.11</logback.version>
+        <logback.version>1.2.13</logback.version>
+
         <junit.version>4.13.2</junit.version>
         <mockito.version>3.12.4</mockito.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.0.0-M9</maven.surefire.plugin.version>
-        <jar.classpath>JInvFore.jar bil.har</jar.classpath>
+        <jar.classpath>JInvFore.jar bil.jar</jar.classpath>
     </properties>
 
     <dependencies>
@@ -127,7 +128,6 @@
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
-                        <include>**/*IT.java</include>
                     </includes>
                     <argLine>-Dfile.encoding=${project.build.sourceEncoding}</argLine>
                 </configuration>
@@ -143,6 +143,7 @@
                     <include>**/*.css</include>
                     <include>**/*.properties</include>
                     <include>**/*.txt</include>
+                    <include>**/*.xml</include>
                 </includes>
             </resource>
         </resources>
