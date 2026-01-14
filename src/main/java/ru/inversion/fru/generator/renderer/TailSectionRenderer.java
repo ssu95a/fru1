@@ -9,6 +9,9 @@ public class TailSectionRenderer implements IRenderer<FruSectionTail>{
     @Override
     public void render( FruContext context, FruSectionTail header ) {
         final IRenderer<FruLine> lr = context.renderers().get(FruLine.class);
-        header.getLines().forEach( l ->lr.render( context, l ) );
+        for (FruLine l : header.getLines()) {
+            lr.render(context, l);
+            context.writer().newLine();
+        }
     }
 }

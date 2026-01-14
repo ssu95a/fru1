@@ -53,12 +53,18 @@ public class FruSectionTable extends FruSection {
 
     /** */
     @Override
-    public void beforeUse(FruContext context) {
+    public void beforeUse( FruContext context ) {
+
+        if( getHeader() != null )
+            context.renderers().get( FruSectionHeader.class ).render( context, getHeader() );
     }
 
     /** */
     @Override
-    public void afterUse(FruContext context) {
+    public void afterUse( FruContext context ) {
+
+        if( getTail() != null )
+            context.renderers().get( FruSectionTail.class ).render( context, getTail() );
     }
 
     /** */

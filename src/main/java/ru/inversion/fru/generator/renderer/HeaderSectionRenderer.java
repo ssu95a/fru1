@@ -11,6 +11,9 @@ public class HeaderSectionRenderer implements IRenderer<FruSectionHeader>{
         // Рендеринг только на первой странице или по условию
         //if( shouldRenderHeader(context) )
         final IRenderer<FruLine> lr = context.renderers().get(FruLine.class);
-        header.getLines().forEach( l ->lr.render( context, l ) );
+        for( FruLine l : header.getLines() ) {
+             lr.render(context, l);
+             context.writer().newLine();
+        }
     }
 }
