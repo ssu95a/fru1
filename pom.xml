@@ -27,6 +27,7 @@
         <mockito.version>3.12.4</mockito.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.0.0-M9</maven.surefire.plugin.version>
+        <jar.classpath>JInvFore.jar bil.har</jar.classpath>
     </properties>
 
     <dependencies>
@@ -113,7 +114,7 @@
                         </manifest>
                         <manifestEntries>
                             <!-- Явно указываем JAR в Class-Path -->
-                            <Class-Path>JInvFore.jar, bil.jar</Class-Path>
+                            <Class-Path>${jar.classpath}</Class-Path>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -132,40 +133,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Создание исходников
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            Создание javadoc
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.4.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <docencoding>${project.build.sourceEncoding}</docencoding>
-                            <charset>${project.build.sourceEncoding}</charset>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        -->
         </plugins>
 
         <resources>
@@ -185,7 +152,7 @@
     <profiles>
         <!-- Профиль для релизной сборки -->
         <profile>
-            <id>release</id>
+            <id>dev</id>
             <!--
             <build>
                 <plugins>
@@ -205,6 +172,13 @@
                 </plugins>
             </build>
             -->
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <properties>
+                <jar.classpath>../japp/JInvFore.jar bil.jar</jar.classpath>
+            </properties>
         </profile>
 
         <!-- Профиль для интеграционных тестов -->

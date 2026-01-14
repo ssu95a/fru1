@@ -4,7 +4,9 @@ import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
+import ru.inversion.fru.model.sections.FruSectionHeader;
 import ru.inversion.fru.model.sections.FruSectionTable;
+import ru.inversion.fru.model.sections.FruSectionTail;
 
 public class Renderers {
 
@@ -39,7 +41,9 @@ public class Renderers {
         }
     };
 
-    private final IRenderer<FruSectionTable> tableRenderer = new TableSectionRenderer();
+    private final IRenderer<FruSectionTable>  tableRenderer = new TableSectionRenderer();
+    private final IRenderer<FruSectionHeader> headerSectionRenderer = new HeaderSectionRenderer();
+    private final IRenderer<FruSectionTail>   tailSectionRenderer = new TailSectionRenderer();
 
     private final IRenderer<FruFormatCall> formatCallRenderer = new FormatCallRenderer();
 
@@ -52,7 +56,7 @@ public class Renderers {
 
         final IRenderer<T> renderer = get( (Class<T>)item.getClass() );
 
-        renderer.render(context, item);
+        renderer.render( context, item );
     }
 
     //Рендереры как внутренние классы
@@ -66,9 +70,13 @@ public class Renderers {
         else if (clazz ==  FruLine.class)
             return (IRenderer<T>) lineRenderer;
          else if (FruField.class.isAssignableFrom(clazz))
-             return (IRenderer<T>) fieldRenderer;
+            return (IRenderer<T>) fieldRenderer;
          else if (clazz == FruSectionTable.class)
-             return (IRenderer<T>) tableRenderer;
+            return (IRenderer<T>) tableRenderer;
+        else if (clazz == FruSectionHeader.class)
+            return (IRenderer<T>)headerSectionRenderer;
+        else if (clazz == FruSectionTail.class)
+            return (IRenderer<T>)tailSectionRenderer;
         else if (clazz == FruFormatCall.class)
             return (IRenderer<T>) formatCallRenderer;
         else if (clazz == FruScript.class)
@@ -76,6 +84,6 @@ public class Renderers {
         else if (clazz == FruPaging.class)
             return (IRenderer<T>) pagingRenderer;
 
-        throw new IllegalArgumentException("No renderer registered for: " + clazz );
+        throw new IllegalArgumentException( "No renderer registered for: " + clazz );
     }
 }
