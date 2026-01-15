@@ -24,8 +24,13 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** */
 public class FruTokenizer extends Tokenizer {
+
+    private static final Logger log = LoggerFactory.getLogger(FruTokenizer.class);
 
     /** */
     private FruTokenizer( Reader reader ) {
@@ -97,7 +102,7 @@ public class FruTokenizer extends Tokenizer {
                     entryOn.setValue( ((SectionHeaderToken)newToken).getSectionType() == SectionTypeEnum.ENTRY );
 
                 if( newToken == null )
-                    System.out.println( "NULL" );
+                    log.debug( "Tokenizer produced null token (ctx='{}')", ctx );
 
                 return newToken;
             }
@@ -116,17 +121,13 @@ public class FruTokenizer extends Tokenizer {
                     for( ITokenHandler<?> state : ep.states() )
                     {
                         if( state.matches(ctx) )
-                        {
-//                          state.incrementUse();
-//
                             return state.apply( ctx );
-                        }
                     }
 
                     return ep.states().get( ep.states().size() - 1 ).apply(ctx);
                 }
                 catch( Throwable th ) {
-                    throw new RuntimeException(th);
+                    throw new RuntimeException( "Error on handle token list", th);
                 }
             }
         };

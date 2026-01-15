@@ -11,11 +11,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static ru.inversion.fru.api.FruEngine.csDos866;
 import static ru.inversion.fru.api.FruEngine.csWin1251;
 
 /** */
 public class FruEngineConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(FruEngineConfig.class);
 
     public enum GenerateModeEnum {
 
@@ -151,7 +156,7 @@ public class FruEngineConfig {
     private static void parseOption( FruEngineConfig config, String option ) {
 
         if( option.length() < 2 ) {
-            System.out.println("WARN: bad value option, '-' char only!");
+            log.warn("Bad option value: '{}' (only '-' provided)", option);
             return;
         }
 

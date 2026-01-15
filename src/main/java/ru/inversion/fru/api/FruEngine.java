@@ -15,12 +15,18 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Основной движок для генерации отчетов FRU
  * парсинг форм, обработка данных и рендеринг в принтер
  */
 public class FruEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(FruEngine.class);
 
     static public final Charset csWin1251 = Charset.forName("CP1251");
     static public final Charset csDos866  = Charset.forName("CP866" );
@@ -88,13 +94,17 @@ public class FruEngine {
     public static void main( String[] args )
     {
         try {
+            log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );
+            log.info("FRU finished successfully");
         }
         catch( FruCommandLineException fcle ) {
-            System.err.println( "Ошибка при запуске: " + fcle.getMessage() );
+            System.out.println( "Ошибка при запуске: " + fcle.getMessage() );
+            System.out.println( "Не корректные входные параметры." );
             printUsage();
         }
         catch( Exception e ) {
+            log.error("Unhandled error", e);
             System.err.println("Ошибка: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
@@ -104,6 +114,7 @@ public class FruEngine {
 
     private static void printUsage()
     {
+        System.out.println( );
         System.out.println("Использование: [options] <report file with cursor data> <fru-form-file> <output-file>");
         System.out.println( );
         System.out.println("Параметры:");
