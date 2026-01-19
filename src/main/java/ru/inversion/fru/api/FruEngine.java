@@ -1,5 +1,6 @@
 package ru.inversion.fru.api;
 
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import ru.inversion.fru.api.exceptions.FruException;
 import ru.inversion.fru.data.FruDataFile;
@@ -13,9 +14,11 @@ import ru.inversion.fru.print.altviewer.FruApp;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.logging.LogManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,19 +48,52 @@ public class FruEngine {
                    context.data().next(); // Это вызовет рендеринг через FruContext.setCurrentRow()
             }
         } catch( Exception e ) {
-            throw new FruException("Ошибка генерации отчета", e);
+            throw new FruException( "Ошибка генерации отчета", e );
         }
     }
 
     /** Парсит FRU форму из файла */
-    private static Fru parseFru( Path fruFile, Charset charset ) throws Exception {
+    private static Fru parseFru( Path fruFile, Charset charset )  {
 
-        try( Reader reader = Files.newBufferedReader( fruFile, charset) )
-        {
-            FruBuilder fruBuilder = new FruBuilder( fruFile, charset );
-            FruParser.parseFru( reader, fruBuilder );
-            return fruBuilder.build();
+        boolean repeat = false;
+
+        do {
+
+            try( Reader reader = Files.newBufferedReader( fruFile, charset ) )
+            {
+                 FruBuilder fruBuilder = new FruBuilder(fruFile, charset);
+                 FruParser.parseFru(reader, fruBuilder);
+
+                 return fruBuilder.build();
+
+            } catch( Throwable th ) {
+
+                if( !repeat )
+                {
+                    Throwable th1 = th;
+
+                    while( th1 != null )
+                    {
+                        if( th1 instanceof UnmappableCharacterException ) {
+                            repeat = true;
+                            break;
+                        }
+                        th1 = th1.getCause();
+                    }
+
+                    if( repeat ) {
+                        charset = charset == csWin1251 ? csDos866 : csWin1251;
+                        log.warn("Смена кодировки файла формы на {}", charset);
+                        continue;
+                    }
+                }
+
+                throw new FruException("Ошибка разбора тела формы из файла " + fruFile + ", в кодировке " + charset, th );
+            }
         }
+        while( repeat );
+
+        return null;
     }
 
     /** */
@@ -66,11 +102,17 @@ public class FruEngine {
         final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
 
         final FruEngine engine = new FruEngine();
-        final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
 
-        try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() ))
+        if( config.useFru() )
         {
-            engine.generate( fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset() ) );
+            final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
+
+            try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() ) ) {
+                 engine.generate(fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset())) ;
+            }
+
+            // Копируем файл данных, если вывод не задан явно
+            config.normalizeOutFile();
         }
 
         final AltPrinter altPrinter = new AltPrinter(config);
@@ -94,6 +136,19 @@ public class FruEngine {
     public static void main( String[] args )
     {
         try {
+
+            LogManager.getLogManager().reset();
+            SLF4JBridgeHandler.removeHandlersForRootLogger();
+            SLF4JBridgeHandler.install();
+
+            System.setOut(new java.io.PrintStream(System.out) {
+                private final org.slf4j.Logger stdout = org.slf4j.LoggerFactory.getLogger("STDOUT");
+                @Override
+                public void println(String x) {
+                    stdout.info("OUT! {}", x);
+                }
+            });
+
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );
             log.info("FRU finished successfully");
@@ -102,10 +157,10 @@ public class FruEngine {
             System.out.println( "Ошибка при запуске: " + fcle.getMessage() );
             System.out.println( "Не корректные входные параметры." );
             printUsage();
+            System.exit(1);
         }
         catch( Exception e ) {
-            log.error("Unhandled error", e);
-            System.err.println("Ошибка: " + e.getMessage());
+            log.error( "Unhandled error", e );
             e.printStackTrace();
             System.exit(1);
         }

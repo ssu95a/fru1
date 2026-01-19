@@ -79,6 +79,9 @@ public class FruEngineConfig {
     /** */
     private GenerateModeEnum generateMode;
 
+    /** */
+    private boolean outExplicitlySet = false;
+
     private FruEngineConfig()
     { }
 
@@ -123,9 +126,16 @@ public class FruEngineConfig {
         return charset == csDos866;
     }
 
+    public boolean useFru()
+    {
+        return fruFile != null;
+    }
+
     public GenerateModeEnum getGenerateMode() {
         return generateMode;
     }
+
+    public boolean isOutExplicitlySet() {  return outExplicitlySet; }
 
     static private FruEngineConfig instance;
 
@@ -193,8 +203,11 @@ public class FruEngineConfig {
 
         if( s.length() > 3 ) {
             String s1 = s.substring( s.length() - 4 );
-            if (".UFS".equalsIgnoreCase( s1 ))
-                return s.replace(".UFS", ".fru");
+            if (".UFS".equalsIgnoreCase( s1 )) {
+                String r = s.substring( 0, s.length() - 4 ) + ".fru";
+                log.info("Файл '{}' пришел с расширением .ufs, меняем на .fru - {}", s, r );
+                return r;
+            }
         }
         return s;
     }
@@ -213,7 +226,7 @@ public class FruEngineConfig {
                 parseOption( config, s );
             else
             {
-                final Path file = Paths.get(normalizeFru(s));
+                final Path file = Paths.get( normalizeFru(s) );
 
                 if (config.datFile == null)
                     config.datFile = file;
@@ -231,8 +244,17 @@ public class FruEngineConfig {
             throw new FruCommandLineException("Переданное имя файла с данными не является файлом или не существует!", new NoSuchFileException( config.datFile.getFileName().toString()) );
 
 
-        if( config.outFile == null )
+        config.outExplicitlySet = config.outFile != null;
+
+        if( config.outFile == null && config.useFru() )
         {
+            try {
+                config.outFile = Files.createTempFile( "alt", "fru" );
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            /*
             if( config.generateMode == GenerateModeEnum.File )
             {
                 String fileName = config.datFile.getFileName().toString();
@@ -249,10 +271,21 @@ public class FruEngineConfig {
                     throw new RuntimeException(e);
                 }
             }
+            */
         }
 
         FruEngineConfig.instance = config;
 
         return config;
     }
+
+    void normalizeOutFile() throws IOException {
+        if( !isOutExplicitlySet() ) {
+            Files.copy( outFile, datFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING );
+            outFile = datFile;
+        }
+
+    }
+
+
 }
