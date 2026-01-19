@@ -36,6 +36,7 @@ public class FruBuilder {
     /** */
     final private LinkedList<FruSection> sections = new LinkedList<>();
 
+
     /** */
     public FruBuilder( Path f, Charset charset )
     {
@@ -43,10 +44,12 @@ public class FruBuilder {
         this.fruCharset = charset;
     }
 
+
     /** */
     public Path fruFile( ) {
         return fruFile;
     }
+
 
     /** */
     public FruBuilder initArgumentList( List<String> l ) {
@@ -54,11 +57,13 @@ public class FruBuilder {
         return this;
     }
 
+
     /** */
     public FruBuilder initScript( FruScript script ) {
         initScript = script;
         return this;
     }
+
 
     /** */
     public FruBuilder addFormat( String name, FruFormat value )
@@ -67,22 +72,25 @@ public class FruBuilder {
         return this;
     }
 
+
     /** */
     public FruBuilder addString( String name, String value )
     {
-        if( !( S.isNullOrEmpty(name) || S.isNullOrEmpty(value) ) )
+        if( !S.isNullOrEmpty(name) )
             strings.put( name, value );
         return this;
     }
 
+
     /** */
     public FruBuilder addParameter( String name, String value )
     {
-        if( !( S.isNullOrEmpty(name) || S.isNullOrEmpty(value) ) )
+        if( !S.isNullOrEmpty(name) )
             parameters.put( name, value );
 
         return this;
     }
+
 
     /** */
     public FruBuilder addSection( FruSection section )
@@ -91,6 +99,7 @@ public class FruBuilder {
             throw new NullPointerException("addSection: 'section' is null");
 
         sections.add(section);
+
         return this;
     }
 
@@ -113,7 +122,7 @@ public class FruBuilder {
              sections
                 .stream()
                     .filter( s->s.getType() == HEAD && s.getNum() == t.getNum() )
-                        .findFirst().ifPresent( head->t.setHeader((FruSectionHeader) head) );
+                        .findFirst().ifPresent( head->t.setHeader((FruSectionHeader)head) );
         }
 
         sections.removeIf( t-> U.in( t.getType(), HEAD, TAIL ) );

@@ -146,9 +146,10 @@ public abstract class AbstractSectionNode {
                 if( S.isNullOrEmpty(parameters) )
                     fieldList = Collections.emptyList();
                 else
-                    fieldList = Arrays.stream(parameters.split(",")).map(String::trim).filter(S::isNotNullOrEmpty).collect(Collectors.toList());
+                    fieldList = Arrays.stream(parameters.split(",")).map(String::trim).filter(S::isNotNullOrEmpty).collect( Collectors.toList() );
 
-                return getType() == TABLE ? new FruSectionTable( num, fieldList ) : new FruSectionText( num, fieldList );
+                // return getType() == TABLE ? new FruSectionTable( num, fieldList ) : new FruSectionText( num, fieldList );
+                return new FruSectionTable( num, fieldList );
             }
         }
 

@@ -78,8 +78,8 @@ public abstract class FruField extends FruItem {
                 return new FruFieldFun( func, formatter );
 
             // 2. Проверка строк и аргументов
-            String value = fruBuilder.strings.get(name);
-            if( !S.isNullOrEmpty(value) )
+            //String value = fruBuilder.strings.get(name);
+            if( fruBuilder.strings.containsKey(name) )
                 return new FruFieldStr( name, formatter );
 
             if( fruBuilder.argumentList.stream().anyMatch(fn->fn.equals(name) ) )

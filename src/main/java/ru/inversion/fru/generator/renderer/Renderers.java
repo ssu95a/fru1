@@ -7,6 +7,7 @@ import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.FruSectionHeader;
 import ru.inversion.fru.model.sections.FruSectionTable;
 import ru.inversion.fru.model.sections.FruSectionTail;
+import ru.inversion.fru.model.sections.FruSectionText;
 
 public class Renderers {
 
@@ -72,6 +73,8 @@ public class Renderers {
          else if (FruField.class.isAssignableFrom(clazz))
             return (IRenderer<T>) fieldRenderer;
          else if (clazz == FruSectionTable.class)
+            return (IRenderer<T>) tableRenderer;
+        else if (clazz == FruSectionText.class)
             return (IRenderer<T>) tableRenderer;
         else if (clazz == FruSectionHeader.class)
             return (IRenderer<T>)headerSectionRenderer;
