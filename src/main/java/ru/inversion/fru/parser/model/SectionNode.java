@@ -47,7 +47,7 @@ public class SectionNode extends AbstractSectionNode {
                 l1.removeLast();
         }
 
-        Function<String,Integer> dataIndex = section instanceof FruSectionTable ? s -> ((FruSectionTable)section).getFieldNum(s) : (s -> -1);
+        Function<String,Integer> dataIndex = section instanceof FruSectionTable ? section::getFieldNum : (s -> -1);
 
         for( String line : lines )
         {

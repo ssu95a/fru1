@@ -2,7 +2,6 @@ package ru.inversion.fru.model.sections;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
-import ru.inversion.utils.U;
 
 import java.util.List;
 import java.util.Map;

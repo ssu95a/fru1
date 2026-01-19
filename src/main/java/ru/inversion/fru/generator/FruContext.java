@@ -19,7 +19,6 @@ import javax.script.*;
 import java.io.Writer;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /** */
 public class FruContext implements AutoCloseable {

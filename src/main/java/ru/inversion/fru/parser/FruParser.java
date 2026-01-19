@@ -1,6 +1,7 @@
 package ru.inversion.fru.parser;
 
 import ru.inversion.fru.model.FruBuilder;
+import ru.inversion.fru.parser.exceptions.FruParseException;
 import ru.inversion.fru.parser.model.AbstractSectionNode;
 import ru.inversion.fru.parser.model.EntrySectionNode;
 import ru.inversion.fru.parser.model.SectionNode;
@@ -13,10 +14,7 @@ import ru.inversion.utils.S;
 
 import java.io.Reader;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static ru.inversion.utils.parser.Token.*;
 import static ru.inversion.utils.parser.Token.TypeEnum.*;
@@ -218,56 +216,68 @@ public class FruParser implements Iterator<AbstractSectionNode> {
         return preNext( nextSection() );
     }
 
+
+    /** */
+    private static void submitSection( AbstractSectionNode section, FruBuilder fruBuilder, ExecutorService executor, List<CompletableFuture<Void>> futures)
+    {
+        if( section.isEntry())
+        {
+            // синхронно → исключение летит сразу
+            section.parse(fruBuilder);
+        }
+        else
+        {
+            // асинхронно → исключение попадёт в CompletableFuture
+            final CompletableFuture<Void> future = CompletableFuture.runAsync( () -> section.parse(fruBuilder), executor );
+            futures.add(future);
+        }
+    }
+
     /** */
     public static void parseFru( Reader r, FruBuilder fruBuilder )
     {
-        final Iterator<AbstractSectionNode> sectionIter = new FruParser( FruTokenizer.parse(r).iterator() );
+        final Iterator<AbstractSectionNode> sectionIter = new FruParser(FruTokenizer.parse(r).iterator());
+        final ExecutorService executor                  = Executors.newFixedThreadPool(3);
+        final List<CompletableFuture<Void>> futures     = new ArrayList<>();
 
-        final List<CompletableFuture<Void>> futures = new ArrayList<>();
-        final ExecutorService executor = Executors.newFixedThreadPool( 3);
-
-        AbstractSectionNode last = null;
+        AbstractSectionNode previous = null;
 
         try {
 
-             do {
+            while( sectionIter.hasNext() )
+            {
+                AbstractSectionNode current = sectionIter.next();
 
-                 AbstractSectionNode next = sectionIter.next();
+                if( previous != null )
+                    submitSection(previous, fruBuilder, executor, futures);
 
-                 if( last != null )
-                {
-                    final AbstractSectionNode asyncSection = last;
+                previous = current;
+            }
 
-                    if( asyncSection.isEntry() )
-                    {
-                        asyncSection.parse(fruBuilder);
-                    }
-                    else
-                    {
-                        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> asyncSection.parse(fruBuilder), executor)
-                                .exceptionally(th -> {
-                                    th.printStackTrace();
-                                    return null;
-                                });
-                        futures.add(future);
-                    }
-                }
+            // обработать последний элемент
+            if( previous != null )
+                submitSection(previous, fruBuilder, executor, futures);
 
-                last = next;
 
-            } while( last != null );
-
-//             if( entryFuture != null )
-//                 entryFuture.thenRun( ()->CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join());
-//             else
-
-                CompletableFuture.allOf( futures.toArray( new CompletableFuture[0] ) ).join();
+            CompletableFuture
+                .allOf( futures.toArray(new CompletableFuture[0]) )
+                    .join( );
+        }
+        catch( CompletionException e ) {
+            throw new FruParseException( fruBuilder.fruFile(), "Ошибка при разборе FRU файла", e );
         }
         finally {
+
             executor.shutdown();
+
             try {
-                executor.awaitTermination( 1L, TimeUnit.SECONDS );
-            } catch (InterruptedException ignored) {
+
+                if(!executor.awaitTermination(1, TimeUnit.SECONDS) )
+                    executor.shutdownNow();
+
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
         }
     }

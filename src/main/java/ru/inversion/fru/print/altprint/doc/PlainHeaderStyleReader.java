@@ -1,7 +1,6 @@
 package ru.inversion.fru.print.altprint.doc;
 
 import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
-import ru.inversion.fru.print.naltprn.AltSettings;
 import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 

@@ -1,7 +1,5 @@
 package ru.inversion.fru.model.fields.functions;
 
-import java.util.function.Supplier;
-
 /** */
 public enum FunctionCategoryEnum {
 

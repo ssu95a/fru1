@@ -110,7 +110,7 @@ public abstract class AbstractSectionNode {
     { }
 
     /** */
-    protected FruSection parseHeader(FruBuilder fruBuilder )
+    protected FruSection parseHeader( FruBuilder fruBuilder )
     {
         final Matcher matcher = NAMED_GROUP_PATTERN.matcher( header );
 

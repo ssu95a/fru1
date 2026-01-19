@@ -2,9 +2,7 @@ package ru.inversion.fru.generator.renderer;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.items.FruLine;
-import ru.inversion.fru.model.sections.FruSectionHeader;
 import ru.inversion.fru.model.sections.FruSectionTable;
-import ru.inversion.fru.model.sections.FruSectionTail;
 
 
 /** */

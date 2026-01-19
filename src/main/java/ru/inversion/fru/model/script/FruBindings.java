@@ -1,8 +1,6 @@
 package ru.inversion.fru.model.script;
 
 import javax.script.SimpleBindings;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 
 public class FruBindings extends SimpleBindings {

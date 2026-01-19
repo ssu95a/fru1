@@ -2,7 +2,6 @@ package ru.inversion.fru.model.script;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 import java.util.function.Function;
 

@@ -4,15 +4,14 @@ import ru.inversion.fru.utils.constants.SectionTypeEnum;
 
 import java.util.List;
 
-public class FruSectionText extends FruSection {
+public class FruSectionText extends FruSectionTable {
 
     /** */
-    final private List<String> fieldList;
+    //final private List<String> fieldList;
 
     /** */
     public FruSectionText( int num, List<String> fieldList ) {
-        super(num);
-        this.fieldList = fieldList;
+        super(num,fieldList);
     }
 
     /** */

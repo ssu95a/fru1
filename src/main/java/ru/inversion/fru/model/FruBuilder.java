@@ -10,7 +10,6 @@ import ru.inversion.fru.model.sections.FruSectionTail;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,6 +41,11 @@ public class FruBuilder {
     {
         this.fruFile = f;
         this.fruCharset = charset;
+    }
+
+    /** */
+    public Path fruFile( ) {
+        return fruFile;
     }
 
     /** */
