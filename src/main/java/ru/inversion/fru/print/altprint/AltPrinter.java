@@ -1,5 +1,7 @@
 package ru.inversion.fru.print.altprint;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.api.FruEngineConfig;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
@@ -13,21 +15,21 @@ import java.awt.print.PrinterJob;
 /** */
 public class AltPrinter {
 
-    /** */
-    final private FruEngineConfig engineConfig;
+    private static final Logger log = LoggerFactory.getLogger(AltPrinter.class);
 
     /** */
-    public AltPrinter( FruEngineConfig ec ) {
-        engineConfig = ec;
+    public AltPrinter( ) {
     }
 
     public void print(ALTDoc doc, IAltPrintListener listener ) throws Exception {
 
-        final PrintService awtPrinter = findAWTPrinterByIndex(engineConfig.getPrinterIndex() );
+        final PrintService awtPrinter = findAWTPrinterByIndex( FruEngineConfig.instance().getPrinterIndex() );
 
         final boolean matrix = isMatrix(awtPrinter);
 
         ALTDocPrintable printable = doc.makePrintable( listener, null );
+
+        log.info( "Печать на принтер: {}, матричный: {}", awtPrinter.getName(), ( matrix ? " Y" : "N" ));
 
         if( matrix ) {
             printable.printToMatrix( awtPrinter );
@@ -39,8 +41,8 @@ public class AltPrinter {
         PageFormat pf = job.defaultPage();
         pf.setOrientation( decodeOrientation( doc.getOrientation()) );
 
-        job.setJobName("ALT: " + doc.getAltFile());
-        job.setCopies(doc.getCopies().getValue());
+        job.setJobName( "ALT: " + doc.getAltFile() );
+        job.setCopies ( doc.getCopies().getValue() );
         job.setPrintService(awtPrinter);
         job.setPrintable(printable, pf);
 
@@ -55,7 +57,7 @@ public class AltPrinter {
     /** */
     public static boolean isMatrix( PrintService awtPrinter )
     {
-        return AltSettings.INSTANCE().isMatrixPrinter(awtPrinter.getName());
+        return AltSettings.INSTANCE().isMatrixPrinter( awtPrinter.getName() );
     }
 
     /** */

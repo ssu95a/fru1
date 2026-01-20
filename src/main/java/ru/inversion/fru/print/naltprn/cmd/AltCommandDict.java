@@ -1,5 +1,7 @@
 package ru.inversion.fru.print.naltprn.cmd;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.print.altprint.*;
 import ru.inversion.fru.print.naltprn.AltPrnt5Ini;
 import ru.inversion.utils.Pair;
@@ -8,9 +10,11 @@ import ru.inversion.utils.S;
 import java.util.*;
 import java.util.function.Consumer;
 
-/** */
+/** Словарь команд для принтера Альтпринтер 5 */
 public class AltCommandDict
 {
+    private static final Logger log = LoggerFactory.getLogger(AltCommandDict.class);
+
     public static final char   COMMAND_SYMBOL  = '`';
 //    public static final String COMMAND_STRING  = "`";
     private static final String SECTION_COMMANDS = "Commands";
@@ -51,9 +55,9 @@ public class AltCommandDict
                 return LineFeedCommand.instance;
             }
 
-            if( add  )
+            if( add )
             {
-                ALTLog.info("Команда не найдена в словаре: Команда " + name);
+                log.warn("Команда не найдена в словаре: Команда {}", name);
 
                 command = new AltCommand( name, null );
                 this.commandMap.put( command.getName(), command );
@@ -95,7 +99,7 @@ public class AltCommandDict
 
             if( section == null )
             {
-                //ALTLog.warning("В INI файле нет секции с описанием команд");
+                log.warn("В INI файле нет секции с описанием команд: {}", SECTION_COMMANDS );
             }
             else
             {
@@ -154,7 +158,7 @@ public class AltCommandDict
 
             return dict;
         }
-        catch (Exception ex)
+        catch( Exception ex )
         {
             throw new ALTException( "Ошибка при загрузке словаря команд", ex );
         }

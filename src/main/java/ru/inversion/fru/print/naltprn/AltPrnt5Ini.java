@@ -1,8 +1,13 @@
 package ru.inversion.fru.print.naltprn;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
+import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 import ru.inversion.utils.Pair;
+import ru.inversion.utils.S;
+import ru.inversion.utils.U;
 import ru.inversion.utils.ini.IniFileEvent;
 import ru.inversion.utils.ini.IniFileEventReader;
 
@@ -13,6 +18,8 @@ import java.util.stream.Collectors;
 
 /** */
 public class AltPrnt5Ini {
+
+    private static final Logger log = LoggerFactory.getLogger(AltPrnt5Ini.class);
 
     public static class IniParameter {
 
@@ -39,12 +46,14 @@ public class AltPrnt5Ini {
 
             int ix;
 
-            for( String paramInfo : value.split(";") ) {
+            for( String paramInfo : value.split(";") )
+            {
                 ix = paramInfo.indexOf('=');
 
-                if (ix == -1)
-                    ALTLog.warning("Не правильный формат параметра графической команды в файле. Параметр игнорируется. Параметр: " + name);
-                else {
+                if( ix == -1 )
+                    log.warn("Не правильный формат параметра графической команды в файле. Параметр игнорируется. Параметр: {} ", name );
+                else
+                {
                     String paramName  = paramInfo.substring(0, ix);
                     String paramValue = paramInfo.substring(ix + 1);
 
@@ -65,7 +74,7 @@ public class AltPrnt5Ini {
 
             int ix = value.indexOf('`');
 
-            if (ix == -1) {
+            if( ix == -1 ) {
                 return Collections.singletonList(value);
             }
             else
@@ -91,18 +100,13 @@ public class AltPrnt5Ini {
                 return values;
             }
         }
-
-        /** */
-        public Map<String, String> parseForPrinter() {
-            return parseForMap();
-        }
     }
 
     /** */
     public static class IniSection {
 
         private final String name;
-        private Map<String, IniParameter> parameterMap = new LinkedHashMap();
+        private final Map<String, IniParameter> parameterMap = new LinkedHashMap<>();
 
         public IniSection(String name) {
             this.name = name;
@@ -120,27 +124,30 @@ public class AltPrnt5Ini {
         {
             IniParameter item = this.parameterMap.get(parameter);
 
-            if (item == null) {
+            if( item == null )
+            {
                 item = new IniParameter(parameter, value);
                 this.parameterMap.put(item.getName(), item);
-            } else
-                throw new IllegalStateException("Дублирование параметра '" + parameter + "' в секции '" + name + "'");
-        }
-
-        public String getParameter(String name) {
-            IniParameter item = this.parameterMap.get(name);
-            if (item != null) {
-                return item.getValue();
             }
-            return null;
+            else
+            {
+                if( item.getValue().equalsIgnoreCase(value) )
+                    log.warn( "Дублирование параметра '{}' в секции '{}' с одинаковыми значениями. Значение: {}", parameter, name, value );
+                else
+                    throw new IllegalStateException("Дублирование параметра '" + parameter + "' в секции '" + name + "' с разными значениями. Значение: " + value + ". Предыдущее значение: " + item.getValue() + ".");
+            }
         }
 
-        public String getParameter(String name, String defaultValue) {
-            String value = getParameter(name);
-            if (value == null)
-                value = defaultValue;
+        /** */
+        public String getParameter(String name) {
+            if( S.isNullOrEmpty(name) )
+                return null;
+            return U.callIfNotNull( this.parameterMap.get(name), IniParameter::getValue  );
+        }
 
-            return value;
+        /** */
+        public String getParameter(String name, String defaultValue) {
+            return U.nvl( getParameter(name), defaultValue );
         }
     }
 
@@ -167,8 +174,7 @@ public class AltPrnt5Ini {
         IniSection section = this.sectionMap.get( "DriverRef" );
 
         if( section == null )
-            throw new IllegalStateException("Нет секции 'DriverRef'. Возможно файл не тот");
-            // logger.info("Нет принтеров для производителя " + company );
+            throw new IllegalStateException("Нет секции 'DriverRef'. Возможно файл не формата ALTPRNT5.INI.");
 
         return
             section.parameterMap.entrySet().stream().collect(
@@ -181,9 +187,10 @@ public class AltPrnt5Ini {
     {
         IniSection section = this.sectionMap.get( "CodeGraphincs" );
 
-        if( section == null )
-            // logger.info("Нет принтеров для производителя " + company );
+        if( section == null ) {
+            log.warn( "В файле INI нет секции 'CodeGraphincs'. Возможно файл не формата ALTPRNT5.INI." );
             return Collections.emptyList();
+        }
 
         return
                 section.parameterMap.entrySet().stream().map(new Function<Map.Entry<String, IniParameter>, Pair<String, Map<String,String>>>() {
@@ -199,9 +206,10 @@ public class AltPrnt5Ini {
     {
         IniSection section = this.sectionMap.get( "CodeText" );
 
-        if( section == null )
-            // logger.info("Нет команд для принтера " + printer );
+        if( section == null ) {
+            log.warn( "В файле INI нет секции 'CodeText'. Возможно файл не формата ALTPRNT5.INI." );
             return Collections.emptyList();
+        }
 
         return
                 section.parameterMap.entrySet().stream().map(new Function<Map.Entry<String, IniParameter>, Pair<String, List<String>>>() {
@@ -231,7 +239,7 @@ public class AltPrnt5Ini {
                 }
             }
         } catch (Exception ex) {
-            throw new ALTException("Ошибка при разборе INI фала " + file, ex);
+            throw new ALTException( "Ошибка при разборе INI фала " + file, ex );
         }
 
         return iniFile;

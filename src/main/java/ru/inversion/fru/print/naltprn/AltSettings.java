@@ -144,7 +144,7 @@ public class AltSettings
     /** */
     public boolean isMatrixPrinter( String name )
     {
-        name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
+        //name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
         return printerMap.getOrDefault( name, Boolean.FALSE );
     }
 }

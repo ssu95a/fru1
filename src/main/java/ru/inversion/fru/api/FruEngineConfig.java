@@ -201,14 +201,18 @@ public class FruEngineConfig {
     /** */
     private static String normalizeFru( String s ) {
 
-        if( s.length() > 3 ) {
+        if( s.length() > 3 )
+        {
             String s1 = s.substring( s.length() - 4 );
-            if (".UFS".equalsIgnoreCase( s1 )) {
+
+            if (".UFS".equalsIgnoreCase( s1 ))
+            {
                 String r = s.substring( 0, s.length() - 4 ) + ".fru";
                 log.info("Файл '{}' пришел с расширением .ufs, меняем на .fru - {}", s, r );
                 return r;
             }
         }
+
         return s;
     }
 
@@ -242,7 +246,6 @@ public class FruEngineConfig {
 
         if( !Files.exists(config.datFile) || !Files.isRegularFile(config.datFile) || !Files.isReadable(config.datFile) )
             throw new FruCommandLineException("Переданное имя файла с данными не является файлом или не существует!", new NoSuchFileException( config.datFile.getFileName().toString()) );
-
 
         config.outExplicitlySet = config.outFile != null;
 

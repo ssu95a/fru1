@@ -23,30 +23,30 @@ public class ALTLog
 
     public static void trace(Object message)
     {
-            if (isLogging()) {
-                g_log.trace(String.valueOf(message));
-            }
+        if (isLogging()) {
+            g_log.trace(String.valueOf(message));
+        }
     }
 
     public static void debug(Object message)
     {
-            if (isLogging()) {
-                g_log.debug(String.valueOf(message));
-            }
+        if (isLogging()) {
+            g_log.debug(String.valueOf(message));
+        }
     }
 
     public static void info(Object message)
     {
-            if (isLogging()) {
-                g_log.info(String.valueOf(message));
-            }
+        if (isLogging()) {
+            g_log.info(String.valueOf(message));
+        }
     }
 
     public static void warning(Object message)
     {
-            if (isLogging()) {
-                g_log.warn(String.valueOf(message));
-            }
+        if (isLogging()) {
+            g_log.warn(String.valueOf(message));
+        }
     }
 
     public static void error(Object message)

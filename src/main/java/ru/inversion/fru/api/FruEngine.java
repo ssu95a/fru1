@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Основной движок для генерации отчетов FRU
- * парсинг форм, обработка данных и рендеринг в принтер
+ * парсинг форм, обработка данных и рендеринг на принтер
  */
 public class FruEngine {
 
@@ -42,10 +42,9 @@ public class FruEngine {
     private void generate( Fru fru, FruDataFile dataFile, Writer output )
     {
         try ( FruContext context  = new FruContext( fru, output, dataFile ) ) {
-
             // Запускаем процесс генерации
             while(!context.data().eof()) {
-                   context.data().next(); // Это вызовет рендеринг через FruContext.setCurrentRow()
+                   context.data().next(); // зовет рендеринг через FruContext.setCurrentRow()
             }
         } catch( Exception e ) {
             throw new FruException( "Ошибка генерации отчета", e );
@@ -115,7 +114,7 @@ public class FruEngine {
             config.normalizeOutFile();
         }
 
-        final AltPrinter altPrinter = new AltPrinter(config);
+        final AltPrinter altPrinter = new AltPrinter( );
 
         final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
 
