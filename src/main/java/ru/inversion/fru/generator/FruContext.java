@@ -1,5 +1,7 @@
 package ru.inversion.fru.generator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.data.FruData;
 import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.data.FruDataRow;
@@ -18,10 +20,13 @@ import javax.script.*;
 
 import java.io.Writer;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 
 /** */
 public class FruContext implements AutoCloseable {
+
+    private static final Logger log = LoggerFactory.getLogger(FruContext.class);
 
     private final Renderers renderers = new Renderers();
 
@@ -117,6 +122,9 @@ public class FruContext implements AutoCloseable {
     private boolean entryExecuted = false;
 
     /** */
+    final private Set<Integer> missingSectionsSet = new TreeSet<>();
+
+    /** */
     private void setCurrentRow( FruDataRow row )
     {
         if( !entryExecuted )
@@ -137,10 +145,12 @@ public class FruContext implements AutoCloseable {
 
             currentSection = fru.sections().get( row.getSectionNum() );
 
-            if( currentSection == null )
-                throw new RuntimeException( "Не найдена секция с номером " + row.getSectionNum() );
-
-            currentSection.beforeUse( this );
+            if( currentSection != null )
+                currentSection.beforeUse( this );
+            else {
+                if( missingSectionsSet.add(row.getSectionNum() ) )
+                    log.warn("В файле формы не найдена секция с номером {}", row.getSectionNum() );
+            }
         }
 
         if( currentSection != null )

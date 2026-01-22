@@ -34,7 +34,6 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
 
         if( S.isNullOrEmpty(line) || line.length() != 2 || line.charAt(0) != FIELD_TERMINATOR || line.charAt(1) != CURSOR_TERMINATOR )
             throw new FruDataException( file, "Файл " + file +" не является форматом FRU/UFS с данными" );
-            //throw new IOException( "Файл " + file +" не является форматом FRU/UFS с данными");
 
         readEntry();
     }
