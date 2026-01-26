@@ -1,8 +1,11 @@
 package ru.inversion.fru.parser.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
+import ru.inversion.fru.parser.FruTokenizer;
 import ru.inversion.fru.parser.exceptions.FruBadHeaderFormatException;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
 import ru.inversion.utils.S;
@@ -17,6 +20,8 @@ import static ru.inversion.fru.utils.constants.SectionTypeEnum.TABLE;
 
 
 public abstract class AbstractSectionNode {
+
+    static protected final Logger log = LoggerFactory.getLogger(AbstractSectionNode.class);
 
     public static final Pattern NAMED_GROUP_PATTERN = Pattern.compile (
         "^#?\\w+\\s*'\\s*(?<num>\\d+)\\s*(?:\\(\\s*(?<fields>[^)]*)\\s*\\))?\\s*;?$"
@@ -56,6 +61,10 @@ public abstract class AbstractSectionNode {
     public int endLine() {
         return endLine;
     }
+
+    /** */
+    public boolean isEmpty()
+    { return lines == null || lines.isEmpty();  }
 
     /** */
     public int getOrderNum() {
@@ -131,6 +140,8 @@ public abstract class AbstractSectionNode {
                 throw new FruBadHeaderFormatException( "Не корректный номер заголовка", header, getOrderNum() );
             }
         }
+
+        header = null; // не используем дальше
 
         //
         switch( getType() ) {
