@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.inversion.utils.U;
 
 import static ru.inversion.fru.api.FruEngine.csDos866;
 import static ru.inversion.fru.api.FruEngine.csWin1251;
@@ -118,7 +119,7 @@ public class FruEngineConfig {
     }
 
     public Path getOutFile() {
-        return outFile;
+        return U.nvl( outFile, datFile );
     }
 
     public boolean isOem()
