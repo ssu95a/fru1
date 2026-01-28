@@ -21,7 +21,7 @@ public class AltPrinter {
     public AltPrinter( ) {
     }
 
-    public void print(ALTDoc doc, IAltPrintListener listener ) throws Exception {
+    public void print( ALTDoc doc, IAltPrintListener listener ) throws Exception {
 
         final PrintService awtPrinter = findAWTPrinterByIndex( FruEngineConfig.instance().getPrinterIndex() );
 
