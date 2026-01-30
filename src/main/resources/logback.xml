@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration  xmlns="http://ch.qos.logback/xml/ns/logback">
+<configuration xmlns="http://ch.qos.logback/xml/ns/logback">
 
-    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
-        <resetJUL>true</resetJUL>
-    </contextListener>
-
-    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.err</target>
-        <encoder>
-            <charset>CP866</charset>
-            <pattern>%d{HH:mm:ss} %-5level %logger{20} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+<!--OnErrorConsoleStatusListener при ошибе -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${user.home}/fru.log</file>
+        <file>${user.home}/jfx_logs\fru.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${user.home}/fru.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${user.home}/jfx_logs\fru.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
                     class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>1MB</maxFileSize>
@@ -24,22 +14,18 @@
             <maxHistory>5</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{20} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <logger name="ru.inversion.fru" level="DEBUG"/>
 
     <logger name="STDOUT" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
-
-    <logger name="ru.inversion.fru" level="DEBUG" additivity="false">
-        <appender-ref ref="FILE"/>
-        <appender-ref ref="STDERR"/>
-    </logger>
-
-    <root level="INFO">
-        <appender-ref ref="FILE"/>
-        <appender-ref ref="STDERR"/>
-    </root>
 
 </configuration>
