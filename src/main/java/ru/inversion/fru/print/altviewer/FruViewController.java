@@ -197,6 +197,9 @@ public class FruViewController implements Initializable {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
 
+                if( newValue == null )
+                    return;
+
                 if( inToggle.get() )
                     return;
 
@@ -686,7 +689,7 @@ public class FruViewController implements Initializable {
             primaryStage.show();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            handleException( primaryStage, e );
         }
     }
 

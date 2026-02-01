@@ -40,14 +40,4 @@ public class FruFieldVal extends FruField {
         else
             return context.data().currentRow().getValue( valIndex );
     }
-
-    /** Для полей внутри формата */
-//    public String formatValue( FruContext context, FruFormatBuilder.FruFormatItem fmtr )
-//    {
-//        if( this.formatter != null && this.formatter != fmtr )
-//            throw new IllegalStateException("Для поля " + name + " установлен свой formatter");
-//
-//        return fmtr.format( context, getValueImpl(context), this );
-//    }
-
 }

@@ -3,7 +3,9 @@ package ru.inversion.fru.generator;
 import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.utils.S;
 
+import java.io.CharArrayWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -13,6 +15,9 @@ import java.util.function.BiConsumer;
 public class FruWriter extends Writer {
 
     final private Writer out;
+
+    private Writer current;
+    private Writer buffer;   // единственный буфер (null если выключен)
 
     private int currentPage       = 1;
     private int currentLine       = 1;
@@ -25,18 +30,80 @@ public class FruWriter extends Writer {
 
     /** */
     public FruWriter( Writer out ) {
-        this.out = Objects.requireNonNull(out, "'out' is null");
-        this.paging = null;
+        this.out     = Objects.requireNonNull(out, "'out' is null");
+        this.current = out;
+        this.paging  = null;
         this.pageConsumer = null;
     }
 
     /** */
     public FruWriter( Writer out, FruPaging paging, BiConsumer<Integer, FruPaging> pc ) {
-        this.out    = Objects.requireNonNull( out, "'out' is null" );
-        this.paging = paging;
+        this.out     = Objects.requireNonNull( out, "'out' is null" );
+        this.current = out;
+        this.paging  = paging;
         this.pageConsumer = pc;
     }
 
+    /** Использовать внешний Writer как буфер */
+    public void startBuffer( Writer externalBuffer )
+    {
+
+        Objects.requireNonNull( externalBuffer, "buffer");
+
+        if( buffer != null )
+            throw new IllegalStateException("Buffer already started");
+
+        buffer  = externalBuffer;
+        current = buffer;
+    }
+
+    /** Включить буферизацию */
+    public void startBuffer()
+    {
+        startBuffer( new CharArrayWriter(1024) );
+    }
+
+    /** Слить буфер → target */
+    public void stopBuffer() {
+
+        if( buffer == null )
+            return;
+
+        try {
+
+            final Writer finished = buffer;
+
+            buffer  = null;
+            current = out;
+
+            if( finished instanceof CharArrayWriter )
+            {
+                final CharArrayWriter cw = (CharArrayWriter) finished;
+                if( cw.size() > 0 )
+                    cw.writeTo(out);   // <-- zero-copy
+            }
+            else
+                finished.flush(); // ответственность за слив на внешнем writer
+
+            out.flush();
+        }
+        catch ( IOException ex ) {
+            throw new RuntimeException( "Error on switch to 'out' writer", ex );
+        }
+    }
+
+    /** Выкинуть буфер без слива */
+    public void discardBuffer() {
+        buffer = null;
+        current= out;
+    }
+
+    /** */
+    public boolean isBufferEnabled() {
+        return buffer != null;
+    }
+
+    /** */
     @Override
     public void write( char[] cbuf, int off, int len ) throws IOException {
 
@@ -44,7 +111,7 @@ public class FruWriter extends Writer {
             for( int i = off; i < off + len; i++ )
                  updatePosition( cbuf[i] );
 
-        out.write( cbuf, off, len );
+        current.write( cbuf, off, len );
     }
 
     @Override
@@ -54,23 +121,23 @@ public class FruWriter extends Writer {
             for( int i = off; i < off + len; i++ )
                 updatePosition( str.charAt(i) );
 
-        out.write( str, off, len );
+        current.write( str, off, len );
     }
 
     @Override
     public void write(int c) throws IOException {
         updatePosition((char) c);
-        out.write(c);
+        current.write(c);
     }
 
     @Override
     public void flush() throws IOException {
-        out.flush();
+        current.flush();
     }
 
     @Override
     public void close() throws IOException {
-        out.close();
+        current.close();
     }
 
     public int getCurrentCharInLine() {
@@ -124,7 +191,7 @@ public class FruWriter extends Writer {
         try {
 
             if( force )
-                out.write(value);
+                current.write(value);
             else
                 write( value == null ? S.EMPTY_STRING : value );
 

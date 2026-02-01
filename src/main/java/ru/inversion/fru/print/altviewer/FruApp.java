@@ -2,6 +2,9 @@ package ru.inversion.fru.print.altviewer;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.utils.MemoryURL;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
@@ -11,6 +14,8 @@ import java.util.Objects;
 
 /** */
 public class FruApp extends Application {
+
+    private static final Logger log = LoggerFactory.getLogger(FruApp.class);
 
     private static ALTDoc altDoc;
     private static AltPrinter altPrinter;
@@ -33,7 +38,7 @@ public class FruApp extends Application {
             FruViewController.showViewer( stage, altPrinter, altDoc );
         }
         catch( Throwable th ) {
-            th.printStackTrace();
+            log.error( "Error on show viewer",th) ;
         }
     }
 

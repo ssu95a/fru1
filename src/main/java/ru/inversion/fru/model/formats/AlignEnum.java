@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 /** */
 public enum AlignEnum {
 
-    Left('l'), Center('c'), Right('r');
+    None('0'), Left('l'), Center('c'), Right('r');
 
     final private char ch;
 
@@ -27,6 +27,8 @@ public enum AlignEnum {
                 return Right;
             case 'c':
                 return Center;
+            case '0':
+                return None;
         }
         throw new NoSuchElementException("'" + ch + "' не существует элемент FruAlignEnum" );
     }

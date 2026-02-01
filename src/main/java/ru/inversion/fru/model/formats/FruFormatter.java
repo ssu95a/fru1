@@ -7,38 +7,93 @@ import ru.inversion.fru.model.items.FruItem;
 import ru.inversion.utils.Holder;
 import ru.inversion.utils.S;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Character.isDigit;
+import static ru.inversion.fru.model.formats.FormatParameterEnum.*;
 
 /** */
 public class FruFormatter extends FruItem {
 
-    private AlignEnum align = AlignEnum.Left;
+//    private AlignEnum align = AlignEnum.Left;
 
-    private CaseModeEnum caseMode;
+//    private CaseModeEnum caseMode;
 
-    private int width = -1;
+//    private int width = -1;
 
-    private boolean excludeSymb = false;
+    //private boolean excludeSymb = false;
 
-    private char fillChar = ' ';
+    //private char fillChar = ' ';
 
     // 1 - в поле
     // 2 - в форматной строке
-    private int split = 0;
+    // private int split = 0;
 
-    private boolean fillRight = false;
+    //private boolean fillRight = false;
+
+    private final Map<FormatParameterEnum,Object> parameters = new EnumMap<>(FormatParameterEnum.class);
+
+    private final FruFormatter parent;
+
+    public FruFormatter()
+    {
+        this(null);
+    }
 
     /** */
-    public int getSplitMode( ) { return split; }
+    public FruFormatter( FruFormatter parent )
+    {
+        this.parent = parent;
+    }
+
+    /** */
+    public int getSplitMode( ) { return parameter(Split); }
 
     /** */
     public int getWidth( ) {
-        return width;
+        return parameter(Width);
+    }
+
+    /** */
+    private char fillChar() { return  parameter(FillChar); }
+
+    /** */
+    private AlignEnum align() { return parameter(Align); }
+
+    /** */
+    private <T> T parameter( FormatParameterEnum p ) {
+
+        T value = (T)parameters.get(p);
+
+        if( value == null && parent != null ) {
+            value = (T)parent.parameters.get(p);
+        }
+
+        if( value == null )
+            value = (T)defaultValue(p);
+
+        return value;
+    }
+
+    private Object defaultValue(FormatParameterEnum p) {
+        switch (p) {
+            case Align:
+                return AlignEnum.None;
+            case Split:
+                return 0;
+            case Width:
+                return -1;
+            case CaseMode:
+                return null;
+            case FillChar:
+                return ' ';
+            case FillRight:
+                return false;
+            case ExcludeSymbol:
+                return false;
+        }
+        return null;
     }
 
     /** */
@@ -47,8 +102,11 @@ public class FruFormatter extends FruItem {
         if( value == null )
             return S.EMPTY_STRING;
 
-        if( excludeSymb && context.excludeSymbols() != null) {
-
+        if( Boolean.TRUE.equals( parameter(ExcludeSymbol) )
+            &&
+            context.excludeSymbols() != null
+        )
+        {
             // если есть исключаем
             final Set<Character> es = context.excludeSymbols();
             boolean doIt = false;
@@ -60,9 +118,12 @@ public class FruFormatter extends FruItem {
                 value = value.chars().filter(c -> !context.excludeSymbols().contains((char) c)).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
         }
 
+        final int width = getWidth();
 
-        if( width > 0 && value.length() > width && split == 0 )
+        if( width > 0 && value.length() > width && getSplitMode( ) == 0 )
             value = value.substring(0,width);
+
+        CaseModeEnum caseMode = parameter(CaseMode);
 
         if( caseMode != null )
         {
@@ -88,33 +149,38 @@ public class FruFormatter extends FruItem {
     /** */
     public String format( FruContext context, String value, FruField fruField ) {
 
+        int width = getWidth();
+
         if( S.isNullOrEmpty(value) )
         {
             if( width > 0 )
-                return S.space( width, fillChar);
+                return S.space( width, fillChar() );
             else
                 return S.EMPTY_STRING;
         }
 
         value = prepareValue( context, value );
 
+        if( width <= 0 )
+            width = context.getWidth();
+
         if( width > 0 )
         {
             Holder<String> rem = new Holder<>();
-            value = FormatHelper.formatString( value, width, align, fillChar, rem );
+            value = FormatHelper.formatString( value, width, align(), fillChar(), rem );
 
-            if( rem.isPresent() )
+            if( fruField != null && rem.isPresent() )
             {
-                if( split == 2 && fruField instanceof FruFieldVal )
+                if( getSplitMode( ) == 2 && fruField instanceof FruFieldVal )
                     context.data().put2CacheRow( rem.get(), ((FruFieldVal)fruField).getValIndex() );
             }
         }
         else
-            if( fillRight && context.getWidth() > 0 )
+            if( Boolean.TRUE.equals( parameter(FillRight)) && context.getWidth() > 0 )
             {
                 int fillLength = context.getWidth() - context.getCurrentPosition();
                 if( fillLength > value.length() )
-                    value += S.space( fillLength - value.length(), fillChar);
+                    value = S.space( fillLength - value.length(), fillChar() ) + value;
             }
 
         return value;
@@ -141,7 +207,7 @@ public class FruFormatter extends FruItem {
         if( S.isNullOrEmpty(fmtStr) )
             return null;
 
-        final List<String> items = Arrays.stream( fmtStr.split("/") ).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+        final List<String> items = Arrays.stream( fmtStr.split("/") ).map(String::trim).filter(s -> !s.isEmpty()).collect( Collectors.toList() );
 
         final FruFormatter formatter = new FruFormatter();
 
@@ -152,33 +218,33 @@ public class FruFormatter extends FruItem {
                 char ch = s.charAt(0);
 
                 if( CaseModeEnum.isCaseMode(ch) )
-                    formatter.caseMode = CaseModeEnum.of(ch);
+                    formatter.parameters.put( CaseMode,CaseModeEnum.of(ch) );
                 if( AlignEnum.isAlign(ch) )
-                    formatter.align = AlignEnum.of(ch);
+                    formatter.parameters.put( Align, AlignEnum.of(ch) );
                 else if( ch == 'v' )
-                    formatter.excludeSymb = true;
+                    formatter.parameters.put( ExcludeSymbol, Boolean.TRUE );
                 else if( ch == 'x' )
-                    formatter.split = 2;
+                    formatter.parameters.put( Split, 2 );
                 else if( ch == 'w' )
-                    formatter.fillRight = true;
+                    formatter.parameters.put( FillRight, Boolean.TRUE );
                 else if( isDigit(ch) )
-                    formatter.width = Integer.parseInt(s);
+                    formatter.parameters.put( Width, Integer.parseInt(s) );
             }
 
             else if( s.length() == 2 )
             {
                 if( s.charAt(0) == 'e' )
-                    formatter.fillChar = s.charAt(1);
+                    formatter.parameters.put( FillChar, s.charAt(1) );
                 else if( s.charAt(1) == 'z' ) {
-                    formatter.split = 1;
-                    formatter.align = AlignEnum.of( s.charAt(0) );
+                    formatter.parameters.put( Split, 1 );
+                    formatter.parameters.put( Align, AlignEnum.of( s.charAt(0) ) );
                 }
                 else if( isDigit(s.charAt(0) ) && isDigit(s.charAt(1) ) )
-                    formatter.width = Integer.parseInt(s);
+                    formatter.parameters.put( Width, Integer.parseInt(s) );
             }
 
             else if( isDigitAll(s) )
-                formatter.width = Integer.parseInt(s);
+                formatter.parameters.put( Width, Integer.parseInt(s) );
         }
         return formatter;
     }

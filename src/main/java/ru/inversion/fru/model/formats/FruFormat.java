@@ -61,6 +61,7 @@ public class FruFormat extends FruItem {
 
                     current.setLength(0);
                 }
+
                 insideAt = !insideAt;
             }
             else

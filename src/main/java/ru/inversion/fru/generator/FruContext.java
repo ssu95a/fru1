@@ -37,7 +37,7 @@ public class FruContext implements AutoCloseable {
     final private Fru fru;
 
     /** */
-    final private FruWriter writer;
+    private FruWriter writer;
 
     /** */
     final private FruScriptContext globalScriptContext;
@@ -47,6 +47,10 @@ public class FruContext implements AutoCloseable {
 
     /** */
     private FruSection currentSection;
+
+    private Writer bufw;
+
+    private boolean writeToBuf;
 
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {

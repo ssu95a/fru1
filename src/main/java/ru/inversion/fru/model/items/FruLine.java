@@ -5,6 +5,7 @@ import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.formats.FruFormatter;
+import ru.inversion.utils.S;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,9 +45,8 @@ public class FruLine extends FruItem {
                     });
     }
 
-
     /** */
-    public static final Pattern FORMAT_CALL_PATTERN = Pattern.compile ("(?<name>\\w+)\\s*\\(\\s*(?<fields>(?:\\w+\\s*(?:,\\s*\\w+\\s*)*)?)\\)");
+    public static final Pattern FORMAT_CALL_PATTERN = Pattern.compile ("^(?<name>\\w+)\\s*\\(\\s*(?<fields>\\w+(?:\\s*,\\s*\\w+)*\\s*)?\\)\\s*(?<flags>(?:/\\w+)*)$");
 
     /** */
     private static FruItem makeItem( FruBuilder fruBuilder, String fieldStr, Function<String,Integer> dataIndex )
@@ -57,6 +57,7 @@ public class FruLine extends FruItem {
         {
             String name   = matcher.group("name"  );
             String fields = matcher.group("fields");
+            String flags  = matcher.group("flags" );
 
             final FruFormat fruFormat = fruBuilder.formats.get( name );
 
@@ -64,10 +65,11 @@ public class FruLine extends FruItem {
             {
                 final List<String> fl = Arrays.stream(fields.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
                 final List<FruField> fieldList = new ArrayList<>( fl.size() );
-                AtomicInteger fldIndex = new AtomicInteger(0);
+
+                final AtomicInteger fldIndex = new AtomicInteger(0);
                 fl.forEach( fs->fieldList.add( FruField.make( fruBuilder, fs, fruFormat.getFormatter(fldIndex.getAndIncrement()), dataIndex.apply(fs) ) ) );
 
-                return new FruFormatCall( fruFormat, fieldList );
+                return new FruFormatCall( fruFormat, fieldList, S.isNullOrEmpty(flags) ? null : FruFormatter.make(flags) );
             }
 
             throw new IllegalStateException( "Формат с именем '" + name + "' не найден в форме!" );

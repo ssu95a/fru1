@@ -140,13 +140,15 @@ public class FruEngine {
             SLF4JBridgeHandler.removeHandlersForRootLogger();
             SLF4JBridgeHandler.install();
 
-            System.setOut(new java.io.PrintStream(System.out) {
-                private final org.slf4j.Logger stdout = org.slf4j.LoggerFactory.getLogger("STDOUT");
-                @Override
-                public void println(String x) {
-                    stdout.info("OUT! {}", x);
-                }
-            });
+//            System.setOut(new java.io.PrintStream(System.out) {
+//                private final org.slf4j.Logger stdout = org.slf4j.LoggerFactory.getLogger("STDOUT");
+//                @Override
+//                public void println(String x) {
+//                    stdout.info("OUT! {}", x);
+//                }
+//            });
+
+            System.setErr( new PrintStream(System.err, true, "CP866" ) );
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );

@@ -107,7 +107,18 @@ public class FruBuilder {
     /** */
     public Fru build() throws Exception
     {
-        sections.sort( Comparator.comparingInt(FruSection::getNum) );
+        //sections.sort( Comparator.comparingInt(FruSection::getNum) );
+        sections.sort(new Comparator<FruSection>() {
+            @Override
+            public int compare( FruSection o1, FruSection o2 ) {
+                try {
+                    return Integer.compare(o1.getNum(), o2.getNum());
+                }
+                catch ( Throwable th ) {
+                    throw new RuntimeException("Error on sort sections. o1 = " + o1  + ", o2 = " + o2, th );
+                }
+            }
+        });
 
         List<FruSectionTable> tables = sections.stream()
                 .filter( t->t.getType() == TABLE )

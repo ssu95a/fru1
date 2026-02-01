@@ -78,7 +78,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
 
         } catch (Exception e) {
             finishPrint();
-            e.printStackTrace();
+            //e.printStackTrace();
             throw new PrinterException(e.getMessage());
         }
     }

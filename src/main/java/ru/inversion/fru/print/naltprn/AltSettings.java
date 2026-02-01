@@ -1,26 +1,30 @@
 package ru.inversion.fru.print.naltprn;
 
-import javafx.stage.FileChooser;
+import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
 import ru.inversion.fru.print.altprint.PrintSettings;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
+import ru.inversion.utils.S;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 /** */
 public class AltSettings
 {
+    private final static Logger logger = getLogger( MethodHandles.lookup().lookupClass() );
+
     public static final String INI_FILE_NAME = "ALTPRNT5.INI";
 
     private static AltSettings instance;
-
-    private final PrintSettings defSettings = new PrintSettings();
 
     private AltCommandDict commandDict;
 
@@ -40,32 +44,29 @@ public class AltSettings
 
         try
         {
-            String INIFileName = null;
-
-            for( int i = 0; (INIFileName == null) && (i < 2); i++ )
+            for( int i = 0; (file == null) && (i < 2); i++ )
             {
                 Preferences preferences = i == 0 ? Preferences.userRoot() : Preferences.systemRoot();
 
-                if( preferences.nodeExists("ALTPRINT") )
-                    INIFileName = preferences.node("ALTPRINT").get("PATH_ALTPRINT", null);
+                if( preferences.nodeExists("ALTPRINT") ) {
+
+                    String iniDir = preferences.node( "ALTPRINT" ).get( "PATH_ALTPRINT", null );
+
+                    if( !S.isNullOrEmpty(iniDir) )
+                        file = new File( iniDir, INI_FILE_NAME );
+                }
             }
-
-            if( INIFileName != null )
-                file = new File(INIFileName);
         }
-        catch( Exception ex )
-        {
-            ALTLog.tech_info("Поиск в реестре пути до файла ALTPRNT5.INI", ex );
+        catch( Exception ex ) {
+            logger.error("Ошибка при поиске в реестре пути до файла ALTPRNT5.INI", ex );
         }
 
-        if( file == null || !file.exists() )
+        if( file == null || !file.exists() || !file.isFile() )
         {
-            final FileChooser fcd = new FileChooser();
-            fcd.setTitle("Выберите файл с параметрами ALTPRNT5.INI");
-            file = fcd.showOpenDialog(null);
+            file = AltPrintFileChooser.chooseAltPrint();
 
             if( file != null )
-                Preferences.userRoot().node("ALTPRINT").put("PATH_ALTPRINT", file.getAbsolutePath() );
+                Preferences.userRoot().node("ALTPRINT").put( "PATH_ALTPRINT", file.getParent() );
         }
 
         return file;
@@ -95,9 +96,8 @@ public class AltSettings
             altSettings.printerMap  = iniFile.getPrinterMap().entrySet().stream().collect( Collectors.toMap(Map.Entry::getKey, e -> "CodeText".equalsIgnoreCase( e.getValue() )));
             altSettings.altPrnt5File= fileName.toPath();
         }
-        catch (Exception ex)
-        {
-            throw new ALTException("Ошибка при разборе ALTPRNT5.INI", ex);
+        catch( Exception ex ) {
+            throw new ALTException("Ошибка при разборе ALTPRNT5.INI", ex );
         }
         return altSettings;
     }
@@ -107,26 +107,10 @@ public class AltSettings
     {
         if( instance == null )
         {
-            ALTLog.tech_info("init: ALTSettings", null);
-
-            try
-            {
-                instance = loadIniFile();
-            }
-            catch (ALTException ex)
-            {
-                ALTLog.tech_error("Ошибка при загрузке файла с настройками", ex);
-                throw ex;
-                //ALTApp.APP().exit();
-            }
+            logger.debug("init: ALTSettings" );
+            instance = loadIniFile();
         }
         return instance;
-    }
-
-    /** */
-    public PrintSettings defSetting()
-    {
-        return this.defSettings;
     }
 
     /** */
@@ -144,7 +128,6 @@ public class AltSettings
     /** */
     public boolean isMatrixPrinter( String name )
     {
-        //name = name.replaceAll("[^A-Za-zА-Яа-яЁё]", "").toLowerCase();
         return printerMap.getOrDefault( name, Boolean.FALSE );
     }
 }

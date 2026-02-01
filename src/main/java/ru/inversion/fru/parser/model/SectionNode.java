@@ -42,15 +42,15 @@ public class SectionNode extends AbstractSectionNode {
 
         if( l1 != null ) {
 
-            while (!l1.isEmpty() && l1.getLast() != null && l1.getLast().length() == 1) {
-                l1.removeLast();
-            }
+//            while (!l1.isEmpty() && l1.getLast() != null && l1.getLast().length() == 1) {
+//                l1.removeLast();
+//            }
 
             Function<String, Integer> dataIndex = section instanceof FruSectionTable ? section::getFieldNum : (s -> -1);
 
             for( String line : lines )
             {
-                if (line == null)
+                if( line == null )
                 {
                     if (script != null)
                         section.addLine( new FruLine(Collections.singletonList(script)) );

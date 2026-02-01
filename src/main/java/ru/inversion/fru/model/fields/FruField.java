@@ -5,11 +5,9 @@ import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.exceptions.FruFieldFactoryException;
 import ru.inversion.fru.model.exceptions.FruFieldNotFoundException;
+import ru.inversion.fru.model.exceptions.FruModelException;
 import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
-import ru.inversion.fru.model.fields.types.FruFieldArg;
-import ru.inversion.fru.model.fields.types.FruFieldFun;
-import ru.inversion.fru.model.fields.types.FruFieldStr;
-import ru.inversion.fru.model.fields.types.FruFieldVal;
+import ru.inversion.fru.model.fields.types.*;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.fru.model.items.FruItem;
@@ -25,6 +23,7 @@ public abstract class FruField extends FruItem {
         Str,
         Arg,
         Func,
+        Text
     };
 
     final protected String name;
@@ -72,13 +71,18 @@ public abstract class FruField extends FruItem {
     {
         try {
 
+            if( S.isNullOrEmpty(name) )
+                throw new IllegalArgumentException("'name' is null");
+
+            if( name.charAt(0) == '"' && S.lastChar(name) == '"' )
+                return new FruFieldTxt( name.substring(1,name.length()-1), formatter );
+
             // 1. Проверка встроенных функций
             final BuiltinFunctionEnum func = BuiltinFunctionEnum.find(name);
             if( func != null )
                 return new FruFieldFun( func, formatter );
 
             // 2. Проверка строк и аргументов
-            //String value = fruBuilder.strings.get(name);
             if( fruBuilder.strings.containsKey(name) )
                 return new FruFieldStr( name, formatter );
 
@@ -99,7 +103,7 @@ public abstract class FruField extends FruItem {
             throw new FruFieldNotFoundException(name);
 
         } catch( Exception e ) {
-            throw new FruFieldFactoryException( name, e.getMessage() );
+            throw new FruModelException( "Error on make field: " + name, e );
         }
     }
 }
