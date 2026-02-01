@@ -4,9 +4,9 @@
     <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 <!--OnErrorConsoleStatusListener при ошибе -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${user.home}/jfx_logs\fru.log</file>
+        <file>${user.home}\jfx_logs\fru.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${user.home}/jfx_logs\fru.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${user.home}\jfx_logs\fru.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
                     class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>1MB</maxFileSize>
