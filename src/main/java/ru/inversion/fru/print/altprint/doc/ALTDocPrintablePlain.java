@@ -23,6 +23,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
 
     final private StyleState baseStyle;
     final private Font font;
+
     /** */
     public ALTDocPrintablePlain(ALTDoc altDoc, IAltPrintListener listener, AltPrintPageConfig pageConfig, StyleState baseStyle ) {
         super( altDoc, listener, pageConfig );
@@ -58,7 +59,6 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
     private BufferedReader reader = null;
     private boolean eof = false;
 
-    //private final List<String> pageCache = new ArrayList<>();
     private int lastLoadedPage = -1;
 
     final private Deque<Pair<Integer,List<String>>> pagesCache = new ArrayDeque<>();
@@ -66,7 +66,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
 
     private int linesPerPage = -1;
     private int lineHeight   = -1;
-    private int ascent = 0;
+    private int ascent       = 0;
     /** */
     private void initReader( ) throws IOException
     {
@@ -77,6 +77,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
         }
     }
 
+    /** */
     private void initPageLayout( Graphics g, PageFormat pf) {
 
         if( linesPerPage > 0 )
@@ -100,10 +101,19 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
     {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setFont ( font );
+
+//        double translateX = pf.getImageableX();
+//        double translateY = pf.getImageableY();
+//        g2d.translate(translateX, translateY);
+
+        g2d.setFont ( font );
         g2d.setColor( Color.BLACK );
 
-        int x = (int) (pf.getImageableX() + baseStyle.leftIndent());
-        int y = (int) pf.getImageableY()  + ascent;
+        int x = (int)( pf.getImageableX() + baseStyle.leftIndent() );
+        int y = (int)  pf.getImageableY() + ascent;
+
+//int x = (int) baseStyle.leftIndent();
+//int y = ascent;
 
         for( String line : pageData )
         {
@@ -111,6 +121,8 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
 
             y += ( lineHeight + baseStyle.spaceAfter() );
         }
+
+        //g2d.dispose();
     }
 
     /** */
@@ -161,8 +173,9 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
         initPageLayout( g, pf );
 
         final List<String> page = preparePage( pageIndex );
-        if( page == null )
+        if( page == null ) {
             return NO_SUCH_PAGE;
+        }
 
         drawPage( g, pf, page );
 
@@ -180,7 +193,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
                 return NO_SUCH_PAGE;
             }
 
-            if( eof )
+            if( pageIndex > 0 && eof )
             {
                 finishPrint();
                 return NO_SUCH_PAGE;
@@ -189,7 +202,6 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
             initReader();
 
             int ret = printGraphics( graphics, pageFormat, pageIndex );
-
 
             if( listener != null && ret == PAGE_EXISTS )
                 listener.onPagePrinted( pageIndex );

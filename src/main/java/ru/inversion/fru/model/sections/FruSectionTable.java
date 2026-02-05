@@ -22,7 +22,7 @@ public class FruSectionTable extends FruSection {
     private FruSectionTail tail;
 
     /** */
-    private Map<Integer,List<Integer>> fieldLengths = null;
+    private FruSectionLine tableLine;
 
     /** */
     public FruSectionTable(int num, List<String> fieldList) {
@@ -44,6 +44,14 @@ public class FruSectionTable extends FruSection {
     public void setTail(FruSectionTail tail) {
         this.tail = tail;
     }
+
+    public FruSectionLine getLine() {
+        return tableLine;
+    }
+    public void setLine(FruSectionLine tableLine) {
+        this.tableLine = tableLine;
+    }
+
 
     @Override
     public SectionTypeEnum getType() {
@@ -73,7 +81,7 @@ public class FruSectionTable extends FruSection {
         return fieldMap.getOrDefault( name, -1 );
     }
 
-    /* */
+    /** */
     public String getFieldValue( FruContext context, String name )
     {
         int index = getFieldNum(name);
@@ -84,18 +92,4 @@ public class FruSectionTable extends FruSection {
         return context.data().currentRow().data().get( index );
     }
 
-    /** */
-    public void linkFields( ) {
-
-        final Map<Integer,List<Integer>> fl = new TreeMap<>();
-
-        lines.forEach(l-> l.collectFieldLengths(fl));
-
-        if(!fl.isEmpty() )
-            fieldLengths = fl;
-    }
-
-    public Map<Integer, List<Integer>> getFieldLengths() {
-        return fieldLengths;
-    }
 }

@@ -4,10 +4,7 @@ import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
-import ru.inversion.fru.model.sections.FruSectionHeader;
-import ru.inversion.fru.model.sections.FruSectionTable;
-import ru.inversion.fru.model.sections.FruSectionTail;
-import ru.inversion.fru.model.sections.FruSectionText;
+import ru.inversion.fru.model.sections.*;
 
 public class Renderers {
 
@@ -45,6 +42,7 @@ public class Renderers {
     private final IRenderer<FruSectionTable>  tableRenderer = new TableSectionRenderer();
     private final IRenderer<FruSectionHeader> headerSectionRenderer = new HeaderSectionRenderer();
     private final IRenderer<FruSectionTail>   tailSectionRenderer = new TailSectionRenderer();
+    private final IRenderer<FruSectionLine>   lineSectionRenderer = new LineSectionRenderer();
 
     private final IRenderer<FruFormatCall>    formatCallRenderer = new FormatCallRenderer();
 
@@ -86,6 +84,8 @@ public class Renderers {
             return (IRenderer<T>) scriptRenderer;
         else if (clazz == FruPaging.class)
             return (IRenderer<T>) pagingRenderer;
+        else if (clazz == FruSectionLine.class)
+            return (IRenderer<T>) lineSectionRenderer;
 
         throw new IllegalArgumentException( "No renderer registered for: " + clazz );
     }

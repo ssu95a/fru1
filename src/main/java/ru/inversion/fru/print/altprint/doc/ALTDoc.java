@@ -58,7 +58,7 @@ public class ALTDoc {
 
     /** */
     public OrientationRequested getOrientation() {
-        return printSettings.getOrientation();
+        return printSettings.resolveOrientation(OrientationRequested.PORTRAIT);
     }
     public void setOrientation(OrientationRequested orientation) {
         this.printSettings.setOrientation(orientation );
@@ -66,7 +66,7 @@ public class ALTDoc {
 
     /** */
     public Copies getCopies() {
-        return U.nvl( FruEngineConfig.instance().getCopies(), printSettings.getCopies() );
+        return U.nvl( FruEngineConfig.instance().getCopies(), printSettings.resolveCopies(new Copies(1)) );
     }
     public void setCopies(Copies copies) {
         this.printSettings.setCopies( copies );
@@ -127,6 +127,11 @@ public class ALTDoc {
                 {
                     String cmdText = readCommand( br, Integer.MAX_VALUE );
                     offset += cmdText.length() + 1;
+
+                    int ix = cmdText.indexOf(',');
+
+                    if( ix > 0 )
+                        cmdText = cmdText.substring(0,ix);
 
                     AltCommand cmd = dict.getCommand(cmdText);
                     if (cmd == null)

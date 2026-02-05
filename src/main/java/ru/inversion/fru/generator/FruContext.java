@@ -37,7 +37,7 @@ public class FruContext implements AutoCloseable {
     final private Fru fru;
 
     /** */
-    private FruWriter writer;
+    private final FruWriter writer;
 
     /** */
     final private FruScriptContext globalScriptContext;

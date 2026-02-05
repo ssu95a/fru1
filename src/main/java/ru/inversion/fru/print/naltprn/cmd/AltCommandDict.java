@@ -66,13 +66,11 @@ public class AltCommandDict
         return command;
     }
 
-
     /** */
     public AltCommand getCommand( String name )
     {
-        return this.commandMap.get(name);
+        return this.commandMap.get( name );
     }
-
 
     /** */
     public String getCSSStylesList()
@@ -86,7 +84,6 @@ public class AltCommandDict
 
         return null;
     }
-
 
     /** */
     public static AltCommandDict load( AltPrnt5Ini ini ) throws ALTException

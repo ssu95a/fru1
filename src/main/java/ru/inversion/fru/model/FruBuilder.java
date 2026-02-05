@@ -2,10 +2,7 @@ package ru.inversion.fru.model;
 
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.script.FruScript;
-import ru.inversion.fru.model.sections.FruSection;
-import ru.inversion.fru.model.sections.FruSectionHeader;
-import ru.inversion.fru.model.sections.FruSectionTable;
-import ru.inversion.fru.model.sections.FruSectionTail;
+import ru.inversion.fru.model.sections.*;
 
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
@@ -103,6 +100,26 @@ public class FruBuilder {
         return this;
     }
 
+    /** */
+    public boolean findScriptParameter( String name )
+    {
+        if( S.isNullOrEmpty(name) || ( initScript == null && sections.isEmpty() ) )
+            return false;
+
+        if( initScript != null )
+            if( initScript.hasExportArg(name) )
+                return true;
+
+        if(!sections.isEmpty() )
+            return sections.stream()
+                .flatMap( fruSection -> fruSection.getLines().stream())
+                    .flatMap( fruLine -> fruLine.getItems().stream() )
+                        .filter( fruItem -> fruItem instanceof FruScript )
+                    .map( fruItem->(FruScript)fruItem )
+                        .anyMatch(fruScript -> fruScript.hasExportArg(name) );
+
+        return false;
+    }
 
     /** */
     public Fru build() throws Exception
@@ -134,11 +151,14 @@ public class FruBuilder {
                 .stream()
                     .filter( s->s.getType() == HEAD && s.getNum() == t.getNum() )
                         .findFirst().ifPresent( head->t.setHeader((FruSectionHeader)head) );
+            sections
+                .stream()
+                    .filter( s->s.getType() == LINE && s.getNum() == t.getNum() )
+                        .findFirst().ifPresent( line->t.setLine((FruSectionLine) line) );
         }
 
-        sections.removeIf( t-> U.in( t.getType(), HEAD, TAIL ) );
-
-        //sections.forEach( f->{if( f instanceof FruSectionTable ) ((FruSectionTable) f).linkFields();} );
+        // Удаляем не привязанные к таблице табличные секции
+        sections.removeIf( t-> U.in( t.getType(), HEAD, TAIL, LINE ) );
 
         final Fru fru = new Fru (
             fruFile,

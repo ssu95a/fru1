@@ -262,7 +262,7 @@ public class FruViewController implements Initializable {
         // Кодировка
         encodingComboBox = new ComboBox<>();
         encodingComboBox.getItems().addAll(charsets);
-        encodingComboBox.setValue(charsets[0]);
+        encodingComboBox.setValue( altDoc.getCharset() );
         encodingComboBox.setPrefWidth(120);
         encodingComboBox.setOnAction(this::updateEncoding);
 
@@ -330,7 +330,7 @@ public class FruViewController implements Initializable {
 
             fxJob.getJobSettings().setJobName( altDoc.getAltFile().toString() );
 
-            if( !fxJob.showPrintDialog(getStage()) ) {
+            if(!fxJob.showPrintDialog(getStage()) ) {
                 fxJob.endJob();
                 return;
             }
@@ -556,19 +556,11 @@ public class FruViewController implements Initializable {
      */
     private void loadALTDoc( ALTDoc ad )
     {
-//
-//        if( ad.getContentState() > 0 )
-//        {
-//            viewModeProperty.setValue(ViewModeEnum.TextOnly);
-//        }
-
-        // statusBar.setText("Загрузка файла...");
-
         altDoc = ad;
 
         if( ad.getContentState() >= 0 )
         {
-            textOnlyProperty.setValue(true );
+            textOnlyProperty.setValue(true);
             applyTextOnlyMode( );
         }
         else
@@ -627,6 +619,13 @@ public class FruViewController implements Initializable {
     }
 
     /** */
+    private void restoreSize()
+    {
+        WindowSizeSaver saver = new WindowSizeSaver( getStage(), "fru.viewer.size");
+        saver.load();
+    }
+
+    /** */
     @Override
     public void initialize( URL location, ResourceBundle resources )
     {
@@ -639,6 +638,9 @@ public class FruViewController implements Initializable {
         initStatusBar();
 
         loadALTDoc(altDoc);
+
+        Platform.runLater( this::restoreSize );
+
     }
 
 
@@ -661,7 +663,7 @@ public class FruViewController implements Initializable {
 
 
     /** */
-    public static void showViewer(Stage primaryStage, AltPrinter altPrinter, ALTDoc altDoc )
+    public static void showViewer( Stage primaryStage, AltPrinter altPrinter, ALTDoc altDoc )
     {
         try {
 

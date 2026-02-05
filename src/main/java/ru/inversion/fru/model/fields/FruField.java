@@ -23,7 +23,8 @@ public abstract class FruField extends FruItem {
         Str,
         Arg,
         Func,
-        Text
+        Text,
+        Script // аргумент скрипта
     };
 
     final protected String name;
@@ -92,15 +93,20 @@ public abstract class FruField extends FruItem {
             if( dataIndex >= 0 )
                 return new FruFieldVal( name, dataIndex, formatter );
 
-            FruFormat f = fruBuilder.formats.get(name);
-
-            if( f.getItems().size() == 1 && f.getItems().get(0) instanceof FruText )
-            {
-                fruBuilder.strings.put( name, ((FruText) f.getItems().get(0)).getText() );
-                return new FruFieldStr( name, null );
+            final FruFormat f = fruBuilder.formats.get(name);
+            if( f != null ) {
+                if (f.getItems().size() == 1 && f.getItems().get(0) instanceof FruText) {
+                    fruBuilder.strings.put(name, ((FruText) f.getItems().get(0)).getText());
+                    return new FruFieldStr(name, null);
+                }
             }
 
-            throw new FruFieldNotFoundException(name);
+            if( fruBuilder.findScriptParameter(name) )
+                return new FruFieldScr( name, formatter);
+
+            return new FruFieldArg( name, formatter );
+
+//            throw new FruFieldNotFoundException(name);
 
         } catch( Exception e ) {
             throw new FruModelException( "Error on make field: " + name, e );

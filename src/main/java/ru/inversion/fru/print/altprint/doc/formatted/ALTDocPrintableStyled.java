@@ -169,7 +169,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
     {
         g2d.setColor(Color.BLACK);
 
-        for (PageLine line : page)
+        for( PageLine line : page )
         {
             line.layout().draw( g2d, line.x(), line.baselineY() );
 

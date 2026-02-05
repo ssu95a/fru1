@@ -149,6 +149,8 @@ public abstract class AbstractSectionNode {
                 return new FruSectionHeader( num );
             case TAIL:
                 return new FruSectionTail( num );
+            case LINE:
+                return new FruSectionLine( num );
             case TABLE:
             case TEXT:
             {
