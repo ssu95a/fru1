@@ -28,7 +28,6 @@ public class WindowSizeSaver {
         double defaultWidth = 900;
         double defaultHeight = 600;
 
-        // Читаем сохраненные значения
         double x = prefs.getDouble("x", -1);
         double y = prefs.getDouble("y", -1);
         double width = prefs.getDouble("width", defaultWidth);

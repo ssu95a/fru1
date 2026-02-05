@@ -83,6 +83,9 @@ public class ALTDoc {
     {
         try( BufferedReader reader = Files.newBufferedReader( altFile, charset ) )
         {
+            if( contentState > 0 )
+                reader.skip(contentState);
+
             final RawCAW r = new RawCAW( (int)Files.size(altFile) );
             r.write( reader );
             return r;
@@ -110,12 +113,13 @@ public class ALTDoc {
         {
             int ch;
             int offset = 0;
+            int realOffset = 0;
 
             boolean sawStyleCommand = false;
             boolean textStarted    = false;
 
             while ((ch = br.read()) != -1) {
-                offset++;
+                     offset++;
 
                 // допустимые управляющие
                 if (ch == '\n' || ch == '\f') {
@@ -127,6 +131,8 @@ public class ALTDoc {
                 {
                     String cmdText = readCommand( br, Integer.MAX_VALUE );
                     offset += cmdText.length() + 1;
+
+                    realOffset = offset;
 
                     int ix = cmdText.indexOf(',');
 
@@ -150,16 +156,16 @@ public class ALTDoc {
                 }
 
                 // любой непробельный символ → начался текст
-                if (!Character.isWhitespace(ch)) {
+                if(!Character.isWhitespace(ch)) {
                     textStarted = true;
                     continue; //
                 }
             }
 
-            if (!sawStyleCommand)
+            if( sawStyleCommand)
                 return 0;           // NO_PARAMS
 
-            return offset;          // PARAMS_ONLY_AT_START
+            return realOffset;          // PARAMS_ONLY_AT_START
         }
     }
 
