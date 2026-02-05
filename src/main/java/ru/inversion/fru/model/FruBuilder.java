@@ -31,7 +31,7 @@ public class FruBuilder {
     private FruScript initScript;
 
     /** */
-    final private LinkedList<FruSection> sections = new LinkedList<>();
+    final private List<FruSection> sections = Collections.synchronizedList( new LinkedList<>() );
 
 
     /** */
