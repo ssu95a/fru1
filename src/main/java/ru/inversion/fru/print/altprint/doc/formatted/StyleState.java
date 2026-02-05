@@ -11,17 +11,19 @@ public class StyleState {
     private final boolean underline;
     private final float   spaceAfter;
     private final float   leftIndent;
+    private final float   upperIndent;
 
     private transient Font cachedFont;
 
     /** */
-    public StyleState( String fontName, int fontSize, int fontStyle, boolean underline, float spaceAfter, float leftIndent) {
+    public StyleState(String fontName, int fontSize, int fontStyle, boolean underline, float spaceAfter, float leftIndent, float upperIndent) {
         this.fontName   = fontName;
         this.fontSize   = fontSize;
         this.fontStyle  = fontStyle;
         this.underline  = underline;
         this.spaceAfter = spaceAfter;
         this.leftIndent = leftIndent;
+        this.upperIndent = upperIndent;
     }
 
     /** */
@@ -52,6 +54,10 @@ public class StyleState {
     public float leftIndent() {
         return leftIndent;
     }
+    /** */
+    public float upperIndent() {
+        return upperIndent;
+    }
 
     // точка входа для ALTCommand
     public Builder toBuilder() {
@@ -67,14 +73,16 @@ public class StyleState {
         private boolean underline;
         private float   spaceAfter;
         private float   leftIndent;
+        private float   upperIndent;
 
         private Builder(StyleState base) {
-            this.fontName   = base.fontName;
-            this.fontSize   = base.fontSize;
-            this.fontStyle  = base.fontStyle;
-            this.underline  = base.underline;
-            this.spaceAfter = base.spaceAfter;
-            this.leftIndent = base.leftIndent;
+            this.fontName    = base.fontName;
+            this.fontSize    = base.fontSize;
+            this.fontStyle   = base.fontStyle;
+            this.underline   = base.underline;
+            this.spaceAfter  = base.spaceAfter;
+            this.leftIndent  = base.leftIndent;
+            this.upperIndent = base.upperIndent;
         }
 
         public Builder fontName(String v) {
@@ -118,8 +126,13 @@ public class StyleState {
             return this;
         }
 
+        public Builder upperIndent(float v) {
+            this.upperIndent = v;
+            return this;
+        }
+
         public StyleState build() {
-            return new StyleState( fontName, fontSize, fontStyle, underline, spaceAfter, leftIndent );
+            return new StyleState( fontName, fontSize, fontStyle, underline, spaceAfter, leftIndent, upperIndent);
         }
     }
 }

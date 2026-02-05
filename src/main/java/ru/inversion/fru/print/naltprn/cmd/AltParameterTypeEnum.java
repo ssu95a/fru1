@@ -2,7 +2,7 @@ package ru.inversion.fru.print.naltprn.cmd;
 
 public enum AltParameterTypeEnum
 {
-    FONT_NAME,  FONT_SIZE,  ITALIC,  BOLD,  UNDERLINE,  ORIENTATION,  LEFT,  COPIES,  SPACE_AFTER,  FRU_COMMAND,  PAGE_END,  LF;
+    FONT_NAME,  FONT_SIZE,  ITALIC,  BOLD,  UNDERLINE,  ORIENTATION,  LEFT,  COPIES,  SPACE_AFTER,  FRU_COMMAND,  PAGE_END,  LF, UP;
 
     AltParameterTypeEnum() {}
 
@@ -43,6 +43,9 @@ public enum AltParameterTypeEnum
         }
         if (name.equalsIgnoreCase("Lf")) {
             return LF;
+        }
+        if (name.equalsIgnoreCase("UP")) {
+            return UP;
         }
         return null;
     }

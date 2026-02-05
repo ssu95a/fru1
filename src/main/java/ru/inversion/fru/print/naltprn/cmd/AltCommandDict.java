@@ -67,6 +67,38 @@ public class AltCommandDict
     }
 
     /** */
+    public Optional<AltParameter<?>> resolveCommand( String str )
+    {
+        if( S.isNullOrEmpty(str) )
+            return Optional.empty();
+
+        String cmd;
+        String prm = null;
+
+        int ix = str.indexOf(',');
+
+        if( ix > 0 )
+        {
+            String[] as = str.split(",");
+            if( as.length > 1 ) {
+                cmd = as[0];
+                prm = as[1];
+            }
+            else
+                cmd = as[0];
+        }
+        else
+            cmd = str;
+
+        AltParameter<?> parameter = AltParameter.createParameter( cmd, prm, this );
+
+        if( parameter == null )
+            return Optional.empty();
+
+        return Optional.of(parameter);
+    }
+
+    /** */
     public AltCommand getCommand( String name )
     {
         return this.commandMap.get( name );

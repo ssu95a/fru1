@@ -60,7 +60,7 @@ public abstract class ALTDocPrintable implements Printable, AutoCloseable {
     /** */
     private static StyleState defaultPlainStyle() {
 
-        return new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f );
+        return new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f, 0.0f );
     }
 
 }

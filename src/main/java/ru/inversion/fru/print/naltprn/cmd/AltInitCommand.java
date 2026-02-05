@@ -8,30 +8,30 @@ import javax.print.attribute.standard.OrientationRequested;
 import java.awt.*;
 import ru.inversion.utils.Pair;
 
-public class AltInitCommand extends AltCommand
-{
-    public AltInitCommand( String name, String note )
-    {
+public class AltInitCommand extends AltCommand {
+    public AltInitCommand(String name, String note) {
         super(name, note);
     }
 
-    /** */
-    public OrientationRequested getOrientation()
-    {
+    /**
+     *
+     */
+    public OrientationRequested getOrientation() {
         for (AltParameter<?> p : getGraphicData().getParameters()) {
             if (p.getType() == AltParameterTypeEnum.ORIENTATION) {
-                return ((AltParameter.PageOrientationParameter)p).getValue();
+                return ((AltParameter.PageOrientationParameter) p).getValue();
             }
         }
         return null;
     }
 
-    /** */
-    public Copies getCopies()
-    {
-        for( AltParameter<?> p : getGraphicData().getParameters() ) {
+    /**
+     *
+     */
+    public Copies getCopies() {
+        for (AltParameter<?> p : getGraphicData().getParameters()) {
             if (p.getType() == AltParameterTypeEnum.COPIES) {
-                return ((AltParameter.CopiesParameter)p).getValue();
+                return ((AltParameter.CopiesParameter) p).getValue();
             }
         }
         return null;
@@ -42,20 +42,18 @@ public class AltInitCommand extends AltCommand
         super.toCSStyle(sb, paramObject);
     }
 
-    public StyleState toStyleState( )
-    {
+    public StyleState toStyleState() {
         // Базовые дефолты (совместимы с altprint defaultPlainStyle / PlainHeaderStyleReader)
-        StyleState style = new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f );
+        StyleState style = new StyleState("Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f, 0.5f);
 
         StyleState.Builder b = style.toBuilder();
 
-        if( getGraphicData() == null || getGraphicData().getParameters() == null) {
+        if (getGraphicData() == null || getGraphicData().getParameters() == null) {
             return b.build();
         }
 
-        for(AltParameter<?> p : getGraphicData().getParameters() )
-        {
-            if( p == null || p.getType() == null )
+        for (AltParameter<?> p : getGraphicData().getParameters()) {
+            if (p == null || p.getType() == null)
                 continue;
 
             switch (p.getType()) {
@@ -78,6 +76,10 @@ public class AltInitCommand extends AltCommand
                     // В INI это left indent (layout), не printableArea
                     b.leftIndent((Float) p.getValue());
                     break;
+                case UP:
+                    // В INI это left indent (layout), не printableArea
+                    b.upperIndent((Float) p.getValue());
+                    break;
                 case SPACE_AFTER: {
                     // Вертикальный шаг в формате p1/p2 дюйма -> points: p1 * 72 / p2
                     // Для INIT обычно "1/6" => 12pt.
@@ -98,49 +100,5 @@ public class AltInitCommand extends AltCommand
         }
 
         return b.build();
-    }
-
-    /** */
-    public PrintSettings toPrintSettings()
-    {
-        PrintSettings ps = new PrintSettings();
-        ps.setCopies     ( new Copies(1) );
-        ps.setOrientation( OrientationRequested.PORTRAIT );
-
-        if( getGraphicData() == null || getGraphicData().getParameters() == null ) {
-            return ps;
-        }
-
-        for( AltParameter<?> p : getGraphicData().getParameters()) {
-
-            if( p == null || p.getType() == null )
-                continue;
-
-            switch (p.getType()) {
-                case COPIES: {
-                    Object v = p.getValue();
-                    if (v instanceof Copies) {
-                        ps.setCopies((Copies) v);
-                    } else if (v instanceof Integer) {
-                        ps.setCopies(new Copies((Integer) v));
-                    }
-                    break;
-                }
-
-                case ORIENTATION: {
-                    Object v = p.getValue();
-                    if (v instanceof OrientationRequested) {
-                        ps.setOrientation((OrientationRequested) v);
-                    } else if (v instanceof String) {
-                        String s = ((String) v).trim().toLowerCase();
-                        if (s.startsWith("land")) ps.setOrientation(OrientationRequested.LANDSCAPE);
-                        else if (s.startsWith("port")) ps.setOrientation(OrientationRequested.PORTRAIT);
-                    }
-                    break;
-                }
-            }
-        }
-
-        return ps;
     }
 }

@@ -151,7 +151,7 @@ public final class StyledTextParser implements IStyledTextParser {
     }
 
     private static StyleState defaultStyle() {
-        return new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f );
+        return new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f, 0.5f );
     }
 }
 

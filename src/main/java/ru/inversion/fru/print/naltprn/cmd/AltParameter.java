@@ -230,12 +230,31 @@ public abstract class AltParameter<T>
         /** */
         @Override
         public void toCSStyle( StringBuilder sb, Object paramObject )
-        {
-        }
-
+        { }
+        /** */
         public StyleState applyTo(StyleState style, Object param)
         {
-            return style.toBuilder().leftIndent(getValue()).build();
+            return style.toBuilder().leftIndent( getValue() ).build();
+        }
+    }
+
+    /** */
+    public static class UpperIndentParameter
+            extends AltParameter<Float>
+    {
+        private UpperIndentParameter(Float indentSize)
+        {
+            super( UP, indentSize );
+        }
+        /** */
+        @Override
+        public void toCSStyle( StringBuilder sb, Object paramObject )
+        { }
+
+        /** */
+        public StyleState applyTo( StyleState style, Object param)
+        {
+            return style.toBuilder().upperIndent( getValue() ).build();
         }
     }
 
@@ -371,6 +390,9 @@ public abstract class AltParameter<T>
                 case LEFT:
                     parameter = new LeftIndentParameter( Float.parseFloat(value) );
                     break;
+                case UP:
+                    parameter = new UpperIndentParameter( Float.parseFloat(value) );
+                    break;
                 case COPIES:
                     parameter = new CopiesParameter(new Copies(Integer.parseInt(value)));
                     break;
@@ -407,7 +429,6 @@ public abstract class AltParameter<T>
                         cmd = cmd.substring(0, ix);
                     }
                     parameter = new CommandParameter( Pair.makePair( dict.getCommand(cmd, true), param) );
-
                 }
                 break;
                 case PAGE_END:

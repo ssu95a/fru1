@@ -3,6 +3,7 @@ package ru.inversion.fru.print.altprint.doc;
 import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
 import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
+import ru.inversion.fru.print.naltprn.cmd.AltParameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 public final class PlainHeaderStyleReader {
 
@@ -24,11 +26,10 @@ public final class PlainHeaderStyleReader {
      * @param dict         словарь команд
      * @param headerLength длина заголовка в символах
      */
-    public static StyleState readHeader(Path file, Charset charset, AltCommandDict dict, int headerLength ) throws IOException {
+    public static StyleState readHeader( Path file, Charset charset, AltCommandDict dict, int headerLength ) throws IOException {
 
         try( BufferedReader reader = Files.newBufferedReader( file, charset ) )
         {
-
             StyleState style = dict.getInitCommand().toStyleState();
 
             int read = 0;
@@ -43,10 +44,10 @@ public final class PlainHeaderStyleReader {
                     String cmdText = readCommand( reader, headerLength - read );
                     read += cmdText.length() + 1; // +1 за закрывающий `
 
-                    AltCommand cmd = dict.getCommand(cmdText);
+                    Optional<AltParameter<?>> altParameter = dict.resolveCommand(cmdText);
 
-                    if( cmd != null )
-                        style = cmd.applyTo( style, null );
+                    if( altParameter.isPresent() )
+                        style = altParameter.get().applyTo(style,null);
 
                     continue;
                 }
