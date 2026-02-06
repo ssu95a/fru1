@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static ru.inversion.fru.parser.model.AbstractSectionNode.SCRIPT_PATTERN;
 import static ru.inversion.fru.utils.constants.SectionTypeEnum.END;
+import static ru.inversion.fru.utils.constants.SectionTypeEnum.ENTRY;
 import static ru.inversion.utils.parser.Token.End;
 
 public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
@@ -59,8 +60,12 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
 
             s = text.toString();
 
-            while( t.shift( ) && ITokenHandler.isSpace( t.current() ) )
-            { }
+            if( sectionType == ENTRY )
+                while( t.shift( ) && ITokenHandler.isSpace( t.current() ) )
+                { }
+            else
+                while( t.shift( ) && t.current() != ' ' && ITokenHandler.isSpace( t.current() ) )
+                { }
 
             return new SectionHeaderToken(s, sectionType);
         }

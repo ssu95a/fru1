@@ -5,6 +5,8 @@ import ru.inversion.fru.print.altprint.*;
 import ru.inversion.fru.print.naltprn.AltSettings;
 import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
+import ru.inversion.fru.print.naltprn.cmd.AltParameter;
+import ru.inversion.utils.Pair;
 import ru.inversion.utils.U;
 import ru.inversion.utils.io.RawCAW;
 
@@ -16,8 +18,11 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static ru.inversion.fru.print.altprint.doc.PlainHeaderStyleReader.readCommand;
+import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.LF;
+import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.PAGE_END;
 
 /** Документ альтернативной печати */
 public class ALTDoc {
@@ -118,11 +123,12 @@ public class ALTDoc {
             boolean sawStyleCommand = false;
             boolean textStarted    = false;
 
-            while ((ch = br.read()) != -1) {
-                     offset++;
+            while((ch = br.read()) != -1) {
+
+                offset++;
 
                 // допустимые управляющие
-                if (ch == '\n' || ch == '\f') {
+                if( ch == '\n' || ch == '\f' ) {
                     continue;
                 }
 
@@ -134,21 +140,17 @@ public class ALTDoc {
 
                     realOffset = offset;
 
-                    int ix = cmdText.indexOf(',');
-
-                    if( ix > 0 )
-                        cmdText = cmdText.substring(0,ix);
-
-                    AltCommand cmd = dict.getCommand(cmdText);
-                    if (cmd == null)
+                    Optional<AltParameter<?>> altParameter = dict.resolveCommand(cmdText);
+                    if( !altParameter.isPresent() )
                         continue;
 
-                    if( cmd.isStyleChanging() )
+                    if( U.notIn( altParameter.get().getType(), PAGE_END, LF ) )
                     {
-                        if (textStarted) {
+                        if( textStarted ) {
                             //  style-команда ПОСЛЕ текста
                             return -1; // TEXT_WITH_PARAMS
                         }
+
                         sawStyleCommand = true;
                     }
 
@@ -162,14 +164,12 @@ public class ALTDoc {
                 }
             }
 
-            if( sawStyleCommand)
+            if(!sawStyleCommand)
                 return 0;           // NO_PARAMS
 
-            return realOffset;          // PARAMS_ONLY_AT_START
+            return realOffset;      // PARAMS_ONLY_AT_START
         }
     }
-
-
 
 
     /** */

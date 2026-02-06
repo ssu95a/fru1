@@ -36,7 +36,7 @@ public abstract class AltParameter<T>
     }
 
     /** */
-    public void toCSStyle( StringBuilder sb, Object paramObject ) {}
+    public void toCSStyle( StringBuilder sb, Object paramObject ) { }
 
     /** */
     public StyleState applyTo(StyleState style, Object param)

@@ -19,8 +19,8 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
     {
         final FruFormat      format = formatCall.getFormat();
         final List<FruField> fields = formatCall.getFields();
-        final List<FruItem>   items = format.getItems();
-        final FruFormatter    containing = formatCall.getContaining();
+        final List<FruItem>  items = format.getItems();
+        final FruFormatter   containing = formatCall.getContaining();
 
         int i = 0;
 

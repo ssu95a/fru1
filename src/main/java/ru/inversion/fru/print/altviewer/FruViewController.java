@@ -326,7 +326,12 @@ public class FruViewController implements Initializable {
 
             javafx.print.PrinterJob fxJob = javafx.print.PrinterJob.createPrinterJob();
             if( fxJob == null )
-                throw new IllegalStateException("Не удалось инициализировать печать");
+                throw new ALTPrintException("Не удалось инициализировать печать") {
+                    @Override
+                    public String getDetailedMessage() {
+                        return "вызов javafx.print.PrinterJob.createPrinterJob() вернул null";
+                    }
+                };
 
             fxJob.getJobSettings().setJobName( altDoc.getAltFile().toString() );
 
@@ -335,16 +340,13 @@ public class FruViewController implements Initializable {
                 return;
             }
 
-            PrintService awtPrinter = findAWTPrinterByName( fxJob.getPrinter().getName() );
+            final PrintService awtPrinter =
+                findAWTPrinterByName( fxJob.getPrinter().getName() )
+                    .orElse( findAWTPrinterByIndex( 0 )
+                        .orElseThrow( ()->new IllegalStateException("Невозможно определить принтер для печати") ) );
 
-            if( awtPrinter == null )
-            {
-                awtPrinter = findAWTPrinterByIndex( 0 );
-                if( awtPrinter == null )
-                    throw new IllegalStateException("Невозможно определить принтер для печати");
-            }
-
-            final PrintAwtContext context = new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage(), createAndInitPageConfig() );
+            final PrintAwtContext context =
+                  new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage(), createAndInitPageConfig() );
 
             final PrintableTask printTask = new PrintableTask ( context );
 
@@ -372,7 +374,7 @@ public class FruViewController implements Initializable {
             scale = Math.max(scale, 0.3);
 
             Transform t = null;
-            if( !codeArea.getTransforms().isEmpty())
+            if(!codeArea.getTransforms().isEmpty())
                 t = codeArea.getTransforms().get(0);
 
             final Scale scaleTransform = new Scale(scale, scale);

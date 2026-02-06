@@ -3,8 +3,6 @@ package ru.inversion.fru.model.fields;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.FruBuilder;
-import ru.inversion.fru.model.exceptions.FruFieldFactoryException;
-import ru.inversion.fru.model.exceptions.FruFieldNotFoundException;
 import ru.inversion.fru.model.exceptions.FruModelException;
 import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
 import ru.inversion.fru.model.fields.types.*;
@@ -24,7 +22,7 @@ public abstract class FruField extends FruItem {
         Arg,
         Func,
         Text,
-        Script // аргумент скрипта
+        ScriptArg // аргумент скрипта
     };
 
     final protected String name;
@@ -75,32 +73,38 @@ public abstract class FruField extends FruItem {
             if( S.isNullOrEmpty(name) )
                 throw new IllegalArgumentException("'name' is null");
 
+            // Текстовые константы, строки в кавычках
             if( name.charAt(0) == '"' && S.lastChar(name) == '"' )
                 return new FruFieldTxt( name.substring(1,name.length()-1), formatter );
 
-            // 1. Проверка встроенных функций
+            // Проверка встроенных функций
             final BuiltinFunctionEnum func = BuiltinFunctionEnum.find(name);
             if( func != null )
                 return new FruFieldFun( func, formatter );
 
-            // 2. Проверка строк и аргументов
+            // Строки
             if( fruBuilder.strings.containsKey(name) )
                 return new FruFieldStr( name, formatter );
 
+            // Аргументы формы
             if( fruBuilder.argumentList.stream().anyMatch(fn->fn.equals(name) ) )
                 return new FruFieldArg( name, formatter );
 
+            // Поля с данными
             if( dataIndex >= 0 )
                 return new FruFieldVal( name, dataIndex, formatter );
 
+            // Форматы
             final FruFormat f = fruBuilder.formats.get(name);
             if( f != null ) {
                 if (f.getItems().size() == 1 && f.getItems().get(0) instanceof FruText) {
                     fruBuilder.strings.put(name, ((FruText) f.getItems().get(0)).getText());
+                    //если в формате только текст, заменяем на строку
                     return new FruFieldStr(name, null);
                 }
             }
 
+            // Аргумент скрипта
             if( fruBuilder.findScriptParameter(name) )
                 return new FruFieldScr( name, formatter);
 

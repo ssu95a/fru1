@@ -11,6 +11,7 @@ import javax.print.*;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
+import java.util.Optional;
 
 /** */
 public class AltPrinter {
@@ -21,9 +22,14 @@ public class AltPrinter {
     public AltPrinter( ) {
     }
 
+    /** */
     public void print( ALTDoc doc, IAltPrintListener listener ) throws Exception {
 
-        final PrintService awtPrinter = findAWTPrinterByIndex( FruEngineConfig.instance().getPrinterIndex() );
+        final PrintService awtPrinter =
+            findAWTPrinterByIndex( FruEngineConfig.instance().getPrinterIndex() )
+                .orElseThrow(
+                    ()->new ALTPrintException("Невозможно определить принтер по переданному индексу: " + FruEngineConfig.instance().getPrinterIndex() )
+                );
 
         final boolean matrix = isMatrix(awtPrinter);
 
@@ -60,21 +66,23 @@ public class AltPrinter {
         return AltSettings.INSTANCE().isMatrixPrinter( awtPrinter.getName() );
     }
 
-    /** */
-    public static PrintService findAWTPrinterByName(String fxPrinterName)
+    /**
+     *
+     */
+    public static Optional<PrintService> findAWTPrinterByName(String fxPrinterName)
     {
         final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
 
         for (PrintService service : services) {
             if( service.getName().equals(fxPrinterName) ) {
-                return service;
+                return Optional.of(service);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /** */
-    public static PrintService findAWTPrinterByIndex(int index ) {
+    public static Optional<PrintService> findAWTPrinterByIndex(int index ) {
 
         final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
 
@@ -83,10 +91,10 @@ public class AltPrinter {
             ALTLog.error( String.format("Ошибочное значение заданного индекса принтера - %d, всего доступно принтеров %d", index, services.length ) );
             ALTLog.warning("Будет использован принтер по умолчанию");
 
-            return PrintServiceLookup.lookupDefaultPrintService();
+            return Optional.ofNullable(PrintServiceLookup.lookupDefaultPrintService());
         }
 
-        return services[index];
+        return Optional.of(services[index]);
     }
 
 }

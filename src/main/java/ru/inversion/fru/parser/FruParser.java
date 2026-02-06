@@ -222,12 +222,12 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     {
         if( section.isEntry())
         {
-            // синхронно → исключение летит сразу
+            // синхронно - исключение летит сразу
             section.parse(fruBuilder);
         }
         else
         {
-            // асинхронно → исключение попадёт в CompletableFuture
+            // асинхронно - исключение попадёт в CompletableFuture
             final CompletableFuture<Void> future = CompletableFuture.runAsync( () -> section.parse(fruBuilder), executor );
             futures.add(future);
         }
@@ -256,8 +256,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
 
             // обработать последний элемент
             if( previous != null )
-                submitSection(previous, fruBuilder, executor, futures);
-
+                submitSection( previous, fruBuilder, executor, futures );
 
             CompletableFuture
                 .allOf( futures.toArray(new CompletableFuture[0]) )

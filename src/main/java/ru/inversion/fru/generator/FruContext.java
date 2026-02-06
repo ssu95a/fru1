@@ -8,6 +8,7 @@ import ru.inversion.fru.data.FruDataRow;
 import ru.inversion.fru.generator.exceptions.FruScriptException;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
+import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.fru.model.script.FruScript;
@@ -48,15 +49,11 @@ public class FruContext implements AutoCloseable {
     /** */
     private FruSection currentSection;
 
-    private Writer bufw;
-
-    private boolean writeToBuf;
-
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
 
-        this.fru    = fru;
-        this.data   = new FruData(dataFile);
+        this.fru  = fru;
+        this.data = new FruData(dataFile);
 
         this.data.rowProperty().addListener(new IProperty.ChangeListener<FruDataRow>() {
             @Override
@@ -249,5 +246,16 @@ public class FruContext implements AutoCloseable {
                 globalScriptContext.clearValuesSupplier();
         }
     }
+
+    /*
+    public FruField.Type getItemType( String name )
+    {
+        if( S.isNullOrEmpty(name) )
+            return null;
+
+        if( currentSection().getFieldNum(name) > 0 )
+            return FruField.Type.Data;
+    }
+    */
 }
 
