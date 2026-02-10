@@ -47,7 +47,6 @@ public class FruWriter extends Writer {
     /** Использовать внешний Writer как буфер */
     public void startBuffer( Writer externalBuffer )
     {
-
         Objects.requireNonNull( externalBuffer, "buffer");
 
         if( buffer != null )
@@ -63,7 +62,7 @@ public class FruWriter extends Writer {
         startBuffer( new CharArrayWriter(1024) );
     }
 
-    /** Слить буфер → target */
+    /** Слить буфер out */
     public void stopBuffer() {
 
         if( buffer == null )
@@ -80,7 +79,7 @@ public class FruWriter extends Writer {
             {
                 final CharArrayWriter cw = (CharArrayWriter) finished;
                 if( cw.size() > 0 )
-                    cw.writeTo(out);   // <-- zero-copy
+                    cw.writeTo(out);
             }
             else
                 finished.flush(); // ответственность за слив на внешнем writer

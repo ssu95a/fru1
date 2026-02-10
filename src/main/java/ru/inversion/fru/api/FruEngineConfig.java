@@ -284,7 +284,15 @@ public class FruEngineConfig {
     }
 
     void normalizeOutFile() throws IOException {
-        if( !isOutExplicitlySet() ) {
+
+        if( !isOutExplicitlySet() )
+        {
+            if( Boolean.getBoolean("ru.inversion.alt.store_src_data") )
+            {
+                Path srcFile = datFile.getParent().resolve( datFile.getFileName() + ".src" );
+                Files.copy( datFile, srcFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING );
+            }
+
             Files.copy( outFile, datFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING );
             outFile = datFile;
         }

@@ -363,8 +363,8 @@ public abstract class AltParameter<T>
 
             if (type == null)
             {
-                ALTLog.warning("Неизвестный тип команды: " + name);
-                return null;
+                //ALTLog.warning("Неизвестный тип команды: " + name);
+                return new CommandParameter( Pair.makePair( dict.getCommand(name, true), value) );
             }
 
             switch (type)

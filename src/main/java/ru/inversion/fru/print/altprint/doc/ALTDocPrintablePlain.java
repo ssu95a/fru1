@@ -45,6 +45,9 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
 
             try( InputStream is = Files.newInputStream( altDoc.getAltFile() ) ) {
 
+                if( altDoc.getContentState() > 0 )
+                    is.skip( altDoc.getContentState() );
+
                 final Doc doc        = new SimpleDoc( is, flavor, null );
                 final DocPrintJob pj = printer.createPrintJob( );
 
@@ -72,6 +75,10 @@ public class ALTDocPrintablePlain extends ALTDocPrintable  {
     {
         if( reader == null ) {
             reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset());
+
+            if( altDoc.getContentState() > 0 )
+                reader.skip( altDoc.getContentState() );
+
             if( listener != null )
                 listener.onBeginPrint();
         }

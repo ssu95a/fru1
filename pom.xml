@@ -218,7 +218,7 @@
     </build>
 
     <profiles>
-        <!-- Профиль для релизной сборки -->
+        <!-- Профиль для dev сборки -->
         <profile>
             <id>dev</id>
             <activation>
