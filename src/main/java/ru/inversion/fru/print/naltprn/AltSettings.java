@@ -44,17 +44,23 @@ public class AltSettings
 
         try
         {
-            for( int i = 0; (file == null) && (i < 2); i++ )
+            for( int i = 0; (file == null) && (i < 3); i++ )
             {
-                Preferences preferences = i == 0 ? Preferences.userRoot() : Preferences.systemRoot();
+                String iniDir = null;
 
-                if( preferences.nodeExists("ALTPRINT") ) {
+                if( i == 2 )
+                    iniDir = System.getenv("PATH_ALTPRINT");
+                else
+                {
+                    Preferences preferences = i == 0 ? Preferences.userRoot() : Preferences.systemRoot();
 
-                    String iniDir = preferences.node( "ALTPRINT" ).get( "PATH_ALTPRINT", null );
-
-                    if( !S.isNullOrEmpty(iniDir) )
-                        file = new File( iniDir, INI_FILE_NAME );
+                    if (preferences.nodeExists("ALTPRINT")) {
+                        iniDir = preferences.node("ALTPRINT").get("PATH_ALTPRINT", null);
+                    }
                 }
+
+                if( !S.isNullOrEmpty(iniDir) )
+                    file = new File( iniDir, INI_FILE_NAME );
             }
         }
         catch( Exception ex ) {

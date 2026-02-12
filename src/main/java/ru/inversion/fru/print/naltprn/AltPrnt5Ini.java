@@ -3,8 +3,6 @@ package ru.inversion.fru.print.naltprn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.inversion.fru.print.altprint.ALTException;
-import ru.inversion.fru.print.altprint.ALTLog;
-import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
