@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
@@ -42,29 +43,28 @@ public class AltSettings
 
         file = null;
 
-        try
+        for( int i = 0; (file == null) && (i < 3); i++ )
         {
-            for( int i = 0; (file == null) && (i < 3); i++ )
-            {
+            try {
+
                 String iniDir = null;
 
                 if( i == 2 )
-                    iniDir = System.getenv("PATH_ALTPRINT");
-                else
-                {
+                    iniDir = System.getProperty("PATH_ALTPRINT");
+                else {
                     Preferences preferences = i == 0 ? Preferences.userRoot() : Preferences.systemRoot();
 
-                    if (preferences.nodeExists("ALTPRINT")) {
+                    if( preferences.nodeExists("ALTPRINT") ) {
                         iniDir = preferences.node("ALTPRINT").get("PATH_ALTPRINT", null);
                     }
                 }
 
-                if( !S.isNullOrEmpty(iniDir) )
-                    file = new File( iniDir, INI_FILE_NAME );
+                if( !S.isNullOrEmpty( iniDir ) )
+                    file = new File ( iniDir, INI_FILE_NAME );
             }
-        }
-        catch( Exception ex ) {
-            logger.error("Ошибка при поиске в реестре пути до файла ALTPRNT5.INI", ex );
+            catch( Exception ex ) {
+                logger.trace("Ошибка при поиске в реестре пути до файла ALTPRNT5.INI", ex );
+            }
         }
 
         if( file == null || !file.exists() || !file.isFile() )

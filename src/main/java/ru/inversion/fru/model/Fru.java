@@ -83,8 +83,8 @@ public class Fru {
         }
 
         {
-            lines = !parameters.containsKey("lines") ? - 1 : Integer.parseInt( (String) parameters.get("lines") );
-            width = !parameters.containsKey("width") ? - 1 : Integer.parseInt( (String) parameters.get("width") );
+            lines = !parameters.containsKey("lines") || "UNLIMITED".equalsIgnoreCase((String) parameters.get("lines")) ? - 1 : Integer.parseInt( (String) parameters.get("lines") );
+            width = !parameters.containsKey("width") || "UNLIMITED".equalsIgnoreCase((String) parameters.get("width")) ? - 1 : Integer.parseInt( (String) parameters.get("width") );
         }
 
         if( lines > 0 )
