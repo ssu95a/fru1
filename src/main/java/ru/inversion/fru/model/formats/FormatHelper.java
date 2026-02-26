@@ -17,7 +17,8 @@ public class FormatHelper {
         }
 
         if( align == AlignEnum.None )
-            return value;
+            align = AlignEnum.Left;
+            //return value;
 
         final int padding = width - value.length();
         final StringBuilder sb = new StringBuilder(width);
@@ -46,9 +47,9 @@ public class FormatHelper {
 
             sb.append(value);
 
-//            for(int i = 0; i < rightPadding; i++) {
-//                sb.append(fillChar);
-//            }
+            for(int i = 0; i < rightPadding; i++) {
+                sb.append(fillChar);
+            }
        }
 
        return sb.toString();
