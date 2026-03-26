@@ -14,6 +14,7 @@ import ru.inversion.fru.print.altviewer.FruApp;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -140,14 +141,6 @@ public class FruEngine {
             SLF4JBridgeHandler.removeHandlersForRootLogger();
             SLF4JBridgeHandler.install();
 
-//            System.setOut(new java.io.PrintStream(System.out) {
-//                private final org.slf4j.Logger stdout = org.slf4j.LoggerFactory.getLogger("STDOUT");
-//                @Override
-//                public void println(String x) {
-//                    stdout.info("OUT! {}", x);
-//                }
-//            });
-
             System.setErr( new PrintStream(System.err, true, "CP866" ) );
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
@@ -162,12 +155,11 @@ public class FruEngine {
         }
         catch( Exception e ) {
             log.error( "Unhandled error", e );
-            e.printStackTrace();
             System.exit(1);
         }
     }
 
-
+    /** */
     private static void printUsage()
     {
         System.out.println( );
@@ -189,5 +181,27 @@ public class FruEngine {
         System.out.println( );
         System.out.println("Пример: ");
         System.out.println("   FruEngine -O report.fru data.dat result.txt");
+    }
+
+    /** Метод генерации отчета из готовых объектов */
+    static public void generate( Path fruPath, Reader reader, Writer output )
+    {
+        final Fru fru;
+
+        try {
+             fru = parseFru( fruPath, csWin1251 );
+        }
+        catch ( Throwable th ) {
+            throw new FruException( "Ошибка разбора файла FRU отчета", th );
+        }
+
+        try ( FruContext context  = new FruContext( fru, output, new FruDataFile(reader) ) ) {
+            // Запускаем процесс генерации
+            while(!context.data().eof()) {
+                   context.data().next(); // зовет рендеринг через FruContext.setCurrentRow()
+            }
+        } catch( Exception e ) {
+            throw new FruException( "Ошибка генерации отчета", e );
+        }
     }
 }

@@ -5,8 +5,7 @@ import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,16 +25,28 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
 
     private final List<String> entryFields = new ArrayList<>();
 
-    /** */
-    public FruDataFile( Path file, Charset charset ) throws IOException {
+    private FruDataFile( BufferedReader reader ) throws IOException {
 
-        reader = Files.newBufferedReader( file, charset );
+        this.reader = Objects.requireNonNull(reader,"'reader' is null");
+
         String line = reader.readLine();
 
-        if( S.isNullOrEmpty(line) || line.length() != 2 || line.charAt(0) != FIELD_TERMINATOR || line.charAt(1) != CURSOR_TERMINATOR )
-            throw new FruDataException( file, "Файл " + file +" не является форматом FRU/UFS с данными" );
+        if( S.isNullOrEmpty(line) || line.charAt(0) != FIELD_TERMINATOR || line.charAt(1) != CURSOR_TERMINATOR )
+            throw new IllegalStateException("Не валидный формат заголовка. Ожидается: header[0] - '0x12', header[1] - '0x0c'");
 
-        readEntry();
+        readEntry( );
+    }
+
+    /** */
+    public FruDataFile( Path file, Charset charset ) throws IOException {
+        this( Files.newBufferedReader(file, charset) );
+        // throw new FruDataException(file, "Файл " + file + " не является форматом FRU/UFS с данными");
+    }
+
+    /** */
+    public FruDataFile( Reader reader ) throws IOException {
+        this( reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader( reader ) );
+        // throw new FruDataException(file, "Файл " + file + " не является форматом FRU/UFS с данными");
     }
 
     /** */
