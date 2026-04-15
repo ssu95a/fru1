@@ -376,13 +376,13 @@ public abstract class AltParameter<T>
                     parameter = new FontSizeParameter(Integer.parseInt(value));
                     break;
                 case ITALIC:
-                    parameter = value.compareToIgnoreCase("YES") == 0 ? g_italicOn : g_italicOff;
+                    parameter = ( value == null || value.compareToIgnoreCase("YES") == 0 ) ? g_italicOn : g_italicOff;
                     break;
                 case BOLD:
-                    parameter = value.compareToIgnoreCase("YES") == 0 ? g_boldOn : g_boldOff;
+                    parameter = ( value == null || value.compareToIgnoreCase("YES")  == 0 ) ? g_boldOn : g_boldOff;
                     break;
                 case UNDERLINE:
-                    parameter = value.compareToIgnoreCase("YES") == 0 ? g_underLineOn : g_underLineOff;
+                    parameter = ( value == null || value.compareToIgnoreCase("YES") == 0  )? g_underLineOn : g_underLineOff;
                     break;
                 case ORIENTATION:
                     parameter = value.compareToIgnoreCase("Portrait") == 0 ? g_portrait : g_landscape;
@@ -394,7 +394,7 @@ public abstract class AltParameter<T>
                     parameter = new UpperIndentParameter( Float.parseFloat(value) );
                     break;
                 case COPIES:
-                    parameter = new CopiesParameter(new Copies(Integer.parseInt(value)));
+                    parameter = new CopiesParameter( new Copies(Integer.parseInt(value)) );
                     break;
                 case SPACE_AFTER: {
 
@@ -404,7 +404,7 @@ public abstract class AltParameter<T>
 
                     if (ix == -1)
                     {
-                        ALTLog.warning("�� ���������� ������ ��� ��������� ������������� �������: " + value);
+                        ALTLog.warning("Не правильный формат для параметра вертикального отступа: " + value);
                         return null;
                     }
 
@@ -440,12 +440,12 @@ public abstract class AltParameter<T>
             }
 
             if( parameter == null )
-                ALTLog.warning("�� �������� ���������� �������� �������: " + name);
+                ALTLog.warning("Не возможно обработать параметр команды: " + name);
 
         }
         catch (Exception ex)
         {
-            throw new ALTException("���������� ���������� �������� �������: " + name + " = " + value, ex);
+            throw new ALTException("Не возможно обработать параметр команды: " + name + " = " + value, ex);
         }
         return parameter;
     }
