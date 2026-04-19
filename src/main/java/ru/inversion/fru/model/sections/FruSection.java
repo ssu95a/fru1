@@ -36,6 +36,7 @@ public abstract class FruSection extends FruItem {
         return num;
     }
 
+    /** */
     public List<FruLine> getLines() {
         return lines;
     }
@@ -58,7 +59,7 @@ public abstract class FruSection extends FruItem {
 
     /** */
     public void beforeUse(FruContext context)
-    {}
+    { }
 
     /** */
     public void afterUse(FruContext context)

@@ -3,7 +3,6 @@ package ru.inversion.fru.print.altprint.doc;
 import ru.inversion.fru.api.FruEngineConfig;
 import ru.inversion.fru.print.altprint.*;
 import ru.inversion.fru.print.naltprn.AltSettings;
-import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 import ru.inversion.fru.print.naltprn.cmd.AltParameter;
 import ru.inversion.utils.Pair;
@@ -21,11 +20,16 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import static ru.inversion.fru.print.altprint.doc.PlainHeaderStyleReader.readCommand;
-import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.LF;
-import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.PAGE_END;
+import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.*;
 
 /** Документ альтернативной печати */
 public class ALTDoc {
+
+    public enum AltDocContentMode {
+        PLAIN,
+        PLAIN_WITH_HEADER,
+        STYLED
+    }
 
     /** Путь до */
     final private Path altFile;
@@ -34,21 +38,44 @@ public class ALTDoc {
     final private Charset charset;
 
     /** Настройки печати */
-    final private PrintSettings printSettings = new PrintSettings(  );
+    final private AltPrintPageConfig pageConfig;
 
     /** */
-    final private int contentState;
+    private final AltDocContentMode contentMode;
+    private final int contentOffset;
 
     /** */
-    private ALTDoc( Path altFile, Charset charset, int contentState )
+    private ALTDoc( Path altFile, Charset charset, AltPrintPageConfig pc, AltDocContentMode contentMode, int contentOffset )
     {
-        this.altFile      = altFile;
-        this.charset      = charset;
-        this.contentState = contentState;
+        this.altFile       = altFile;
+        this.charset       = charset;
+        this.contentMode   = contentMode;
+        this.contentOffset = contentOffset;
+        this.pageConfig    = pc;
     }
 
-    public int getContentState( ) {
-        return contentState;
+    /** */
+    public AltPrintPageConfig getPageConfig() {
+        return pageConfig;
+    }
+
+    public AltDocContentMode getContentMode() {
+        return contentMode;
+    }
+
+    /** */
+    public int getContentOffset() {
+        return contentOffset;
+    }
+
+    /** */
+    public boolean isStyled() {
+        return contentMode == AltDocContentMode.STYLED;
+    }
+
+    /** */
+    public boolean hasHeaderCommands( ) {
+        return contentMode == AltDocContentMode.PLAIN_WITH_HEADER;
     }
 
     /** */
@@ -62,19 +89,8 @@ public class ALTDoc {
     }
 
     /** */
-    public OrientationRequested getOrientation() {
-        return printSettings.resolveOrientation(OrientationRequested.PORTRAIT);
-    }
-    public void setOrientation(OrientationRequested orientation) {
-        this.printSettings.setOrientation(orientation );
-    }
-
-    /** */
     public Copies getCopies() {
-        return U.nvl( FruEngineConfig.instance().getCopies(), printSettings.resolveCopies(new Copies(1)) );
-    }
-    public void setCopies(Copies copies) {
-        this.printSettings.setCopies( copies );
+        return U.nvl( FruEngineConfig.instance().getCopies(), getPageConfig().getCopies() );
     }
 
     /** */
@@ -88,8 +104,8 @@ public class ALTDoc {
     {
         try( BufferedReader reader = Files.newBufferedReader( altFile, charset ) )
         {
-            if( contentState > 0 )
-                reader.skip(contentState);
+            if( contentOffset > 0 )
+                reader.skip(contentOffset);
 
             final RawCAW r = new RawCAW( (int)Files.size(altFile) );
             r.write( reader );
@@ -101,20 +117,15 @@ public class ALTDoc {
     }
 
     /** */
-    public ALTDocPrintable makePrintable( IAltPrintListener listener, AltPrintPageConfig pageConfig ) throws IOException {
+    public ALTDocPrintable makePrintable( IAltPrintListener listener ) throws IOException {
         return ALTDocPrintable.load( this, listener, pageConfig );
     }
 
 
-    /**
-     * Определяет тип содержимого сверстанного файла с данными.
-     * 0 - только текст, NO_PARAMS
-     * > 0 - текст, но с начала идут инструкции в параметрах, PARAMS_ONLY_AT_START
-     * -1 - файл с командами форматирования, TEXT_WITH_PARAMS
-     */
-    private static int getContentState( Path file, Charset charset, AltCommandDict dict ) throws IOException {
+    /** */
+    private static Pair<AltDocContentMode,Integer> getContentState( Path file, Charset charset, AltCommandDict dict, AltPrintPageConfig.Builder b ) throws IOException {
 
-        try( Reader br = Files.newBufferedReader(file, charset) )
+        try( Reader br = Files.newBufferedReader( file, charset ) )
         {
             int ch;
             int offset = 0;
@@ -128,12 +139,11 @@ public class ALTDoc {
                 offset++;
 
                 // допустимые управляющие
-                if( ch == '\n' || ch == '\f' ) {
+                if( ch == '\n' || ch == '\f' )
                     continue;
-                }
 
                 // команда
-                if (ch == '`')
+                if (ch == '`' )
                 {
                     String cmdText = readCommand( br, Integer.MAX_VALUE );
                     offset += cmdText.length() + 1;
@@ -141,14 +151,20 @@ public class ALTDoc {
                     realOffset = offset;
 
                     Optional<AltParameter<?>> altParameter = dict.resolveCommand(cmdText);
-                    if( !altParameter.isPresent() )
+                    if(!altParameter.isPresent() )
                         continue;
 
-                    if( U.notIn( altParameter.get().getType(), PAGE_END, LF ) )
+                    if( altParameter.get().getType() == ORIENTATION )
+                        b.orientation( (OrientationRequested)altParameter.get().getValue() );
+
+                    if( altParameter.get().getType() == COPIES )
+                        b.copies( (Integer) altParameter.get().getValue() );
+
+                    if( U.notIn( altParameter.get().getType(), PAGE_END, LF, ORIENTATION, COPIES ) )
                     {
                         if( textStarted ) {
                             //  style-команда ПОСЛЕ текста
-                            return -1; // TEXT_WITH_PARAMS
+                            return Pair.makePair( AltDocContentMode.STYLED, 0 ); // TEXT_WITH_PARAMS
                         }
 
                         sawStyleCommand = true;
@@ -165,9 +181,9 @@ public class ALTDoc {
             }
 
             if(!sawStyleCommand)
-                return 0;           // NO_PARAMS
+                return Pair.makePair( AltDocContentMode.PLAIN, 0 );
 
-            return realOffset;      // PARAMS_ONLY_AT_START
+            return Pair.makePair( AltDocContentMode.PLAIN_WITH_HEADER, realOffset );
         }
     }
 
@@ -177,12 +193,18 @@ public class ALTDoc {
     {
         try {
 
-            int contentState = getContentState( file, charset, AltSettings.INSTANCE().commandDict() );
+            AltPrintPageConfig.Builder b = AltSettings.INSTANCE().commandDict().getInitAltPrintPageConfig();
 
-            return new ALTDoc( file, charset, contentState );
+            Pair<AltDocContentMode,Integer> contentInfo = getContentState( file, charset, AltSettings.INSTANCE().commandDict(), b );
+            return new ALTDoc( file, charset, b.build(), contentInfo.first, contentInfo.second );
         }
         catch (Exception ex) {
             throw new ALTException( "Ошибка при загрузке файла с отчетом " + file, ex );
         }
+    }
+
+    /** */
+    public OrientationRequested getOrientation() {
+        return pageConfig.getOrientation();
     }
 }

@@ -312,12 +312,6 @@ public class FruViewController implements Initializable {
         return (Stage) toolBar.getScene().getWindow();
     }
 
-    /** */
-    private AltPrintPageConfig createAndInitPageConfig()
-    {
-        return AltPrintPageConfig.builder().font(fontComboBox.getValue(), 0, Integer.parseInt( sizeComboBox.getValue() ) ).build();
-    }
-
 
     /** */
     private void printDocument( )
@@ -346,7 +340,7 @@ public class FruViewController implements Initializable {
                         .orElseThrow( ()->new IllegalStateException("Невозможно определить принтер для печати") ) );
 
             final PrintAwtContext context =
-                  new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage(), createAndInitPageConfig() );
+                  new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage() );
 
             final PrintableTask printTask = new PrintableTask ( context );
 
@@ -409,13 +403,15 @@ public class FruViewController implements Initializable {
 
             Printer printer              = job.getPrinter();
             PageLayout defaultPageLayout = printer.getDefaultPageLayout();
+
+
             PageLayout pageLayout        = printer.createPageLayout (
                 defaultPageLayout.getPaper(),
                 U.decode( altDoc.getOrientation(), OrientationRequested.LANDSCAPE, PageOrientation.LANDSCAPE, PageOrientation.PORTRAIT ),
                 Printer.MarginType.DEFAULT
             );
 
-            t = configure( fruArea, pageLayout );
+            //t = configure( fruArea, pageLayout );
 
             // Печатаем
             boolean printResult = job.printPage(pageLayout, fruArea);
@@ -560,7 +556,7 @@ public class FruViewController implements Initializable {
     {
         altDoc = ad;
 
-        if( ad.getContentState() >= 0 )
+        if( !ad.isStyled() )
         {
             textOnlyProperty.setValue(true);
             applyTextOnlyMode( );
@@ -568,6 +564,7 @@ public class FruViewController implements Initializable {
         else
         {
             textOnlyProperty.setValue(false);
+                fontComboBox.setDisable(true);
 
             if( viewModeProperty.getValue() == ViewModeEnum.Formatted )
                 applyFormattingMode( );

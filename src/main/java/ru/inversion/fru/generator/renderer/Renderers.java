@@ -34,19 +34,19 @@ public class Renderers {
 
     private final IRenderer<FruScript> scriptRenderer = new IRenderer<FruScript>() {
         @Override
-        public void render(FruContext context, FruScript script ) {
+        public void render( FruContext context, FruScript script ) {
             context.executeScript(script);
         }
     };
 
-    private final IRenderer<FruSectionTable>  tableRenderer = new TableSectionRenderer();
+    private final IRenderer<FruSectionTable>  tableRenderer         = new TableSectionRenderer();
     private final IRenderer<FruSectionHeader> headerSectionRenderer = new HeaderSectionRenderer();
-    private final IRenderer<FruSectionTail>   tailSectionRenderer = new TailSectionRenderer();
-    private final IRenderer<FruSectionLine>   lineSectionRenderer = new LineSectionRenderer();
+    private final IRenderer<FruSectionTail>   tailSectionRenderer   = new TailSectionRenderer();
+    private final IRenderer<FruSectionLine>   lineSectionRenderer   = new LineSectionRenderer();
 
-    private final IRenderer<FruFormatCall>    formatCallRenderer = new FormatCallRenderer();
+    private final IRenderer<FruFormatCall>    formatCallRenderer    = new FormatCallRenderer();
 
-    private final IRenderer<FruPaging>        pagingRenderer =new PageNumRenderer();
+    private final IRenderer<FruPaging>        pagingRenderer        = new PageNumRenderer();
 
     public <T extends FruItem> void render( FruContext context, T item ) {
 

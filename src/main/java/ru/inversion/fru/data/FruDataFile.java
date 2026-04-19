@@ -1,6 +1,5 @@
 package ru.inversion.fru.data;
 
-import ru.inversion.fru.data.exceptions.FruDataException;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
@@ -25,14 +24,20 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
 
     private final List<String> entryFields = new ArrayList<>();
 
+    /** */
     private FruDataFile( BufferedReader reader ) throws IOException {
 
-        this.reader = Objects.requireNonNull(reader,"'reader' is null");
+        Objects.requireNonNull(reader,"'reader' is null");
 
         String line = reader.readLine();
 
-        if( S.isNullOrEmpty(line) || line.charAt(0) != FIELD_TERMINATOR || line.charAt(1) != CURSOR_TERMINATOR )
-            throw new IllegalStateException("Не валидный формат заголовка. Ожидается: header[0] - '0x12', header[1] - '0x0c'");
+        if( S.isNullOrEmpty(line) )
+            throw new IllegalStateException("Пустой файл с данными для печати!");
+
+        if( line.charAt(0) != FIELD_TERMINATOR || line.charAt(1) != CURSOR_TERMINATOR )
+            throw new IllegalStateException("Не валидный формат заголовка файла с данными. Ожидается: header[0] - '0x12', header[1] - '0x0c'");
+
+        this.reader = reader;
 
         readEntry( );
     }

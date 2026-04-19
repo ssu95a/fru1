@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
-import ru.inversion.fru.parser.FruTokenizer;
 import ru.inversion.fru.parser.exceptions.FruBadHeaderFormatException;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
 import ru.inversion.utils.S;
@@ -16,8 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static ru.inversion.fru.utils.constants.SectionTypeEnum.TABLE;
-
 
 public abstract class AbstractSectionNode {
 
@@ -27,21 +24,17 @@ public abstract class AbstractSectionNode {
         "^#?\\w+\\s*'\\s*(?<num>\\d+)\\s*(?:\\(\\s*(?<fields>[^)]*)\\s*\\))?\\s*;?$"
     );
 
-    public static final Pattern SCRIPT_PATTERN = Pattern.compile (
-        "^script\\s+(on|off)\\s*"
-    );
+    /** */
+    public static final Pattern SCRIPT_PATTERN = Pattern.compile ( "^script\\s+(on|off)\\s*" );
 
     /** Номер по порядку загрузки */
     final private int orderNum;
-
-    /** Скрипт */
-    protected FruScript script;
 
     /** */
     private int begLine, endLine;
 
     /** */
-    protected List<String> lines;
+    protected List lines;
 
     /** */
     protected String header;
@@ -84,17 +77,17 @@ public abstract class AbstractSectionNode {
     }
 
     /** */
-    public void setBilScript( FruScript sc )
+    public void addBilScript( FruScript sc )
     {
-        if( this.script!= null )
-            throw new IllegalStateException("script already init");
+//        if( this.scripts != null )
+//            throw new IllegalStateException("script already init");
 
-        if( lines == null )
-            lines = new LinkedList<>();
+        if( this.lines == null )
+            this.lines = new ArrayList<>();
 
-        lines.add(null);
+        this.lines.add(sc);
 
-        this.script = sc;
+        //this.scripts = sc;
     }
 
     /** */
@@ -123,11 +116,11 @@ public abstract class AbstractSectionNode {
     {
         final Matcher matcher = NAMED_GROUP_PATTERN.matcher( header );
 
-        if( !matcher.find() )
+        if(!matcher.find() )
             throw new FruBadHeaderFormatException( "Не корректный формат заголовка", header, getOrderNum() );
 
-        String sectionNum = matcher.group("num");  // именованная группа num
-        String parameters = matcher.group("fields");
+        String sectionNum = matcher.group("num" );  // именованная группа num
+        String parameters = matcher.group("fields" );
 
         int num = -1;
 

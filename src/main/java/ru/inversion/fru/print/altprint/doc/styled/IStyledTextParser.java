@@ -1,4 +1,4 @@
-package ru.inversion.fru.print.altprint.doc.formatted;
+package ru.inversion.fru.print.altprint.doc.styled;
 
 
 import java.util.Iterator;
@@ -13,7 +13,8 @@ public interface IStyledTextParser extends Iterator<IStyledTextParser.ParsedElem
         final private int end; //)
         final private StyleState style;
 
-        public Span( int start, int end, StyleState style) {
+        public Span( int start, int end, StyleState style )
+        {
             this.start = start;
             this.end   = end;
             this.style = style;
@@ -23,7 +24,7 @@ public interface IStyledTextParser extends Iterator<IStyledTextParser.ParsedElem
             return start;
         }
         /** */
-        public int end() {
+        public int end( ) {
             return end;
         }
         /** */
@@ -42,24 +43,42 @@ public interface IStyledTextParser extends Iterator<IStyledTextParser.ParsedElem
     }
 
     /** */
-    final class TextChunk implements ParsedElement {
+    final class StyledTextChunk implements ParsedElement {
 
         private final String text;
         private final List<Span> spans;
 
-        public TextChunk( String text, List<Span> spans) {
+        public StyledTextChunk(String text, List<Span> spans) {
             this.text = text;
             this.spans= spans;
         }
-
         /** */
         public String text() {
             return text;
         }
-
         /** */
         public List<Span> spans() {
             return spans;
         }
     }
+
+    /** */
+    final class MatrixTextChunk implements ParsedElement {
+        final private String text;
+        /** */
+        public MatrixTextChunk( StringBuilder sb) {
+            this.text = sb.toString();
+            sb.setLength(0);
+        }
+        /** */
+        public MatrixTextChunk( String s) {
+            this.text = s;
+        }
+        /** */
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
+
 }

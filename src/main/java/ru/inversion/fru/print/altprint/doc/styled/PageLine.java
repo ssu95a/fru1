@@ -1,4 +1,4 @@
-package ru.inversion.fru.print.altprint.doc.formatted;
+package ru.inversion.fru.print.altprint.doc.styled;
 
 import java.awt.font.TextLayout;
 

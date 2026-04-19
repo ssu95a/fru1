@@ -152,7 +152,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
 
         if( buffer[0].getType() == BIL )
         {
-            currentSection.setBilScript( ((BilScriptToken)buffer[0] ).toBilScript() );
+            currentSection.addBilScript( ((BilScriptToken)buffer[0] ).toBilScript() );
 
             shift(1);
 

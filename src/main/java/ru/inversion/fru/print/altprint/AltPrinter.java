@@ -1,94 +1,104 @@
 package ru.inversion.fru.print.altprint;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.inversion.fru.api.FruEngineConfig;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
-import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
 import ru.inversion.fru.print.naltprn.AltSettings;
 
-import javax.print.*;
-import javax.print.attribute.standard.OrientationRequested;
-import java.awt.print.PageFormat;
-import java.awt.print.PrinterJob;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
 import java.util.Optional;
 
-/** */
+/**
+ * ЗОНА ОТВЕТСТВЕННОСТИ:
+ * Фасад уровня приложения для печати ALT-документа.
+ *
+ * Отвечает за:
+ * - поиск принтера
+ * - вызов общего execution service
+ *
+ * НЕ ОТВЕЧАЕТ ЗА:
+ * - фактическое исполнение печати
+ * - PageFormat / print-attributes
+ * - layout документа
+ * - shrink логики страницы
+ */
 public class AltPrinter {
 
-    private static final Logger log = LoggerFactory.getLogger(AltPrinter.class);
+    private final AltPrintExecutionService executionService = new AltPrintExecutionService();
 
-    /** */
-    public AltPrinter( ) {
-    }
-
-    /** */
-    public void print( ALTDoc doc, IAltPrintListener listener ) throws Exception {
-
-        final PrintService awtPrinter =
-            findAWTPrinterByIndex( FruEngineConfig.instance().getPrinterIndex() )
-                .orElseThrow(
-                    ()->new ALTPrintException("Невозможно определить принтер по переданному индексу: " + FruEngineConfig.instance().getPrinterIndex() )
-                );
-
-        final boolean matrix = isMatrix(awtPrinter);
-
-        ALTDocPrintable printable = doc.makePrintable( listener, null );
-
-        log.info( "Печать на принтер: {}, матричный: {}", awtPrinter.getName(), ( matrix ? " Y" : "N" ));
-
-        if( matrix ) {
-            printable.printToMatrix( awtPrinter );
-            return;
-        }
-
-        PrinterJob job = PrinterJob.getPrinterJob();
-
-        PageFormat pf = job.defaultPage();
-        pf.setOrientation( decodeOrientation( doc.getOrientation()) );
-
-        job.setJobName( "ALT: " + doc.getAltFile() );
-        job.setCopies ( doc.getCopies().getValue() );
-        job.setPrintService(awtPrinter);
-        job.setPrintable(printable, pf);
-
-        job.print();
-    }
-
-    /** */
-    private static int decodeOrientation(OrientationRequested o) {
-        return o == OrientationRequested.LANDSCAPE ? PageFormat.LANDSCAPE : PageFormat.PORTRAIT;
-    }
-
-    /** */
-    public static boolean isMatrix( PrintService awtPrinter )
-    {
-        return AltSettings.INSTANCE().isMatrixPrinter( awtPrinter.getName() );
+    public AltPrinter() {
     }
 
     /**
-     *
+     * ЗОНА ОТВЕТСТВЕННОСТИ:
+     * Напечатать документ на принтер по индексу из конфигурации.
      */
-    public static Optional<PrintService> findAWTPrinterByName(String fxPrinterName)
-    {
-        final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
+    public void print(ALTDoc doc, IAltPrintListener listener) throws Exception {
+        PrintService printer =
+                findAWTPrinterByIndex(FruEngineConfig.instance().getPrinterIndex())
+                        .orElseThrow(() ->
+                                new ALTPrintException(
+                                        "Невозможно определить принтер по переданному индексу: "
+                                                + FruEngineConfig.instance().getPrinterIndex()
+                                )
+                        );
+
+        executionService.print(doc, printer, listener);
+    }
+
+    /**
+     * ЗОНА ОТВЕТСТВЕННОСТИ:
+     * Напечатать документ на уже выбранный принтер.
+     */
+    public void print(ALTDoc doc, IAltPrintListener listener, PrintService printer) throws Exception {
+        if (printer == null) {
+            throw new ALTPrintException("Принтер не задан");
+        }
+
+        executionService.print(doc, printer, listener);
+    }
+
+    /**
+     * ЗОНА ОТВЕТСТВЕННОСТИ:
+     * Проверка, относится ли принтер к matrix backend.
+     */
+    public static boolean isMatrix(PrintService awtPrinter) {
+        if (awtPrinter == null) {
+            return false;
+        }
+
+        return AltSettings.INSTANCE().isMatrixPrinter(awtPrinter.getName());
+    }
+
+    /**
+     * ЗОНА ОТВЕТСТВЕННОСТИ:
+     * Найти AWT-принтер по имени.
+     */
+    public static Optional<PrintService> findAWTPrinterByName(String printerName) {
+        PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
 
         for (PrintService service : services) {
-            if( service.getName().equals(fxPrinterName) ) {
+            if (service.getName().equals(printerName)) {
                 return Optional.of(service);
             }
         }
+
         return Optional.empty();
     }
 
-    /** */
-    public static Optional<PrintService> findAWTPrinterByIndex(int index ) {
+    /**
+     * ЗОНА ОТВЕТСТВЕННОСТИ:
+     * Найти AWT-принтер по индексу.
+     */
+    public static Optional<PrintService> findAWTPrinterByIndex(int index) {
+        PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
 
-        final PrintService[] services = PrintServiceLookup.lookupPrintServices( null, null );
-
-        if( index < 0 || index >= services.length )
-        {
-            ALTLog.error( String.format("Ошибочное значение заданного индекса принтера - %d, всего доступно принтеров %d", index, services.length ) );
+        if (index < 0 || index >= services.length) {
+            ALTLog.error(String.format(
+                    "Ошибочное значение индекса принтера: %d, всего доступно принтеров: %d",
+                    index,
+                    services.length
+            ));
             ALTLog.warning("Будет использован принтер по умолчанию");
 
             return Optional.ofNullable(PrintServiceLookup.lookupDefaultPrintService());
@@ -96,5 +106,4 @@ public class AltPrinter {
 
         return Optional.of(services[index]);
     }
-
 }

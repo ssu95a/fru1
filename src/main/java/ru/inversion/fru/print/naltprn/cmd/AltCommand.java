@@ -1,7 +1,7 @@
 package ru.inversion.fru.print.naltprn.cmd;
 
 import ru.inversion.fru.print.altprint.ALTException;
-import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
+import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 
 import java.util.List;
 

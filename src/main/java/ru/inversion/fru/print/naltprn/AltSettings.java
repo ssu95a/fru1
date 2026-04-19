@@ -3,7 +3,6 @@ package ru.inversion.fru.print.naltprn;
 import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
-import ru.inversion.fru.print.altprint.PrintSettings;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 import ru.inversion.utils.S;
 
@@ -12,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 

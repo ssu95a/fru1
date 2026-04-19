@@ -65,11 +65,14 @@ public class Fru {
         this.formats    = U.nvl( formats,    Collections.emptyMap() );
         this.strings    = U.nvl( strings,    Collections.emptyMap() );
         this.parameters = U.nvl( parameters, Collections.emptyMap() );
+
         this.initScript = initScript;
 
         {
             String excludeStr = (String) parameters.get("FILTER");
-            if (!S.isNullOrEmpty(excludeStr)) {
+
+            if( !S.isNullOrEmpty(excludeStr) )
+            {
                 excludeSymbols = new HashSet<>();
                 excludeStr.chars().forEach(i -> excludeSymbols.add((char) i));
             }
@@ -90,17 +93,18 @@ public class Fru {
         if( lines > 0 )
         {
             final String paging_s = (String)parameters.get("paging");
+
             if( S.isNullOrEmpty(paging_s) )
                 paging = null;
             else
             {
-                final String pageEnd = (String) parameters.get("PAGE_END");
+                final String pageEnd  = (String) parameters.get("PAGE_END");
                 final String pageLine = U.nvl((String) parameters.get("PAGELINE"), "- @ /0 @- ");
 
                 final String first_s = (String) parameters.get("first");
                 boolean first = !S.isNullOrEmpty(first_s) && !"off".equals(first_s);
 
-                Pair<Boolean, AlignEnum> p = FruPaging.parsePaging(paging_s);
+                Pair<Boolean, AlignEnum> p = FruPaging.parsePaging( paging_s );
 
                 paging = new FruPaging( p.second, p.first, first, pageEnd, FruFormatter.make(pageLine), lines );
             }

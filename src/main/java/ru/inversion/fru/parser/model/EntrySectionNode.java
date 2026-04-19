@@ -2,21 +2,22 @@ package ru.inversion.fru.parser.model;
 
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.formats.FruFormat;
+import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.FruSection;
 import ru.inversion.fru.parser.exceptions.FruBadHeaderFormatException;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
 import ru.inversion.utils.S;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EntrySectionNode extends AbstractSectionNode {
 
-    protected static final Pattern ENTRY_PATTERN = Pattern.compile (
-        "#?entry\\(\\s*(?<fields>.*?)\\s*\\);?"
-    );
+    /** entry */
+    protected static final Pattern ENTRY_PATTERN = Pattern.compile ("#?entry\\(\\s*(?<fields>.*?)\\s*\\);?" );
 
     /** */
     public Map<String,String> formats;
@@ -28,25 +29,26 @@ public class EntrySectionNode extends AbstractSectionNode {
     private Map<String,String> parameters;
 
     /** */
-    public EntrySectionNode(String h, int b, int e  ) {
+    public EntrySectionNode( String h, int b, int e  ) {
         super( 0, h, b, e );
     }
 
     /** */
     @Override
-    public SectionTypeEnum getType() {
+    public SectionTypeEnum getType( ) {
         return SectionTypeEnum.ENTRY;
     }
 
     /** */
     @Override
-    public boolean isEntry() { return true; }
+    public boolean isEntry( ) { return true; }
 
     /** */
     public void addParameter( String name, String value )
     {
         if( parameters == null )
             parameters = new HashMap<>();
+
         parameters.put( name, value );
     }
 
@@ -55,6 +57,7 @@ public class EntrySectionNode extends AbstractSectionNode {
     {
         if( formats == null )
             formats = new LinkedHashMap<>();
+
         formats.put( name, format );
     }
 
@@ -63,6 +66,7 @@ public class EntrySectionNode extends AbstractSectionNode {
     {
         if( strings == null )
             strings = new LinkedHashMap<>();
+
         strings.put( name, text );
     }
 
@@ -79,18 +83,20 @@ public class EntrySectionNode extends AbstractSectionNode {
 
         final List<String> fieldList = Arrays.stream(as.split(",")).map(String::trim).filter(S::isNotNullOrEmpty).collect(Collectors.toList());
 
-        if( !fieldList.isEmpty() )
+        if(!fieldList.isEmpty() )
             fruBuilder.initArgumentList(fieldList);
 
         if( formats != null )
-            formats.forEach( (k,v)->fruBuilder.addFormat(k, FruFormat.make(v)) );
-        if( strings != null )
-            strings.forEach(fruBuilder::addString);
-        if( parameters != null )
-            parameters.forEach(fruBuilder::addParameter);
+            formats.forEach( (k,v)->fruBuilder.addFormat( k, FruFormat.make(v) ) );
 
-        if( script != null )
-            fruBuilder.initScript( script );
+        if( strings != null )
+            strings.forEach( fruBuilder::addString );
+
+        if( parameters != null )
+            parameters.forEach( fruBuilder::addParameter );
+
+        if( lines != null )
+            lines.stream().filter(sc->sc instanceof FruScript).findFirst().ifPresent(scr->fruBuilder.initScript( (FruScript)scr ) );
 
         return null;
     }

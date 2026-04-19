@@ -242,8 +242,10 @@ public class FruContext implements AutoCloseable {
             throw new FruScriptException( "Ошибка при выполнении скрипта", e, script.getBody() );
         }
         finally {
+
             if( globalScriptContext != null )
                 globalScriptContext.clearValuesSupplier();
+
         }
     }
 

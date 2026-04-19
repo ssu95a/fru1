@@ -1,6 +1,8 @@
 package ru.inversion.fru.api;
 
+import ch.qos.logback.classic.util.ContextInitializer;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+import org.xml.sax.InputSource;
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import ru.inversion.fru.api.exceptions.FruException;
 import ru.inversion.fru.data.FruDataFile;
@@ -13,6 +15,7 @@ import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.fru.print.altviewer.FruApp;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnmappableCharacterException;
@@ -23,6 +26,9 @@ import java.util.logging.LogManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
 
 /**
  * Основной движок для генерации отчетов FRU
@@ -62,7 +68,7 @@ public class FruEngine {
             try( Reader reader = Files.newBufferedReader( fruFile, charset ) )
             {
                  FruBuilder fruBuilder = new FruBuilder(fruFile, charset);
-                 FruParser.parseFru(reader, fruBuilder);
+                 FruParser.parseFru( reader, fruBuilder);
 
                  return fruBuilder.build();
 
@@ -115,20 +121,60 @@ public class FruEngine {
             config.normalizeOutFile();
         }
 
-        final AltPrinter altPrinter = new AltPrinter( );
-
-        final ALTDoc altDoc = ALTDoc.loadFile( config.getOutFile(), config.getCharset() );
-
         if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.File )
             ;//altPrinter.saveTo();
+        else
+        {
+            final AltPrinter altPrinter = new AltPrinter( );
 
-        else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
-            altPrinter.print( altDoc, null );
+            final ALTDoc altDoc
+                    = ALTDoc.loadFile (
+                        config.getOutFile(),
+                        resolveCharset( config.getOutFile(), config.getCharset() )
+                    );
 
-        else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
-            FruApp.run( altPrinter, altDoc );
+            if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
+                altPrinter.print( altDoc, null);
+
+            else if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Display )
+                FruApp.run( altPrinter, altDoc );
+        }
     }
 
+    /**
+        Уточнить кодировку файла, если XML то он мб в UTF
+     */
+    private static Charset resolveCharset( Path file, Charset defCharset )
+    {
+        final String fileName = file.toString();
+
+        if( fileName.toLowerCase().endsWith(".xml") )
+        {
+            log.info("Проверка кодировки XML файла {}", fileName );
+
+            try( InputStream fis = Files.newInputStream(file) )
+            {
+                final String encoding;
+
+                final XMLInputFactory factory = XMLInputFactory.newInstance();
+                final XMLStreamReader reader  = factory.createXMLStreamReader(fis);
+
+                encoding = reader.getEncoding();
+                reader.close();
+
+                if( encoding == null )
+                    log.info("кодировка: не возможно определить. null" );
+                else
+                {
+                    log.info("кодировка: {}", encoding);
+                    return Charset.forName(encoding);
+                }
+            } catch (Exception e ) {
+                log.error("кодировка: ошибка при определении кодировки: {}", e.getLocalizedMessage() );
+            }
+        }
+        return defCharset;
+    }
 
     /**
      * Основной метод для запуска из командной строки
@@ -137,11 +183,22 @@ public class FruEngine {
     {
         try {
 
+            final URL logbackUrl = FruEngine.class.getResource("/logback.xml");
+
+            if( logbackUrl != null )
+                System.setProperty( ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY, logbackUrl.toExternalForm() );
+            else
+                System.err.println("Не найден /logback.xml внутри jar");
+
             LogManager.getLogManager().reset();
+
             SLF4JBridgeHandler.removeHandlersForRootLogger();
             SLF4JBridgeHandler.install();
 
-            System.setErr( new PrintStream(System.err, true, "CP866" ) );
+            StdOutRedirector.install();
+            System.setErr( new PrintStream( System.err, true, "CP866" ) );
+
+
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );

@@ -1,4 +1,4 @@
-package ru.inversion.fru.print.altprint.doc.formatted;
+package ru.inversion.fru.print.altprint.doc.styled;
 
 import java.awt.*;
 
@@ -134,5 +134,11 @@ public class StyleState {
         public StyleState build() {
             return new StyleState( fontName, fontSize, fontStyle, underline, spaceAfter, leftIndent, upperIndent);
         }
+    }
+
+    /** */
+    private static StyleState defaultPlainStyle () {
+
+        return new StyleState( "Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f, 0.0f );
     }
 }

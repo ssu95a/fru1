@@ -6,7 +6,6 @@ import ru.inversion.fru.print.altprint.*;
 import ru.inversion.fru.print.naltprn.AltPrnt5Ini;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
-
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -37,6 +36,14 @@ public class AltCommandDict
         return this.initCommand;
     }
 
+    /** */
+    public AltPrintPageConfig.Builder getInitAltPrintPageConfig()
+    {
+        AltPrintPageConfig.Builder b = AltPrintPageConfig.builder();
+        if( initCommand != null )
+            initCommand.makePrintPageConfig( b );
+        return b;
+    }
 
     /** */
     public AltCommand getCommand( String name, boolean add )

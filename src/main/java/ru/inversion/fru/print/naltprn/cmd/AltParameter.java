@@ -2,11 +2,15 @@ package ru.inversion.fru.print.naltprn.cmd;
 
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
-import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
+import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 import ru.inversion.utils.Pair;
+import ru.inversion.utils.U;
+import ru.inversion.utils.converter.TypeConverter;
 
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.OrientationRequested;
+
+import java.math.BigDecimal;
 
 import static ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum.*;
 
@@ -39,7 +43,7 @@ public abstract class AltParameter<T>
     public void toCSStyle( StringBuilder sb, Object paramObject ) { }
 
     /** */
-    public StyleState applyTo(StyleState style, Object param)
+    public StyleState applyTo( StyleState style, Object param )
     {
         return style.toBuilder().build();
     }
@@ -84,7 +88,7 @@ public abstract class AltParameter<T>
         {
             try
             {
-                return getCommand().applyTo( style, param );
+                return getCommand().applyTo( style, U.nvl( param, this.getParam() ) );
             }
             catch (Exception ex)
             {
@@ -155,7 +159,10 @@ public abstract class AltParameter<T>
         }
 
         @Override
-        public StyleState applyTo(StyleState style, Object param) { return style.toBuilder().bold(true).build(); }
+        public StyleState applyTo(StyleState style, Object param) {
+            boolean on = param == null ? getValue() : Boolean.TRUE.equals(param);
+            return style.toBuilder().bold(on).build();
+        }
     }
 
     private static final FontBoldParameter g_boldOn  = new FontBoldParameter(true );
@@ -296,7 +303,7 @@ public abstract class AltParameter<T>
         {
             try
             {
-                float p1 = ( param == null ? getFirst() : (Float)param);
+                float p1 = ( param == null ? getFirst() : TypeConverter.convert( param, BigDecimal.class ).floatValue() );
                 float p2 = getSecond();
 
                 float result = p1 * 72.0F / p2;
@@ -363,7 +370,11 @@ public abstract class AltParameter<T>
 
             if (type == null)
             {
-                //ALTLog.warning("Неизвестный тип команды: " + name);
+                if( "LANDSCAPE".equalsIgnoreCase(name) )
+                    return g_landscape;
+                if( "PORTRAIT".equalsIgnoreCase(name) )
+                    return g_portrait;
+
                 return new CommandParameter( Pair.makePair( dict.getCommand(name, true), value) );
             }
 
@@ -411,9 +422,8 @@ public abstract class AltParameter<T>
                     p1 = value.substring(0, ix ).trim();
                     p2 = value.substring(ix + 1).trim();
 
-                    if( p1.charAt(0) == 'n' ) {
+                    if( p1.charAt(0) == 'n' )
                         p1 = null;
-                    }
 
                     parameter = new SpaceAfterParameter( Pair.makePair(p1 == null ? null : Float.parseFloat(p1), Float.parseFloat(p2)) );
 

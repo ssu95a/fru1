@@ -1,21 +1,20 @@
 package ru.inversion.fru.print.naltprn.cmd;
 
-import ru.inversion.fru.print.altprint.PrintSettings;
-import ru.inversion.fru.print.altprint.doc.formatted.StyleState;
+import ru.inversion.fru.print.altprint.AltPrintPageConfig;
+import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.*;
 import ru.inversion.utils.Pair;
+import ru.inversion.utils.U;
 
 public class AltInitCommand extends AltCommand {
     public AltInitCommand(String name, String note) {
         super(name, note);
     }
 
-    /**
-     *
-     */
+    /** */
     public OrientationRequested getOrientation() {
         for (AltParameter<?> p : getGraphicData().getParameters()) {
             if (p.getType() == AltParameterTypeEnum.ORIENTATION) {
@@ -25,9 +24,7 @@ public class AltInitCommand extends AltCommand {
         return null;
     }
 
-    /**
-     *
-     */
+    /** */
     public Copies getCopies() {
         for (AltParameter<?> p : getGraphicData().getParameters()) {
             if (p.getType() == AltParameterTypeEnum.COPIES) {
@@ -42,7 +39,52 @@ public class AltInitCommand extends AltCommand {
         super.toCSStyle(sb, paramObject);
     }
 
+    /** */
+    public void makePrintPageConfig( final AltPrintPageConfig.Builder b )
+    {
+        U.callIfNotNull( getOrientation(), b::orientation );
+
+        if( getGraphicData() == null || getGraphicData().getParameters() == null )
+            return;
+
+        for( AltParameter<?> p : getGraphicData().getParameters() ) {
+
+            if (p == null || p.getType() == null)
+                continue;
+
+            switch (p.getType()) {
+                case FONT_NAME:
+                    b.fontName(p.getValue().toString());
+                    break;
+                case FONT_SIZE:
+                    b.fontSize((Integer) p.getValue());
+                    break;
+                case BOLD:
+                    b.bold(Boolean.TRUE.equals(p.getValue()));
+                    break;
+                case ITALIC:
+                    b.italic(Boolean.TRUE.equals(p.getValue()));
+                    break;
+//                case UNDERLINE:
+//                    b.underline(Boolean.TRUE.equals(p.getValue()));
+//                    break;
+                case LEFT:
+                    // В INI это left indent (layout), не printableArea
+                    b.marginLeftMm( (Float) p.getValue());
+                    break;
+                case UP:
+                    // В INI это upper indent (layout), не printableArea
+                    b.marginTopMm((Float) p.getValue());
+                    break;
+                default:
+                    // ORIENTATION/COPIES/Cmd/LF/PAGE_END — не часть StyleState (job-level или runtime-level)
+                    break;
+            }
+        }
+    }
+
     public StyleState toStyleState() {
+
         // Базовые дефолты (совместимы с altprint defaultPlainStyle / PlainHeaderStyleReader)
         StyleState style = new StyleState("Monospaced", 10, Font.PLAIN, false, 0.0f, 0.5f, 0.5f);
 
@@ -77,7 +119,7 @@ public class AltInitCommand extends AltCommand {
                     b.leftIndent((Float) p.getValue());
                     break;
                 case UP:
-                    // В INI это left indent (layout), не printableArea
+                    // В INI это upper indent (layout), не printableArea
                     b.upperIndent((Float) p.getValue());
                     break;
                 case SPACE_AFTER: {
