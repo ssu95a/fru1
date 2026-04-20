@@ -105,7 +105,7 @@ public class ALTDoc {
         try( BufferedReader reader = Files.newBufferedReader( altFile, charset ) )
         {
             if( contentOffset > 0 )
-                reader.skip(contentOffset);
+                skipHeader( reader, contentOffset );
 
             final RawCAW r = new RawCAW( (int)Files.size(altFile) );
             r.write( reader );
@@ -206,5 +206,21 @@ public class ALTDoc {
     /** */
     public OrientationRequested getOrientation() {
         return pageConfig.getOrientation();
+    }
+
+    private static void skipHeader(Reader reader, long count) throws IOException {
+
+        long remaining = count;
+
+        while (remaining > 0) {
+            long skipped = reader.skip(remaining);
+            if (skipped <= 0) {
+                if (reader.read() == -1) {
+                    break;
+                }
+                skipped = 1;
+            }
+            remaining -= skipped;
+        }
     }
 }

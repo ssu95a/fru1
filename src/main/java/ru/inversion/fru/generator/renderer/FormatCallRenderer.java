@@ -55,8 +55,7 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
                 context.writer().discardBuffer();
         }
 
-        if( w != null ) {
+        if( w != null )
             context.writer().print( containing.format( context, w.toString(), null ) );
-        }
     }
 }

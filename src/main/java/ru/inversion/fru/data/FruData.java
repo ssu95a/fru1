@@ -66,7 +66,6 @@ public class FruData {
     /** */
     public boolean eof()
     {
-        return !dataFile.hasNext();
+        return /*cacheRow == null && */ !dataFile.hasNext( );
     }
-
 }

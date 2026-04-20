@@ -14,13 +14,24 @@ import java.util.List;
 public final class AltPlainPreparedPage {
 
    private final List<String> lines;
-
-   public AltPlainPreparedPage(List<String> lines) {
+   private final float ascent;
+   private final float logicalLineStep;
+   public AltPlainPreparedPage(List<String> lines, float ascent, float logicalLineStep) {
       this.lines = lines;
+      this.ascent = ascent;
+      this.logicalLineStep = logicalLineStep;
    }
 
    public List<String> getLines() {
       return lines;
+   }
+
+   public float getAscent() {
+      return ascent;
+   }
+
+   public float getLogicalLineStep() {
+      return logicalLineStep;
    }
 
    public boolean isEmpty() {

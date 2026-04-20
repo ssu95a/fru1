@@ -111,7 +111,7 @@ public abstract class AltParameter<T>
         @Override
         public void toCSStyle( StringBuilder sb, Object paramObject )
         {
-            sb.append("-fx-font-family:").append( getValue() ).append(" !important; ");
+            sb.append("-fx-font-family:'").append( getValue() ).append("' !important; ");
         }
 
         @Override
@@ -133,7 +133,7 @@ public abstract class AltParameter<T>
         @Override
         public void toCSStyle( StringBuilder sb, Object paramObject )
         {
-            sb.append("-fx-font-size:").append( getValue() ).append(" !important;");
+            sb.append("-fx-font-size:").append( getValue() ).append("pt !important;");
         }
 
         @Override
@@ -303,12 +303,12 @@ public abstract class AltParameter<T>
         {
             try
             {
-                float p1 = ( param == null ? getFirst() : TypeConverter.convert( param, BigDecimal.class ).floatValue() );
+                float p1 = ( param == null ? getFirst() : (( param instanceof Float ) ? (Float)param : TypeConverter.convert( param, BigDecimal.class ).floatValue() ));
                 float p2 = getSecond();
 
                 float result = p1 * 72.0F / p2;
 
-                return style.toBuilder().spaceAfter(result).build();
+                return style.toBuilder().verticalMovePt(result).build();
             }
             catch (Exception ex)
             {

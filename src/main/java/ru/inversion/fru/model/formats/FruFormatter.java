@@ -171,7 +171,7 @@ public class FruFormatter extends FruItem {
 
             if( fruField != null && rem.isPresent() )
             {
-                if( getSplitMode( ) == 2 && fruField instanceof FruFieldVal )
+                if( getSplitMode( ) == 2 && fruField instanceof FruFieldVal ) // 2
                     context.data().put2CacheRow( rem.get(), ((FruFieldVal)fruField).getValIndex() );
             }
         }

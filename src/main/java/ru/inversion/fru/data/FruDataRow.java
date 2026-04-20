@@ -10,6 +10,7 @@ public class FruDataRow {
 
     private final int sectionNum;
     private final List<String> data;
+
     private Map< Integer, String > splitValues = null;
 
     /** */
@@ -42,17 +43,24 @@ public class FruDataRow {
                 Pair<String, String> p = FruUtils.splitString(value, length);
                 value = p.first;
 
-                if( splitValues == null )
-                    splitValues = new TreeMap<>();
+                if( !S.isNullOrEmpty(p.second) )
+                {
+                    if (splitValues == null)
+                        splitValues = new TreeMap<>();
 
-                splitValues.put( valIndex, p.second );
+                    splitValues.put(valIndex, p.second);
+                }
             }
         }
         else
         {
             Pair<String, String> p = FruUtils.splitString( splitValues.get( valIndex ), length );
             value = p.first;
-            splitValues.put( valIndex, p.second );
+
+            if( !S.isNullOrEmpty(p.second) )
+                splitValues.put(valIndex, p.second);
+            else
+                splitValues.remove(valIndex);
         }
         return value;
     }

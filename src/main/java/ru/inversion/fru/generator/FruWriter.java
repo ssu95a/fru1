@@ -1,13 +1,18 @@
 package ru.inversion.fru.generator;
 
 import ru.inversion.fru.model.items.FruPaging;
+import ru.inversion.property.Property;
+import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
+import ru.inversion.utils.lstn.IListenerManConsumer;
+import ru.inversion.utils.lstn.ListenerManFactory;
 
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 
 /** */
@@ -28,6 +33,9 @@ public class FruWriter extends Writer {
     final private BiConsumer<Integer, FruPaging> pageConsumer;
 
     /** */
+    private IListenerManConsumer<Consumer<Pair<Integer,Integer>>> nlListeners;
+
+    /** */
     public FruWriter( Writer out ) {
         this.out     = Objects.requireNonNull(out, "'out' is null");
         this.current = out;
@@ -43,10 +51,35 @@ public class FruWriter extends Writer {
         this.pageConsumer = pc;
     }
 
+    /** */
+    public void addNLListener( Consumer<Pair<Integer,Integer>> nlListener )
+    {
+        if( nlListeners == null )
+            nlListeners = ListenerManFactory.createListenerManConsumer();
+        nlListeners.addListener( nlListener );
+    }
+
+    /** */
+    public void removeNLListener( Consumer<Pair<Integer,Integer>> nlListener )
+    {
+        if( nlListeners != null ) {
+            nlListeners.removeListener(nlListener);
+        }
+    }
+
+    /** */
+    private void fireNLListener()
+    {
+        if( nlListeners != null ) {
+            final Pair<Integer,Integer> pn = Pair.makePair(currentPage,currentLine);
+            nlListeners.fire((l) -> l.accept(pn));
+        }
+    }
+
     /** Использовать внешний Writer как буфер */
     public void startBuffer( Writer externalBuffer )
     {
-        Objects.requireNonNull( externalBuffer, "buffer");
+        Objects.requireNonNull( externalBuffer, "externalBuffer");
 
         if( buffer != null )
             throw new IllegalStateException("Buffer already started");
@@ -149,12 +182,26 @@ public class FruWriter extends Writer {
     }
 
     /** */
+    private void incrementLine()
+    {
+        currentLine++;
+        fireNLListener();
+    }
+
+    /** */
+    private void resetLine()
+    {
+        currentLine = 1;
+        fireNLListener();
+    }
+
+    /** */
     private void updatePosition( char c )
     {
         if( c == '\n' )
         {
-            currentLine++;
             currentCharInLine=1;
+            incrementLine( );
         }
         else
             currentCharInLine++;
@@ -169,7 +216,7 @@ public class FruWriter extends Writer {
                     this.pageConsumer.accept( currentPage, paging );
 
                 currentPage ++;
-                currentLine = 1;
+                resetLine( );
 
                 if( paging.isTop() && pageConsumer != null )
                     this.pageConsumer.accept( currentPage, paging );

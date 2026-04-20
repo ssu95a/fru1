@@ -37,7 +37,7 @@ public abstract class FruField extends FruItem {
     /** */
     public boolean hasFieldSplit( )
     {
-        return formatter != null && formatter.getSplitMode() == 1;
+        return formatter != null && formatter.getSplitMode() == 1; //
     }
 
     /** */

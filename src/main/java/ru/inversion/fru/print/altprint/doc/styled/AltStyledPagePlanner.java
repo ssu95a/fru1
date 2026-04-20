@@ -3,7 +3,6 @@ package ru.inversion.fru.print.altprint.doc.styled;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.naltprn.AltSettings;
-import ru.inversion.utils.Checks;
 import ru.inversion.utils.Pair;
 
 import java.awt.Graphics2D;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Objects;
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -37,8 +37,8 @@ public final class AltStyledPagePlanner {
 
    /** */
    public AltStyledPagePlanner(ALTDoc altDoc) {
-      Checks.Require.object(altDoc,"altDoc");
-      this.altDoc = altDoc;
+      //Checks.Require.object(altDoc,"altDoc");
+      this.altDoc = Objects.requireNonNull(altDoc, "'altDoc' is null");
    }
 
    /**

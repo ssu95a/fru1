@@ -1,7 +1,6 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
-import ru.inversion.utils.Checks;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -138,8 +137,8 @@ public final class PageLayoutEngine {
             float scale
     )
     {
-        Checks.Require.object(parser, "parser");
-
+        if( parser == null )
+            throw new IllegalArgumentException("parser == null");
         if( g2d == null )
             throw new IllegalArgumentException("g2d == null");
         if( pf == null )
@@ -156,7 +155,6 @@ public final class PageLayoutEngine {
         this.startY = cfg.getMarginTopPtOrZero();
 
         /*
-         * ВАЖНО:
          * Рисование потом будет через g2d.scale(scale, scale),
          * поэтому в логических координатах доступная область становится больше:
          * printable / scale

@@ -157,13 +157,13 @@ public class TagProcessor {
         {
             char ch = text.charAt(i);
 
-            if (ch != TAG_CHAR) {
+            if( ch != TAG_CHAR ) {
                 i++;
                 continue;
             }
 
             int tagStart = i;
-            int close = indexOf(text, TAG_CHAR, i + 1, n);
+            int close = indexOf( text, TAG_CHAR, i + 1, n);
             if (close < 0) {
                 i++;
                 continue;
@@ -175,7 +175,7 @@ public class TagProcessor {
             }
 
             int innerStart = tagStart + 1;
-            int innerEnd = close;
+            int innerEnd   = close;
 
             boolean valid = (innerEnd > innerStart) && isValidTagBody(text, innerStart, innerEnd);
 

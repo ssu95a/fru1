@@ -36,12 +36,12 @@ public final class AltPlainPagePlanner {
    private final StyleState baseStyle;
    private final Font font;
 
-   private final Deque<Pair<Integer, AltPlainPreparedPage>> pagesCache =
-           new ArrayDeque<Pair<Integer, AltPlainPreparedPage>>();
+   private final Deque<Pair<Integer, AltPlainPreparedPage>> pagesCache = new ArrayDeque<Pair<Integer, AltPlainPreparedPage>>();
 
    private int linesPerPage = -1;
-   private int lineHeight = -1;
-   private int ascent = 0;
+
+   private float ascent = Float.NaN;
+   private float logicalLineStep = Float.NaN;
 
    public AltPlainPagePlanner(ALTDoc altDoc, StyleState baseStyle) {
       if (altDoc == null) {
@@ -78,31 +78,38 @@ public final class AltPlainPagePlanner {
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
     * Рассчитать метрики plain-layout для текущего шрифта.
     */
    private void initPageLayout(Graphics2D g2d, PageFormat pf) {
-
-      if( linesPerPage > 0 )
+      if (linesPerPage > 0) {
          return;
+      }
 
       g2d.setFont(font);
 
       FontMetrics fm = g2d.getFontMetrics(font);
+      ascent = fm.getAscent();
 
-      lineHeight = fm.getHeight();
-      ascent     = fm.getAscent();
+      float naturalLineStep = fm.getHeight();
 
-      int logicalLineStep = (int)( lineHeight + baseStyle.spaceAfter() );
+      // verticalMovePt — если задан как полный шаг строки
+      float configuredLineStep = baseStyle.verticalMovePt();
+
+      float effectiveLineStep =
+              configuredLineStep > 0.01f
+                      ? configuredLineStep
+                      : naturalLineStep;
+
+      logicalLineStep = Math.round(effectiveLineStep);
+
       if( logicalLineStep <= 0 )
-          throw new IllegalStateException("Invalid line step for plain page");
+         throw new IllegalStateException("Invalid logical line step");
 
+      linesPerPage = (int) (pf.getImageableHeight() / effectiveLineStep);
 
-      linesPerPage = (int) (pf.getImageableHeight() / logicalLineStep);
-
-      if (linesPerPage <= 0) {
+      if(linesPerPage <= 0 )
          throw new IllegalStateException("Invalid page layout: linesPerPage <= 0");
-      }
+
    }
 
    /**
@@ -110,6 +117,7 @@ public final class AltPlainPagePlanner {
     * Прочитать нужную страницу из документа.
     */
    private AltPlainPreparedPage readPage(int targetPageIndex) throws IOException {
+
       List<String> pageLines = new ArrayList<String>(linesPerPage);
 
       try (BufferedReader reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset())) {
@@ -141,15 +149,7 @@ public final class AltPlainPagePlanner {
          return null;
       }
 
-      return new AltPlainPreparedPage(pageLines);
-   }
-
-   public int getLineHeight() {
-      return lineHeight;
-   }
-
-   public int getAscent() {
-      return ascent;
+      return new AltPlainPreparedPage(pageLines, logicalLineStep, ascent );
    }
 
    public void clearCache() {

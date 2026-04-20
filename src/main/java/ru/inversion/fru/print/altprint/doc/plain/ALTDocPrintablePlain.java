@@ -89,7 +89,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
     }
 
     @Override
-    public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    public int print( Graphics graphics, PageFormat pageFormat, int pageIndex ) throws PrinterException {
         try {
 
             if( listener != null && listener.isCancelled() ) {
@@ -101,7 +101,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
 
             try {
 
-                if( !beginPrintNotified )
+                if(!beginPrintNotified )
                 {
                     beginPrintNotified = true;
 
@@ -116,7 +116,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
                     return NO_SUCH_PAGE;
                 }
 
-                renderer.drawPage( g2d, pageFormat, page, planner.getAscent(), planner.getLineHeight() );
+                renderer.drawPage( g2d, pageFormat, page );
 
                 if( listener != null )
                     listener.onPagePrinted(pageIndex);

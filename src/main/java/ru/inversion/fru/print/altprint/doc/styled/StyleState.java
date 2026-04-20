@@ -9,19 +9,19 @@ public class StyleState {
     private final int     fontSize;
     private final int     fontStyle;
     private final boolean underline;
-    private final float   spaceAfter;
+    private final float verticalMovePt;
     private final float   leftIndent;
     private final float   upperIndent;
 
     private transient Font cachedFont;
 
     /** */
-    public StyleState(String fontName, int fontSize, int fontStyle, boolean underline, float spaceAfter, float leftIndent, float upperIndent) {
+    public StyleState(String fontName, int fontSize, int fontStyle, boolean underline, float verticalMovePt, float leftIndent, float upperIndent) {
         this.fontName   = fontName;
         this.fontSize   = fontSize;
         this.fontStyle  = fontStyle;
         this.underline  = underline;
-        this.spaceAfter = spaceAfter;
+        this.verticalMovePt = verticalMovePt;
         this.leftIndent = leftIndent;
         this.upperIndent = upperIndent;
     }
@@ -46,8 +46,8 @@ public class StyleState {
     }
 
     /** */
-    public float spaceAfter() {
-        return spaceAfter;
+    public float verticalMovePt() {
+        return verticalMovePt;
     }
 
     /** */
@@ -71,7 +71,7 @@ public class StyleState {
         private int     fontSize;
         private int     fontStyle;
         private boolean underline;
-        private float   spaceAfter;
+        private float verticalMovePt;
         private float   leftIndent;
         private float   upperIndent;
 
@@ -80,7 +80,7 @@ public class StyleState {
             this.fontSize    = base.fontSize;
             this.fontStyle   = base.fontStyle;
             this.underline   = base.underline;
-            this.spaceAfter  = base.spaceAfter;
+            this.verticalMovePt = base.verticalMovePt;
             this.leftIndent  = base.leftIndent;
             this.upperIndent = base.upperIndent;
         }
@@ -116,8 +116,8 @@ public class StyleState {
             return this;
         }
 
-        public Builder spaceAfter(float v) {
-            this.spaceAfter = v;
+        public Builder verticalMovePt(float v) {
+            this.verticalMovePt = v;
             return this;
         }
 
@@ -132,7 +132,7 @@ public class StyleState {
         }
 
         public StyleState build() {
-            return new StyleState( fontName, fontSize, fontStyle, underline, spaceAfter, leftIndent, upperIndent);
+            return new StyleState( fontName, fontSize, fontStyle, underline, verticalMovePt, leftIndent, upperIndent);
         }
     }
 

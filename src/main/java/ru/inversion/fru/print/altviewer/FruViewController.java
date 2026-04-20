@@ -95,7 +95,7 @@ public class FruViewController implements Initializable {
     private CodeArea fruArea;
 
     private ComboBox<String> fontComboBox;
-    private ComboBox<String> zoomComboBox;
+    //private ComboBox<String> zoomComboBox;
     private ComboBox<String> sizeComboBox;
 
     /** */
@@ -148,7 +148,7 @@ public class FruViewController implements Initializable {
         String font = fontComboBox.getValue();
         String size = sizeComboBox.getValue();
         if( font != null )
-            fruArea.setStyle( "-fx-font-family: '" + font + "'; -fx-font-size: " + size + "px;" );
+            fruArea.setStyle( "-fx-font-family: '" + font + "'; -fx-font-size: " + size + "pt;" );
     }
 
     /** */
@@ -165,15 +165,19 @@ public class FruViewController implements Initializable {
     /** */
     private void onZoom( )
     {
-        final String zoomValue = zoomComboBox.getValue( );
+        final String zoomValue = null; // zoomComboBox.getValue( );
 
         if( zoomValue != null )
         {
             try {
+
                 double zoomLevel = Double.parseDouble(zoomValue.replace("%", "")) / 100.0;
+
                 currentScale.setX(zoomLevel);
                 currentScale.setY(zoomLevel);
+
                 fruArea.requestLayout();
+
             } catch( NumberFormatException e ) {
                 System.err.println("Invalid zoom value: " + zoomValue);
             }
@@ -267,11 +271,11 @@ public class FruViewController implements Initializable {
         encodingComboBox.setOnAction(this::updateEncoding);
 
         // Масштаб
-        zoomComboBox = new ComboBox<>();
-        zoomComboBox.getItems().addAll(zoomLevels);
-        zoomComboBox.setValue("100%");
-        zoomComboBox.setPrefWidth(80);
-        zoomComboBox.setOnAction(e -> onZoom());
+//        zoomComboBox = new ComboBox<>();
+//        zoomComboBox.getItems().addAll(zoomLevels);
+//        zoomComboBox.setValue("100%");
+//        zoomComboBox.setPrefWidth(80);
+//        zoomComboBox.setOnAction(e -> onZoom());
 
         // Кнопки
         Button loadButton = new Button("Загрузить файл");
@@ -281,15 +285,15 @@ public class FruViewController implements Initializable {
         printButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         printButton.setOnAction(e -> printDocument());
 
-        Button printButton2 = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.BLUEVIOLET) );
-        printButton2.setOnAction(e -> printWysiwygDoc());
+//        Button printButton2 = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.BLUEVIOLET) );
+//        printButton2.setOnAction(e -> printWysiwygDoc());
 
         toolBar.getItems( ).addAll (
-            printButton, printButton2, new Separator(), loadButton,
+            printButton, new Separator(), loadButton,
             new Label("Шрифт:" ),    fontComboBox,
             new Label("Размер:"),    sizeComboBox,
-            new Label("Кодировка:"), encodingComboBox,
-            new Label("Масштаб:"  ), zoomComboBox
+            new Label("Кодировка:"), encodingComboBox
+            //new Label("Масштаб:"  ), zoomComboBox
         );
     }
 
@@ -421,14 +425,16 @@ public class FruViewController implements Initializable {
         } catch ( Throwable  th ) {
             handleException( getStage(), th );
         }
-        finally {
-            fruArea.getTransforms().clear();
-            if( t != null ) {
-                fruArea.getTransforms().add(t);
-                fruArea.applyCss();
-                fruArea.layout();
-            }
-        }
+//
+//        finally {
+//            fruArea.getTransforms().clear();
+//            if( t != null ) {
+//                fruArea.getTransforms().add(t);
+//                fruArea.applyCss();
+//                fruArea.layout();
+//            }
+//        }
+
     }
 
 
@@ -440,13 +446,13 @@ public class FruViewController implements Initializable {
         Label fontLabel     = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
         Label encodingLabel = new Label( S.EMPTY_STRING ); encodingLabel.textProperty().bind( encodingComboBox.valueProperty().asString() );
         Label modeLabel     = new Label( S.EMPTY_STRING ); modeLabel.textProperty().bind( viewModeProperty.asString() );
-        Label zoomLabel     = new Label( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
+        //Label zoomLabel     = new Label( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
 
         statusBar.getRightItems().addAll (
             new Label("Режим: "),     modeLabel,     new Separator(Orientation.VERTICAL),
             new Label("Шрифт: "),     fontLabel,     new Separator(Orientation.VERTICAL),
-            new Label("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL),
-            new Label("Масштаб: "),   zoomLabel
+            new Label("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL)
+            //new Label("Масштаб: "),   zoomLabel
         );
 
         Label iniLabel = new Label( AltSettings.INSTANCE().getINIFileName().toString() );

@@ -129,7 +129,7 @@ public class AltInitCommand extends AltCommand {
                     Pair<Float, Float> frac = (Pair<Float, Float>) p.getValue();
                     if (frac != null && frac.first != null && frac.second != null && frac.second != 0f) {
                         float pt = frac.first * 72.0f / frac.second;
-                        b.spaceAfter(pt);
+                        b.verticalMovePt(pt);
                     }
                     // если p1 == null (n/72), без параметра вычислить нельзя -> оставляем дефолт
                     break;

@@ -5,6 +5,7 @@ import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
+import ru.inversion.utils.Holder;
 
 public class Renderers {
 
