@@ -16,6 +16,6 @@ public class PageNumRenderer implements IRenderer<FruPaging> {
 
         final FruFormatter formatter = paging.getFormatter();
 
-        context.writer().print( formatter.format( context, "`PAGE_END`", null ), true );
+        context.writer().print( formatter.format( context, "`PAGE_END`", null ).first, true );
     }
 }

@@ -5,9 +5,12 @@ import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.items.FruItem;
 import ru.inversion.utils.Holder;
+import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
+import ru.inversion.utils.U;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.Character.isDigit;
@@ -147,22 +150,24 @@ public class FruFormatter extends FruItem {
     }
 
     /** */
-    public String format( FruContext context, String value, FruField fruField ) {
+    public Pair<String,String> format( FruContext context, String value, FruField fruField ) {
 
         int width = getWidth();
 
         if( S.isNullOrEmpty(value) )
         {
             if( width > 0 )
-                return S.space( width, fillChar() );
+                return Pair.makePair( S.space( width, fillChar() ), null );
             else
-                return S.EMPTY_STRING;
+                return Pair.makePair( S.EMPTY_STRING, null );
         }
 
         value = prepareValue( context, value );
 
         if( width <= 0 )
             width = context.getWidth();
+
+        String restValue = null;
 
         if( width > 0 )
         {
@@ -171,8 +176,15 @@ public class FruFormatter extends FruItem {
 
             if( fruField != null && rem.isPresent() )
             {
-                if( getSplitMode( ) == 2 && fruField instanceof FruFieldVal ) // 2
-                    context.data().put2CacheRow( rem.get(), ((FruFieldVal)fruField).getValIndex() );
+                if( getSplitMode( ) == 2 && fruField instanceof FruFieldVal ) {
+
+                    context.data().put2CacheRow (
+                        rem.get(),
+                        ( (FruFieldVal) fruField ).getValIndex()
+                    );
+
+                    restValue = rem.get();
+                }
             }
         }
         else
@@ -183,7 +195,7 @@ public class FruFormatter extends FruItem {
                     value = S.space( fillLength - value.length(), fillChar() ) + value;
             }
 
-        return value;
+        return Pair.makePair( value, restValue );
     }
 
     /** */

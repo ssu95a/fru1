@@ -5,7 +5,8 @@ import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
-import ru.inversion.utils.Holder;
+import ru.inversion.utils.Pair;
+import ru.inversion.utils.S;
 
 public class Renderers {
 
@@ -14,20 +15,32 @@ public class Renderers {
 
     private final IRenderer<FruLine> lineRenderer = new IRenderer<FruLine>() {
         @Override
-        public void render( FruContext context, FruLine line ) {
-            for( FruItem i : line.getItems() ) {
-                 context.renderers().render(context, i );
-            }
+        public void render( FruContext context, FruLine line )
+        {
+            for( FruItem i : line.getItems( ) )
+                 context.renderers().render( context, i );
         }
     };
 
     private final IRenderer<FruField> fieldRenderer = new IRenderer<FruField>() {
         @Override
-        public void render(FruContext context, FruField field ) {
+        public void render( FruContext context, FruField field ) {
 
-            String value = field.getValue(context);
+            String value = field.getValue( context );
+
             if( field.getFormatter() != null )
-                context.writer().print( field.getFormatter().format( context, value, field ));
+            {
+//                Pair<String, String> pv = Pair.makePair( null, value );
+//                do {
+//                     if( pv.first != null )
+//                         context.writer().newLine();
+//                     pv = field.getFormatter().format( context, pv.second, field );
+//                     context.writer().print( pv.first );
+//                } while( S.isNotNullOrEmpty(pv.second) );
+
+                Pair<String, String> pv = field.getFormatter().format( context, value, field );
+                context.writer().print( pv.first );
+            }
             else
                 context.writer().print( value );
         }

@@ -25,11 +25,16 @@ public class TableSectionRenderer implements IRenderer<FruSectionTable> {
     }
 
     // Рендеринг строки с учетом переносов
-    private void renderTableLine(FruContext context, FruSectionTable table, IRenderer<FruLine> lineRenderer, IRenderer<FruSectionLine> lineSectionRenderer) {
-
+    private void renderTableLine(
+        FruContext context, FruSectionTable table,
+        IRenderer<FruLine> lineRenderer,
+        IRenderer<FruSectionLine> lineSectionRenderer
+    )
+    {
         for( FruLine line : table.getLines() )
         {
             lineRenderer.render( context, line );
+
             context.writer().newLine(); // Переход на следующую строку для сплитов
             if( lineSectionRenderer != null )
                 lineSectionRenderer.render( context, table.getLine() );

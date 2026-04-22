@@ -4,6 +4,7 @@ import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
 
+import ru.inversion.fru.parser.model.EntrySectionNode;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
@@ -138,8 +139,8 @@ public class FruBuilder {
         });
 
         List<FruSectionTable> tables = sections.stream()
-                .filter( t->t.getType() == TABLE )
-                    .map(t->(FruSectionTable)t).collect( Collectors.toList() );
+            .filter( t->t.getType() == TABLE )
+                .map(t->(FruSectionTable)t).collect( Collectors.toList() );
 
         for( FruSectionTable t : tables ) {
 

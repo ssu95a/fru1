@@ -70,7 +70,7 @@ public class FruParser implements Iterator<AbstractSectionNode> {
             buffer[i] = buffer[ i + count ];
         //
         for( int i = buffer.length - count; i < buffer.length; i++ ) {
-            buffer[i] = base.hasNext() ? base.next() : null;
+             buffer[i] = base.hasNext() ? base.next() : null;
         }
 
         return !eof();

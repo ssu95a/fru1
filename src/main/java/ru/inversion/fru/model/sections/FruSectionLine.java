@@ -7,13 +7,10 @@ import static ru.inversion.fru.utils.constants.SectionTypeEnum.LINE;
 /** */
 public class FruSectionLine extends FruSection{
 
-    /**
-     * @param num
-     */
+    /**  @param num */
     public FruSectionLine(int num) {
         super( num );
     }
-
     /** */
     @Override
     public SectionTypeEnum getType() {

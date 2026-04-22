@@ -74,6 +74,9 @@ public class EntrySectionNode extends AbstractSectionNode {
     @Override
     protected FruSection parseHeader( FruBuilder fruBuilder )
     {
+        if( S.isNullOrEmpty(header) )
+            return null;
+
         final Matcher matcher = ENTRY_PATTERN.matcher( header );
 
         if( !matcher.find() )

@@ -8,10 +8,6 @@ import java.io.PrintStream;
 
 /**
  * Перенаправить System.out в логгер STDOUT.
- *
- * НЕ ОТВЕЧАЕТ ЗА:
- * - System.err
- * - конфигурацию logback
  */
 public final class StdOutRedirector {
 

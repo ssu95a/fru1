@@ -3,6 +3,7 @@ package ru.inversion.fru.model.script;
 import ru.inversion.fru.model.items.FruItem;
 import ru.inversion.utils.S;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class FruScript extends FruItem {
         if( exportArgs != null && !exportArgs.isEmpty() )
             this.exportArgs = new HashSet<>(exportArgs);
         else
-            this.exportArgs = null;
+            this.exportArgs = Collections.emptySet();
     }
 
     /** */

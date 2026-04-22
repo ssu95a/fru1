@@ -22,8 +22,6 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
         final List<FruItem>  items  = format.getItems();
         final FruFormatter   containing = formatCall.getContaining();
 
-        int i = 0;
-
         Writer w = null;
 
         if( containing != null )
@@ -34,20 +32,21 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
 
         try {
 
-            IRenderer<FruField> fieldRenderer = context.renderers().get(FruField.class);
+            final IRenderer<FruField> fieldRenderer = context.renderers( ).get( FruField.class );
+            final IRenderer<FruText > textRenderer  = context.renderers( ).get( FruText.class  );
+
+            int i = 0;
 
             for( FruItem item : items )
             {
-                if( item instanceof FruText ) {
-                    context.renderers().render(context, item);
-                }
+                if( item instanceof FruText)
+                    textRenderer.render( context, (FruText)item );
                 else
                 {
                     final FruField fruField = fields.get(i++);
-                    fieldRenderer.render(context, fruField);
+                    fieldRenderer.render( context, fruField );
                 }
             }//end for
-
         }
         finally
         {
@@ -56,6 +55,6 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
         }
 
         if( w != null )
-            context.writer().print( containing.format( context, w.toString(), null ) );
+            context.writer().print( containing.format( context, w.toString(), null ).first );
     }
 }

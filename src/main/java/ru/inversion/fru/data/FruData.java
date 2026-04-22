@@ -43,8 +43,9 @@ public class FruData {
     {
         if( cacheRow != null )
         {
-            rowProperty.setValue( new FruDataRow( currentSectionNum(), cacheRow ) );
-            cacheRow   = null;
+            List<String> cacheTmp = cacheRow;
+            cacheRow = null;
+            rowProperty.setValue( new FruDataRow( currentSectionNum(), cacheTmp ) );
         }
         else
         {
@@ -61,6 +62,12 @@ public class FruData {
             IntStream.range( 0, rowProperty.getValue().data().size() ).forEach(i->cacheRow.add(null) );
         }
         cacheRow.set( valIndex, value );
+    }
+
+    /** */
+    public boolean isCacheFilled()
+    {
+        return cacheRow != null;
     }
 
     /** */

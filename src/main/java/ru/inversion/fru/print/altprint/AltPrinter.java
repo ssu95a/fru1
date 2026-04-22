@@ -59,19 +59,17 @@ public class AltPrinter {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Проверка, относится ли принтер к matrix backend.
      */
     public static boolean isMatrix(PrintService awtPrinter) {
-        if (awtPrinter == null) {
+
+        if( awtPrinter == null)
             return false;
-        }
 
         return AltSettings.INSTANCE().isMatrixPrinter(awtPrinter.getName());
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Найти AWT-принтер по имени.
      */
     public static Optional<PrintService> findAWTPrinterByName(String printerName) {
@@ -87,7 +85,6 @@ public class AltPrinter {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Найти AWT-принтер по индексу.
      */
     public static Optional<PrintService> findAWTPrinterByIndex(int index) {

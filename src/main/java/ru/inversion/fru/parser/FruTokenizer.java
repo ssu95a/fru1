@@ -62,7 +62,7 @@ public class FruTokenizer extends Tokenizer {
 
         final Iterator<Token<?>> iter = new Iterator<Token<?>>() {
 
-            final private BooleanProperty entryOn = new BooleanProperty(false);
+            final private BooleanProperty entryOn = new BooleanProperty(true);
 
             {
                 entryOn.addListener( new IProperty.ChangeListener<Boolean>() {
