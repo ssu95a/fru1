@@ -31,13 +31,8 @@ public class FruFieldVal extends FruField {
     /** */
     @Override
     protected String getValueImpl( FruContext context ) {
-
         if( valIndex == -1 )
             return null;
-
-        if( hasFieldSplit() )
-            return context.data().currentRow().getValue( valIndex, getWidth() );
-        else
-            return context.data().currentRow().getValue( valIndex );
+        return context.data().currentRow().getValue( valIndex );
     }
 }

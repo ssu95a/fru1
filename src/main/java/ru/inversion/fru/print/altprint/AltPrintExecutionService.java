@@ -6,6 +6,7 @@ import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
 import ru.inversion.fru.print.naltprn.AltSettings;
 
 import javax.print.PrintService;
+import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
@@ -29,48 +30,45 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public final class AltPrintExecutionService {
 
-   private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+   private static final Logger log = getLogger( MethodHandles.lookup().lookupClass() );
 
    private final AltPrintPageResolver pageResolver = new AltPrintPageResolver();
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
     * Исполнить печать документа на уже выбранный принтер.
     */
-   public void print(ALTDoc doc, PrintService printer, IAltPrintListener listener) throws Exception {
+   public void print( ALTDoc doc, PrintService printer, IAltPrintListener listener ) throws Exception {
 
-      if(doc == null )
+      if( doc == null )
          throw new IllegalArgumentException("doc == null");
-
       if( printer == null )
          throw new IllegalArgumentException("printer == null");
 
       boolean matrix = isMatrixPrinter(printer);
 
-      log.info("Печать на принтер: {}, матричный: {}", printer.getName(), matrix ? "Y" : "N");
+      log.info( "Печать на принтер: {}, матричный: {}", printer.getName(), matrix ? "Y" : "N" );
 
-      try (ALTDocPrintable printable = doc.makePrintable(listener)) {
-         if (matrix) {
+      try (ALTDocPrintable printable = doc.makePrintable(listener))
+      {
+         if( matrix )
             printMatrix(printable, printer);
-         } else {
+         else
             printGraphic(doc, printable, printer);
-         }
       }
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
-    * Проверка, относится ли принтер к matrix backend.
+    * Проверка, относится ли принтер к matrix
     */
    public boolean isMatrixPrinter(PrintService printer) {
-      if (printer == null) {
-         return false;
-      }
+
+      if( printer == null )
+          return false;
+
       return AltSettings.INSTANCE().isMatrixPrinter(printer.getName());
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
     * Запуск matrix/raw-печати.
     */
    private void printMatrix(ALTDocPrintable printable, PrintService printer) throws Exception {
@@ -78,30 +76,24 @@ public final class AltPrintExecutionService {
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
     * Запуск AWT/WYSIWYG-печати.
     */
    private void printGraphic(ALTDoc doc, ALTDocPrintable printable, PrintService printer) throws Exception {
-      PrinterJob job = PrinterJob.getPrinterJob();
+
+      final PrinterJob job = PrinterJob.getPrinterJob();
       job.setPrintService(printer);
-      job.setJobName("ALT: " + doc.getAltFile());
+      job.setJobName( "ALT: " + doc.getAltFile() );
 
-      AltPrintPageResolver.ResolvedPageSetup setup =
-              pageResolver.resolve(job, printer, doc.getPageConfig(), doc.getCopies().getValue());
+      AltPrintPageResolver.ResolvedPageSetup setup = pageResolver.resolve( job, printer, doc.getPageConfig(), doc.getCopies().getValue());
+      /*
+         log.info("Resolved printable area: {}", pageResolver.printableAreaToString(setup.getPrintableArea()));
+         log.info("PF orientation={}", setup.getPageFormat().getOrientation());
+         log.info("PF imageableX={}, imageableY={}", setup.getPageFormat().getImageableX(), setup.getPageFormat().getImageableY());
+         log.info("PF imageableW={}, imageableH={}", setup.getPageFormat().getImageableWidth(), setup.getPageFormat().getImageableHeight());
+         log.info("PF pageW={}, pageH={}", setup.getPageFormat().getWidth(), setup.getPageFormat().getHeight());
+      */
 
-      log.info("Resolved printable area: {}", pageResolver.printableAreaToString(setup.getPrintableArea()));
-      log.info("PF orientation={}", setup.getPageFormat().getOrientation());
-      log.info("PF imageableX={}, imageableY={}",
-              setup.getPageFormat().getImageableX(),
-              setup.getPageFormat().getImageableY());
-      log.info("PF imageableW={}, imageableH={}",
-              setup.getPageFormat().getImageableWidth(),
-              setup.getPageFormat().getImageableHeight());
-      log.info("PF pageW={}, pageH={}",
-              setup.getPageFormat().getWidth(),
-              setup.getPageFormat().getHeight());
-
-      job.setPrintable(printable);
-      job.print(setup.getAttributes());
+      job.setPrintable( printable, setup.getPageFormat() );
+      job.print( setup.getAttributes() );
    }
 }

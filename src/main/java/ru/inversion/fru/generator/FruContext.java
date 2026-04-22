@@ -6,6 +6,7 @@ import ru.inversion.fru.data.FruData;
 import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.data.FruDataRow;
 import ru.inversion.fru.generator.exceptions.FruScriptException;
+import ru.inversion.fru.generator.renderer.FruLineRenderSession;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.fields.FruField;
@@ -49,6 +50,8 @@ public class FruContext implements AutoCloseable {
     /** */
     private FruSection currentSection;
 
+    private FruLineRenderSession lineRenderSession;
+
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
 
@@ -87,6 +90,15 @@ public class FruContext implements AutoCloseable {
         globalScriptContext.setWriter( this.writer );
 
         scriptEngine.setContext( globalScriptContext );
+    }
+
+    /** */
+    public FruLineRenderSession getLineRenderSession() {
+        return lineRenderSession;
+    }
+
+    public void setLineRenderSession(FruLineRenderSession lineRenderSession) {
+        this.lineRenderSession = lineRenderSession;
     }
 
     /** */
@@ -248,16 +260,5 @@ public class FruContext implements AutoCloseable {
 
         }
     }
-
-    /*
-    public FruField.Type getItemType( String name )
-    {
-        if( S.isNullOrEmpty(name) )
-            return null;
-
-        if( currentSection().getFieldNum(name) > 0 )
-            return FruField.Type.Data;
-    }
-    */
 }
 

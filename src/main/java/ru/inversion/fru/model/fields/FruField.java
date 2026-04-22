@@ -110,8 +110,6 @@ public abstract class FruField extends FruItem {
 
             return new FruFieldArg( name, formatter );
 
-//            throw new FruFieldNotFoundException(name);
-
         } catch( Exception e ) {
             throw new FruModelException( "Error on make field: " + name, e );
         }

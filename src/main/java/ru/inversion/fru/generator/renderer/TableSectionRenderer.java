@@ -9,31 +9,40 @@ import ru.inversion.fru.model.sections.FruSectionTable;
 /** */
 public class TableSectionRenderer implements IRenderer<FruSectionTable> {
 
+
+    private final FruTableBodyLineRenderer tableBodyLineRenderer;
+
+    public TableSectionRenderer()
+    {
+        this( new FruTableBodyLineRenderer() );
+    }
+
+    public TableSectionRenderer(FruTableBodyLineRenderer tableBodyLineRenderer)
+    {
+        this.tableBodyLineRenderer = tableBodyLineRenderer;
+    }
+    
     @Override
     public void render( FruContext context, FruSectionTable table ) {
 
         table.incrementUse();
 
-        final IRenderer<FruLine> lineRenderer = context.renderers().get( FruLine.class );
-
         final IRenderer<FruSectionLine> lineSectionRenderer =
-              table.getLine() != null ? context.renderers().get(FruSectionLine.class) : null;
-
+                table.getLine() != null ? context.renderers().get(FruSectionLine.class) : null;
         // Рендерим каждую строку таблицы
-        renderTableLine( context, table, lineRenderer, lineSectionRenderer );
+        renderTableLine( context, table, lineSectionRenderer );
 
     }
 
     // Рендеринг строки с учетом переносов
     private void renderTableLine(
         FruContext context, FruSectionTable table,
-        IRenderer<FruLine> lineRenderer,
         IRenderer<FruSectionLine> lineSectionRenderer
     )
     {
         for( FruLine line : table.getLines() )
         {
-            lineRenderer.render( context, line );
+            tableBodyLineRenderer.render( context, line );
 
             context.writer().newLine(); // Переход на следующую строку для сплитов
             if( lineSectionRenderer != null )

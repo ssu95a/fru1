@@ -39,6 +39,8 @@ import ru.inversion.fru.print.altprint.ALTPrintException;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.fru.print.naltprn.AltSettings;
+import ru.inversion.fru.print.naltprn.cmd.AltInitCommand;
+import ru.inversion.fru.print.naltprn.cmd.AltParameterTypeEnum;
 import ru.inversion.utils.MemoryURL;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
@@ -95,7 +97,6 @@ public class FruViewController implements Initializable {
     private CodeArea fruArea;
 
     private ComboBox<String> fontComboBox;
-    //private ComboBox<String> zoomComboBox;
     private ComboBox<String> sizeComboBox;
 
     /** */
@@ -138,7 +139,11 @@ public class FruViewController implements Initializable {
         fontComboBox.getItems().addAll(fontNames);
 
         String defaultFontName = FontMan.getDefaultMonospaceFont(fontNames);
-        fontComboBox.setValue( defaultFontName );
+
+        AltInitCommand cmd = AltSettings.INSTANCE().commandDict().getInitCommand();
+        String fontName = cmd.getParameter(AltParameterTypeEnum.FONT_NAME);
+
+        fontComboBox.setValue( U.nvl( fontName, defaultFontName ) );
 
         onFontName();
     }
@@ -449,7 +454,7 @@ public class FruViewController implements Initializable {
         //Label zoomLabel     = new Label( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
 
         statusBar.getRightItems().addAll (
-            new Label("Режим: "),     modeLabel,     new Separator(Orientation.VERTICAL),
+                new Label("Режим: "), modeLabel,     new Separator(Orientation.VERTICAL),
             new Label("Шрифт: "),     fontLabel,     new Separator(Orientation.VERTICAL),
             new Label("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL)
             //new Label("Масштаб: "),   zoomLabel

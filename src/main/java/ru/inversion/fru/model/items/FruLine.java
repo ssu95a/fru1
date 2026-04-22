@@ -31,7 +31,7 @@ public class FruLine extends FruItem {
         return items;
     }
 
-    /** */
+    /*
     public void collectFieldLengths(Map<Integer,List<Integer>> fieldLengths )
     {
         items.stream()
@@ -44,6 +44,7 @@ public class FruLine extends FruItem {
                         }
                     });
     }
+    */
 
     /** */
     public static final Pattern FORMAT_CALL_PATTERN = Pattern.compile ("^(?<name>\\w+)\\s*\\(\\s*(?<fields>\\w+(?:\\s*,\\s*\\w+)*\\s*)?\\)\\s*(?<flags>(?:/\\w+)*)$");
@@ -131,5 +132,4 @@ public class FruLine extends FruItem {
 
         return new FruLine( result );
     }
-
 }

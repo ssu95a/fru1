@@ -24,25 +24,27 @@ public class Renderers {
 
     private final IRenderer<FruField> fieldRenderer = new IRenderer<FruField>() {
         @Override
-        public void render( FruContext context, FruField field ) {
+        public void render(FruContext context, FruField field) {
 
-            String value = field.getValue( context );
+            final FruLineRenderSession lineSession = context.getLineRenderSession();
+
+            final String value = lineSession != null
+                    ? lineSession.resolveValue(context, field)
+                    : field.getValue(context);
 
             if( field.getFormatter() != null )
             {
-//                Pair<String, String> pv = Pair.makePair( null, value );
-//                do {
-//                     if( pv.first != null )
-//                         context.writer().newLine();
-//                     pv = field.getFormatter().format( context, pv.second, field );
-//                     context.writer().print( pv.first );
-//                } while( S.isNotNullOrEmpty(pv.second) );
+                Pair<String, String> pv = field.getFormatter().format(context, value, field);
+                context.writer().print(pv.first);
 
-                Pair<String, String> pv = field.getFormatter().format( context, value, field );
-                context.writer().print( pv.first );
+                if( lineSession != null && field.hasFieldSplit() ) {
+                    if( S.isNotNullOrEmpty( pv.second ) && !pv.second.equals( value ) )
+                            lineSession.storeRemainder( field, pv.second );
+                }
             }
-            else
-                context.writer().print( value );
+            else {
+                context.writer().print(value);
+            }
         }
     } ;
 
@@ -61,6 +63,9 @@ public class Renderers {
     private final IRenderer<FruFormatCall>    formatCallRenderer    = new FormatCallRenderer();
 
     private final IRenderer<FruPaging>        pagingRenderer        = new PageNumRenderer();
+
+    private final FruTableBodyLineRenderer    tableBodyLineRenderer = new FruTableBodyLineRenderer();
+
 
     public <T extends FruItem> void render( FruContext context, T item ) {
 

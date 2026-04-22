@@ -14,7 +14,7 @@ public class FruData {
 
     final private Property<FruDataRow> rowProperty = new Property<>( new FruDataRow( -1, Collections.emptyList()) );
 
-    private List<String> cacheRow;
+    private List<String> pendingContinuationRow;
 
     /** */
     public FruData( FruDataFile dataFile ) {
@@ -41,10 +41,10 @@ public class FruData {
     /** */
     public void next()
     {
-        if( cacheRow != null )
+        if( pendingContinuationRow != null )
         {
-            List<String> cacheTmp = cacheRow;
-            cacheRow = null;
+            List<String> cacheTmp = pendingContinuationRow;
+            pendingContinuationRow = null;
             rowProperty.setValue( new FruDataRow( currentSectionNum(), cacheTmp ) );
         }
         else
@@ -57,22 +57,16 @@ public class FruData {
     /** */
     public void put2CacheRow( String value, int valIndex )
     {
-        if( cacheRow == null ) {
-            cacheRow = new ArrayList<>();
-            IntStream.range( 0, rowProperty.getValue().data().size() ).forEach(i->cacheRow.add(null) );
+        if( pendingContinuationRow == null ) {
+            pendingContinuationRow = new ArrayList<>();
+            IntStream.range( 0, rowProperty.getValue().data().size() ).forEach(i-> pendingContinuationRow.add(null) );
         }
-        cacheRow.set( valIndex, value );
-    }
-
-    /** */
-    public boolean isCacheFilled()
-    {
-        return cacheRow != null;
+        pendingContinuationRow.set( valIndex, value );
     }
 
     /** */
     public boolean eof()
     {
-        return /*cacheRow == null && */ !dataFile.hasNext( );
+        return pendingContinuationRow == null && !dataFile.hasNext( );
     }
 }

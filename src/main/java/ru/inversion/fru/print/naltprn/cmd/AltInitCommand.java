@@ -10,6 +10,8 @@ import ru.inversion.utils.Pair;
 import ru.inversion.utils.U;
 
 public class AltInitCommand extends AltCommand {
+
+    /** */
     public AltInitCommand(String name, String note) {
         super(name, note);
     }
@@ -34,13 +36,26 @@ public class AltInitCommand extends AltCommand {
         return null;
     }
 
+    /** */
     @Override
     void toCSStyle(StringBuilder sb, Object paramObject) {
         super.toCSStyle(sb, paramObject);
     }
 
     /** */
-    public void makePrintPageConfig( final AltPrintPageConfig.Builder b )
+    public <T> T getParameter( AltParameterTypeEnum type )
+    {
+        for( AltParameter<?> p : getGraphicData().getParameters() ) {
+             if( p == null )
+                 continue;
+             if( type == p.getType() )
+                 return (T)p.getValue();
+        }
+        return null;
+    }
+
+    /** */
+    public void initPrintPageConfig(final AltPrintPageConfig.Builder b )
     {
         U.callIfNotNull( getOrientation(), b::orientation );
 
@@ -49,10 +64,10 @@ public class AltInitCommand extends AltCommand {
 
         for( AltParameter<?> p : getGraphicData().getParameters() ) {
 
-            if (p == null || p.getType() == null)
+            if( p == null || p.getType() == null )
                 continue;
 
-            switch (p.getType()) {
+            switch( p.getType() ) {
                 case FONT_NAME:
                     b.fontName(p.getValue().toString());
                     break;
@@ -90,7 +105,7 @@ public class AltInitCommand extends AltCommand {
 
         StyleState.Builder b = style.toBuilder();
 
-        if (getGraphicData() == null || getGraphicData().getParameters() == null) {
+        if( getGraphicData() == null || getGraphicData().getParameters() == null ) {
             return b.build();
         }
 

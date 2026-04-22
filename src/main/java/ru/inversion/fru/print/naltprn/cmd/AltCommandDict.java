@@ -31,7 +31,7 @@ public class AltCommandDict
     }
 
     /** */
-    public AltInitCommand getInitCommand()
+    public AltInitCommand getInitCommand( )
     {
         return this.initCommand;
     }
@@ -41,7 +41,7 @@ public class AltCommandDict
     {
         AltPrintPageConfig.Builder b = AltPrintPageConfig.builder();
         if( initCommand != null )
-            initCommand.makePrintPageConfig( b );
+            initCommand.initPrintPageConfig( b );
         return b;
     }
 

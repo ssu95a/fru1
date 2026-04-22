@@ -71,27 +71,22 @@ public final class AltPrintPageResolver {
            PrintService service,
            AltPrintPageConfig cfg,
            int copies
-   ) {
-      if (job == null) {
-         throw new IllegalArgumentException("job == null");
-      }
-      if (service == null) {
-         throw new IllegalArgumentException("service == null");
-      }
-      if (cfg == null) {
-         throw new IllegalArgumentException("cfg == null");
-      }
+   )
+   {
+      if (job == null) { throw new IllegalArgumentException("job == null"); }
+      if (service == null) { throw new IllegalArgumentException("service == null");}
+      if (cfg == null) { throw new IllegalArgumentException("cfg == null"); }
 
       PrintRequestAttributeSet attrs = buildAttributes(cfg, copies);
 
       MediaPrintableArea printableArea = resolvePrintableArea(service, cfg, attrs);
-      if (printableArea != null) {
+      if( printableArea != null )
          attrs.add(printableArea);
-      }
 
       PageFormat pf = job.getPageFormat(attrs);
+      pf = job.validatePage(pf);
 
-      return new ResolvedPageSetup(attrs, pf, printableArea);
+      return new ResolvedPageSetup( attrs, pf, printableArea );
    }
 
    /**

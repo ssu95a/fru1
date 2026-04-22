@@ -107,6 +107,6 @@ public class FruUtils {
         if( lastWSIndex == 0 )
             lastWSIndex = length - 1;
 
-        return Pair.makePair( text.substring( 0 ,lastWSIndex ), text.substring( lastWSIndex + 1 ) );
+        return Pair.makePair( text.substring( 0, lastWSIndex ), text.substring( lastWSIndex + 1 ) );
     }
 }
