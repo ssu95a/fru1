@@ -32,119 +32,183 @@ public final class AltStyledPagePlanner {
    private static final int PAGES_CACHE_SIZE = 3;
 
    private final ALTDoc altDoc;
+   private final Deque<Pair<Integer, AltStyledPreparedPage>> pagesCache =
+           new ArrayDeque<Pair<Integer, AltStyledPreparedPage>>();
 
-   private final Deque<Pair<Integer, AltStyledPreparedPage>> pagesCache = new ArrayDeque<Pair<Integer, AltStyledPreparedPage>>();
+   private Float effectiveScale;
+   private boolean effectiveScaleResolved;
 
-   /** */
    public AltStyledPagePlanner(ALTDoc altDoc) {
-      //Checks.Require.object(altDoc,"altDoc");
       this.altDoc = Objects.requireNonNull(altDoc, "'altDoc' is null");
    }
 
    /**
     * Подготовить страницу для печати.
-    * Сначала строит страницу без shrink, затем при необходимости пересчитывает её с уменьшением масштаба.
+    * Масштаб вычисляется один раз на весь документ и далее используется
+    * одинаково для всех страниц.
     */
-   public AltStyledPreparedPage preparePage( Graphics2D g2d, PageFormat pf, int pageIndex) throws IOException {
+   public AltStyledPreparedPage preparePage(Graphics2D g2d, PageFormat pf, int pageIndex) throws IOException {
 
       AltStyledPreparedPage cached = findCachedPage(pageIndex);
-      if( cached != null )
-          return cached;
+      if (cached != null)
+         return cached;
 
-      final AltPrintPageConfig cfg = altDoc.getPageConfig();
+      float scale = resolveEffectiveScale(g2d, pf);
 
-      AltStyledPreparedPage normal = layoutPage( g2d, pf, pageIndex, 1.0f );
-      //если нет больше страниц, то выходим
-      if( normal == null )
-          return null;
+      AltStyledPreparedPage prepared = layoutPage(g2d, pf, pageIndex, scale);
+      if (prepared == null)
+         return null;
 
-      // если масштабирование не включено
-      if( !cfg.isShrinkEnabled() ) {
-         cachePage( pageIndex, normal );
-         return normal;
-      }
-
-      // надо ли масштабировать
-      boolean needShrink =
-              normal.isOverflowByHeight()
-                      || normal.isOverflowByWidth()
-                      || normal.getRequiredHeightPt() > cfg.getSafeContentHeightPt(pf) + 0.01f
-                      || normal.getRequiredWidthPt()  > cfg.getSafeContentWidthPt(pf)  + 0.01f;
-
-      if( !needShrink ) {
-         cachePage(pageIndex, normal);
-         return normal;
-      }
-
-      // попытались
-      float resolvedScale = cfg.resolveShrinkScale( pf, normal.getRequiredWidthPt(), normal.getRequiredHeightPt() );
-      // нет необходимости не делаем
-      if( resolvedScale >= 0.99f )
-      {
-         cachePage(pageIndex, normal);
-         return normal;
-      }
-
-      AltStyledPreparedPage shrunk = layoutPage( g2d, pf, pageIndex, resolvedScale );
-      AltStyledPreparedPage result = (shrunk != null) ? shrunk : normal;
-
-      cachePage(pageIndex, result);
-
-      return result;
+      cachePage(pageIndex, prepared);
+      return prepared;
    }
 
    /**
-    * Построить указанную страницу с заданным scale.
-    * Stateless: каждый вызов перечитывает документ с начала.
+    * Один раз вычислить effective scale для всего документа.
     */
-   private AltStyledPreparedPage layoutPage( Graphics2D g2d, PageFormat pf, int targetPage, float scale) throws IOException
-   {
-      try( BufferedReader reader = Files.newBufferedReader( altDoc.getAltFile(), altDoc.getCharset() ) )
-      {
-         IStyledTextParser tmpParser = new StyledTextParser( reader, AltSettings.INSTANCE().commandDict() );
+   private float resolveEffectiveScale(Graphics2D g2d, PageFormat pf) throws IOException {
 
-         PageLayoutEngine tmpEngine = new PageLayoutEngine( tmpParser, g2d, pf, altDoc.getPageConfig(), scale );
+      if (effectiveScaleResolved)
+         return effectiveScale.floatValue();
+
+      final AltPrintPageConfig cfg = altDoc.getPageConfig();
+
+      if (!cfg.isShrinkEnabled()) {
+         effectiveScale = Float.valueOf(1.0f);
+         effectiveScaleResolved = true;
+         return 1.0f;
+      }
+
+      DocumentMetrics metrics = inspectDocumentAtScale(g2d, pf, 1.0f);
+
+      if (!metrics.hasPages) {
+         effectiveScale = Float.valueOf(1.0f);
+         effectiveScaleResolved = true;
+         return 1.0f;
+      }
+
+      boolean needShrink =
+              metrics.anyOverflowByHeight
+                      || metrics.anyOverflowByWidth
+                      || metrics.maxRequiredHeightPt > cfg.getSafeContentHeightPt(pf) + 0.01f
+                      || metrics.maxRequiredWidthPt > cfg.getSafeContentWidthPt(pf) + 0.01f;
+
+      float resolved = 1.0f;
+
+      if (needShrink) {
+         resolved = cfg.resolveShrinkScale(
+                 pf,
+                 metrics.maxRequiredWidthPt,
+                 metrics.maxRequiredHeightPt
+         );
+
+         if (resolved >= 0.99f)
+            resolved = 1.0f;
+      }
+
+      effectiveScale = Float.valueOf(resolved);
+      effectiveScaleResolved = true;
+
+      return resolved;
+   }
+
+   /**
+    * Один полный прогон документа на заданном scale, чтобы собрать
+    * максимальные требования по ширине/высоте для всех страниц.
+    */
+   private DocumentMetrics inspectDocumentAtScale(Graphics2D g2d, PageFormat pf, float scale) throws IOException {
+
+      try (BufferedReader reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset())) {
+
+         IStyledTextParser tmpParser =
+                 new StyledTextParser(reader, AltSettings.INSTANCE().commandDict());
+
+         PageLayoutEngine tmpEngine =
+                 new PageLayoutEngine(tmpParser, g2d, pf, altDoc.getPageConfig(), scale);
+
+         DocumentMetrics metrics = new DocumentMetrics();
+
+         PageLayoutEngine.LaidOutPage laidOut;
+         while ((laidOut = tmpEngine.nextPreparedPage()) != null) {
+            metrics.hasPages = true;
+            metrics.maxRequiredHeightPt =
+                    Math.max(metrics.maxRequiredHeightPt, laidOut.getRequiredHeightPt());
+            metrics.maxRequiredWidthPt =
+                    Math.max(metrics.maxRequiredWidthPt, laidOut.getRequiredWidthPt());
+            metrics.anyOverflowByHeight |= laidOut.isOverflowByHeight();
+            metrics.anyOverflowByWidth  |= laidOut.isOverflowByWidth();
+         }
+
+         return metrics;
+      }
+   }
+
+   /**
+    * Построить указанную страницу с уже выбранным общим scale.
+    * Stateless: каждый вызов перечитывает документ с начала,
+    * но scale у всех страниц один и тот же.
+    */
+   private AltStyledPreparedPage layoutPage(Graphics2D g2d, PageFormat pf, int targetPage, float scale) throws IOException
+   {
+      try (BufferedReader reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset())) {
+
+         IStyledTextParser tmpParser =
+                 new StyledTextParser(reader, AltSettings.INSTANCE().commandDict());
+
+         PageLayoutEngine tmpEngine =
+                 new PageLayoutEngine(tmpParser, g2d, pf, altDoc.getPageConfig(), scale);
 
          int currentPage = 0;
          PageLayoutEngine.LaidOutPage laidOut;
 
-         while( (laidOut = tmpEngine.nextPreparedPage()) != null )
-         {
-            if( currentPage == targetPage )
-                return new AltStyledPreparedPage( laidOut.getLines(), laidOut.getRequiredHeightPt(), laidOut.isOverflowByHeight(), laidOut.getRequiredWidthPt(), laidOut.isOverflowByWidth(), scale );
+         while ((laidOut = tmpEngine.nextPreparedPage()) != null) {
+            if (currentPage == targetPage) {
+               return new AltStyledPreparedPage(
+                       laidOut.getLines(),
+                       laidOut.getRequiredHeightPt(),
+                       laidOut.isOverflowByHeight(),
+                       laidOut.getRequiredWidthPt(),
+                       laidOut.isOverflowByWidth(),
+                       scale
+               );
+            }
 
             currentPage++;
          }
       }
+
       return null;
    }
 
-   /**
-    * Очистка кэша prepared pages.
-    */
    public void clearCache() {
       pagesCache.clear();
+      effectiveScale = null;
+      effectiveScaleResolved = false;
    }
 
-   /** */
-   private AltStyledPreparedPage findCachedPage( int pageIndex )
+   private AltStyledPreparedPage findCachedPage(int pageIndex)
    {
-      for (Pair<Integer, AltStyledPreparedPage> p : pagesCache)
-      {
-         if( p.first == pageIndex )
+      for (Pair<Integer, AltStyledPreparedPage> p : pagesCache) {
+         if (p.first == pageIndex)
             return p.second;
       }
       return null;
    }
 
-   /** */
-   private void cachePage( int pageIndex, AltStyledPreparedPage page ) {
+   private void cachePage(int pageIndex, AltStyledPreparedPage page) {
 
-      while( pagesCache.size() >= PAGES_CACHE_SIZE )
-      {
+      while (pagesCache.size() >= PAGES_CACHE_SIZE) {
          pagesCache.removeLast();
       }
 
-      pagesCache.addFirst( Pair.makePair(pageIndex, page) );
+      pagesCache.addFirst(Pair.makePair(pageIndex, page));
+   }
+
+   private static final class DocumentMetrics {
+      private boolean hasPages;
+      private float maxRequiredHeightPt;
+      private float maxRequiredWidthPt;
+      private boolean anyOverflowByHeight;
+      private boolean anyOverflowByWidth;
    }
 }

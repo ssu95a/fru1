@@ -279,6 +279,13 @@ public class FruFormatter extends FruItem {
 
         if (split1)
         {
+            String normalized = normalizeLocalSplitCandidate( value, width, fruField );
+
+            if (!normalized.equals(value)) {
+                visibleValue = formatVisiblePart(normalized, width);
+                return Pair.makePair(visibleValue, null);
+            }
+
             Pair<String, String> splitPair = FruUtils.splitString(value, width);
             visibleValue = splitPair.first;
             restValue = splitPair.second;
@@ -304,6 +311,25 @@ public class FruFormatter extends FruItem {
         return Pair.makePair(visibleValue, restValue);
     }
 
+    /** */
+    private String normalizeLocalSplitCandidate(String value, int width, FruField fruField)
+    {
+        if (!(fruField instanceof FruFieldVal) || S.isNullOrEmpty(value)) {
+            return value;
+        }
+
+        String trimmed = value.trim();
+
+        // Если переполнение вызвано только внешним padding из DAT,
+        // считаем его незначимым и не уводим поле на continuation.
+        if (!trimmed.equals(value) && trimmed.length() <= width) {
+            return trimmed;
+        }
+
+        return value;
+    }
+
+    /** */
     private int resolveEffectiveWidth(FruContext context)
     {
         int width = getWidth();

@@ -27,11 +27,10 @@ public class TableSectionRenderer implements IRenderer<FruSectionTable> {
 
         table.incrementUse();
 
-        final IRenderer<FruSectionLine> lineSectionRenderer =
-                table.getLine() != null ? context.renderers().get(FruSectionLine.class) : null;
+        final IRenderer<FruSectionLine> lineSectionRenderer = table.getLine() != null ? context.renderers().get(FruSectionLine.class) : null;
+
         // Рендерим каждую строку таблицы
         renderTableLine( context, table, lineSectionRenderer );
-
     }
 
     // Рендеринг строки с учетом переносов
@@ -43,8 +42,9 @@ public class TableSectionRenderer implements IRenderer<FruSectionTable> {
         for( FruLine line : table.getLines() )
         {
             tableBodyLineRenderer.render( context, line );
-
-            context.writer().newLine(); // Переход на следующую строку для сплитов
+context.writer().marker = "TableSectionRenderer: " + table.getNum();
+            context.writer().newLine();
+context.writer().marker = null;
             if( lineSectionRenderer != null )
                 lineSectionRenderer.render( context, table.getLine() );
         }

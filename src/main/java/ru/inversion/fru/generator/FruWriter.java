@@ -51,6 +51,14 @@ public class FruWriter extends Writer {
         this.pageConsumer = pc;
     }
 
+    public int currentLine() {
+        return currentLine;
+    }
+
+    public int currentCharInLine() {
+        return currentCharInLine;
+    }
+
     /** */
     public void addNLListener( Consumer<Pair<Integer,Integer>> nlListener )
     {
@@ -185,21 +193,23 @@ public class FruWriter extends Writer {
     private void incrementLine()
     {
         currentLine++;
-        fireNLListener();
+        //fireNLListener();
     }
 
     /** */
     private void resetLine()
     {
         currentLine = 1;
-        fireNLListener();
+        //fireNLListener();
     }
 
     /** */
-    private void updatePosition( char c )
-    {
+    private void updatePosition( char c ) throws IOException {
+
         if( c == '\n' )
         {
+            //write(" marker:" );write(marker);
+
             currentCharInLine=1;
             incrementLine( );
         }
@@ -246,6 +256,8 @@ public class FruWriter extends Writer {
 
         return this;
     }
+
+    public String marker = S.EMPTY_STRING;
 
     /** */
     public FruWriter newLine(  )

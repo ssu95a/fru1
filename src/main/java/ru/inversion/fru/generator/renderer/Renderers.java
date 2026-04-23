@@ -32,21 +32,20 @@ public class Renderers {
                     ? lineSession.resolveValue(context, field)
                     : field.getValue(context);
 
-            if( field.getFormatter() != null )
-            {
+            if (field.getFormatter() != null) {
                 Pair<String, String> pv = field.getFormatter().format(context, value, field);
                 context.writer().print(pv.first);
 
-                if( lineSession != null && field.hasFieldSplit() ) {
-                    if( S.isNotNullOrEmpty( pv.second ) && !pv.second.equals( value ) )
-                            lineSession.storeRemainder( field, pv.second );
+                if (lineSession != null && field.hasFieldSplit()) {
+                    if (S.isNotNullOrEmpty(pv.second) && !pv.second.equals(value)) {
+                        lineSession.storeRemainder(field, pv.second);
+                    }
                 }
-            }
-            else {
+            } else {
                 context.writer().print(value);
             }
         }
-    } ;
+    };
 
     private final IRenderer<FruScript> scriptRenderer = new IRenderer<FruScript>() {
         @Override
@@ -63,9 +62,6 @@ public class Renderers {
     private final IRenderer<FruFormatCall>    formatCallRenderer    = new FormatCallRenderer();
 
     private final IRenderer<FruPaging>        pagingRenderer        = new PageNumRenderer();
-
-    private final FruTableBodyLineRenderer    tableBodyLineRenderer = new FruTableBodyLineRenderer();
-
 
     public <T extends FruItem> void render( FruContext context, T item ) {
 

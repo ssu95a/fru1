@@ -2,14 +2,12 @@ package ru.inversion.fru.model.items;
 
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.fields.FruField;
-import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.utils.S;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,8 +45,12 @@ public class FruLine extends FruItem {
     */
 
     /** */
-    public static final Pattern FORMAT_CALL_PATTERN = Pattern.compile ("^(?<name>\\w+)\\s*\\(\\s*(?<fields>\\w+(?:\\s*,\\s*\\w+)*\\s*)?\\)\\s*(?<flags>(?:/\\w+)*)$");
-
+    private static final Pattern FORMAT_CALL_PATTERN = Pattern.compile(
+            "^(?<name>[A-Za-z_]\\w*)\\s*\\(\\s*" +
+                    "(?<fields>(?:(?:\"[^\"\\r\\n]*\"|[A-Za-z_]\\w*)(?:\\s*,\\s*(?:\"[^\"\\r\\n]*\"|[A-Za-z_]\\w*))*)?)" +
+                    "\\s*\\)\\s*" +
+                    "(?<flags>(?:/[A-Za-z_]\\w*)*)$"
+    );
     /** */
     private static FruItem makeItem( FruBuilder fruBuilder, String fieldStr, Function<String,Integer> dataIndex )
     {

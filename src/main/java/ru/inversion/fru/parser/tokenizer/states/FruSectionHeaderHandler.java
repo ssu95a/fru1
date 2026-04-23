@@ -37,7 +37,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
 
     /** */
     @Override
-    public Token<String> apply(Tokenizer.IContext t)
+    public Token<String> apply( Tokenizer.IContext t )
     {
         final StringBuilder text = new StringBuilder();
 
@@ -46,10 +46,11 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
         }
 
         String s = text.toString();
+
         final SectionTypeEnum sectionType = SectionTypeEnum.getType(s);
 
-        if( sectionType != null ) {
-
+        if( sectionType != null )
+        {
             if( sectionType == END )
                 return End;
 
@@ -64,7 +65,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
                 while( t.shift( ) && ITokenHandler.isSpace( t.current() ) )
                 { }
             else
-                while( t.shift( ) && t.current() != ' ' && ITokenHandler.isSpace( t.current() ) )
+                while( t.shift( ) && ITokenHandler.isSpace( t.current() ) && t.previous() != '\n' )
                 { }
 
             return new SectionHeaderToken(s, sectionType);

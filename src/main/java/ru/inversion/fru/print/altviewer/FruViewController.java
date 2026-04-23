@@ -53,6 +53,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -141,9 +142,21 @@ public class FruViewController implements Initializable {
         String defaultFontName = FontMan.getDefaultMonospaceFont(fontNames);
 
         AltInitCommand cmd = AltSettings.INSTANCE().commandDict().getInitCommand();
-        String fontName = cmd.getParameter(AltParameterTypeEnum.FONT_NAME);
 
-        fontComboBox.setValue( U.nvl( fontName, defaultFontName ) );
+        String  fontName = cmd.getParameter(AltParameterTypeEnum.FONT_NAME);
+
+        if( S.isNullOrEmpty(fontName) || fontComboBox.getItems().stream().noneMatch(fontName::equalsIgnoreCase) )
+            fontName = defaultFontName;
+
+        fontComboBox.setValue( fontName );
+
+        Integer fz = cmd.getParameter(AltParameterTypeEnum.FONT_SIZE);
+        if( fz != null && fz > 0 && fz <= 72 ) {
+            String sz = fz.toString();
+            int i = Arrays.binarySearch(fontSize, sz, String::compareTo);
+            if( i > -1 )
+                sizeComboBox.setValue( fontSize[i] );
+        }
 
         onFontName();
     }
