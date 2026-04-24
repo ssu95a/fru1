@@ -111,7 +111,7 @@ public class FruEngine {
 
         if( config.useFru() )
         {
-            final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
+            final Fru fru = parseFru( config.getFruFile(), csWin1251 );
 
             try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() ) ) {
                  engine.generate(fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset())) ;
@@ -197,8 +197,6 @@ public class FruEngine {
 
             StdOutRedirector.install();
             System.setErr( new PrintStream( System.err, true, "CP866" ) );
-
-
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );

@@ -5,6 +5,7 @@ import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import javax.print.attribute.standard.Copies;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -185,6 +186,9 @@ public class FruEngineConfig {
             break;
             case 'O':
                 config.charset = csDos866;
+            break;
+            case 'U':
+                config.charset = StandardCharsets.UTF_8;
             break;
             case 'P':
                 config.printerIndex = Integer.parseInt( option.substring(2) );
