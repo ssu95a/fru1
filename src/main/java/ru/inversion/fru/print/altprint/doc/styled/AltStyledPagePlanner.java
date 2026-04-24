@@ -29,15 +29,15 @@ import java.util.Objects;
  */
 public final class AltStyledPagePlanner {
 
-   private static final int PAGES_CACHE_SIZE = 3;
+   private static final int PAGES_CACHE_SIZE = 4;
 
    private final ALTDoc altDoc;
-   private final Deque<Pair<Integer, AltStyledPreparedPage>> pagesCache =
-           new ArrayDeque<Pair<Integer, AltStyledPreparedPage>>();
+   private final Deque<Pair<Integer, AltStyledPreparedPage>> pagesCache = new ArrayDeque<Pair<Integer, AltStyledPreparedPage>>();
 
-   private Float effectiveScale;
+   private Float   effectiveScale;
    private boolean effectiveScaleResolved;
 
+   /** */
    public AltStyledPagePlanner(ALTDoc altDoc) {
       this.altDoc = Objects.requireNonNull(altDoc, "'altDoc' is null");
    }
@@ -47,19 +47,20 @@ public final class AltStyledPagePlanner {
     * Масштаб вычисляется один раз на весь документ и далее используется
     * одинаково для всех страниц.
     */
-   public AltStyledPreparedPage preparePage(Graphics2D g2d, PageFormat pf, int pageIndex) throws IOException {
+   public AltStyledPreparedPage preparePage( Graphics2D g2d, PageFormat pf, int pageIndex ) throws IOException {
 
       AltStyledPreparedPage cached = findCachedPage(pageIndex);
-      if (cached != null)
+      if( cached != null )
          return cached;
 
-      float scale = resolveEffectiveScale(g2d, pf);
+      float scale = resolveEffectiveScale( g2d, pf );
 
       AltStyledPreparedPage prepared = layoutPage(g2d, pf, pageIndex, scale);
-      if (prepared == null)
-         return null;
+      if( prepared == null )
+          return null;
 
       cachePage(pageIndex, prepared);
+
       return prepared;
    }
 
@@ -68,13 +69,14 @@ public final class AltStyledPagePlanner {
     */
    private float resolveEffectiveScale(Graphics2D g2d, PageFormat pf) throws IOException {
 
-      if (effectiveScaleResolved)
-         return effectiveScale.floatValue();
+      if( effectiveScaleResolved )
+         return effectiveScale;
 
       final AltPrintPageConfig cfg = altDoc.getPageConfig();
 
-      if (!cfg.isShrinkEnabled()) {
-         effectiveScale = Float.valueOf(1.0f);
+      if( !cfg.isShrinkEnabled() )
+      {
+         effectiveScale         = 1.0f;
          effectiveScaleResolved = true;
          return 1.0f;
       }
@@ -82,7 +84,7 @@ public final class AltStyledPagePlanner {
       DocumentMetrics metrics = inspectDocumentAtScale(g2d, pf, 1.0f);
 
       if (!metrics.hasPages) {
-         effectiveScale = Float.valueOf(1.0f);
+         effectiveScale = 1.0f;
          effectiveScaleResolved = true;
          return 1.0f;
       }
@@ -95,15 +97,12 @@ public final class AltStyledPagePlanner {
 
       float resolved = 1.0f;
 
-      if (needShrink) {
-         resolved = cfg.resolveShrinkScale(
-                 pf,
-                 metrics.maxRequiredWidthPt,
-                 metrics.maxRequiredHeightPt
-         );
+      if (needShrink)
+      {
+         resolved = cfg.resolveShrinkScale( pf, metrics.maxRequiredWidthPt, metrics.maxRequiredHeightPt );
 
-         if (resolved >= 0.99f)
-            resolved = 1.0f;
+         if( resolved >= 0.99f )
+             resolved = 1.0f;
       }
 
       effectiveScale = Float.valueOf(resolved);

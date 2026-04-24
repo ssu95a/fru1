@@ -14,27 +14,28 @@ public class WindowSizeSaver {
     private final Stage stage;
     private final Preferences prefs;
 
-    // Конструктор
     public WindowSizeSaver( Stage stage, String configName) {
         this.stage = stage;
         this.prefs = Preferences.userRoot().node(configName);
-        // Вешаем обработчик на закрытие
+        // Обработчик на закрытие
         stage.setOnCloseRequest(this::onWindowClosing);
     }
 
     // Восстановление состояния
     public void load() {
+
         // Значения по умолчанию
-        double defaultWidth = 900;
+        double defaultWidth  = 900;
         double defaultHeight = 600;
 
         double x = prefs.getDouble("x", -1);
         double y = prefs.getDouble("y", -1);
+
         double width = prefs.getDouble("width", defaultWidth);
         double height = prefs.getDouble("height", defaultHeight);
+
         boolean maximized = prefs.getBoolean("maximized", false);
 
-        // Проверяем экран
         Rectangle2D screen = Screen.getPrimary().getVisualBounds();
 
         // Если координаты не сохранены или некорректны
