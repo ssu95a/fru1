@@ -2,6 +2,7 @@ package ru.inversion.fru.generator.renderer;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.fields.FruField;
+import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.items.*;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.*;
@@ -32,16 +33,40 @@ public class Renderers {
                     ? lineSession.resolveValue(context, field)
                     : field.getValue(context);
 
-            if (field.getFormatter() != null) {
+            if (field.getFormatter() != null)
+            {
                 Pair<String, String> pv = field.getFormatter().format(context, value, field);
                 context.writer().print(pv.first);
 
+                // Старый line-local continuation для автопереноса внутри одной физической строки.
                 if (lineSession != null && field.hasFieldSplit()) {
                     if (S.isNotNullOrEmpty(pv.second) && !pv.second.equals(value)) {
                         lineSession.storeRemainder(field, pv.second);
                     }
                 }
-            } else {
+
+                // Новый record-local split state по valIndex.
+                if (field instanceof FruFieldVal) {
+                    FruFieldVal fv = (FruFieldVal) field;
+
+                    LocalSplitState state = context.findLocalSplitState(fv.getValIndex());
+
+                    // Поле участвует в local split-flow, если:
+                    // 1) текущее поле само split-овое (/z),
+                    // 2) или flow уже был начат предыдущим вхождением этого valIndex.
+                    boolean participatesInLocalFlow =
+                            field.hasFieldSplit()
+                                    || (state != null && state.isActive());
+
+                    if (participatesInLocalFlow) {
+                        LocalSplitState flowState = context.getOrCreateLocalSplitState(fv.getValIndex());
+                        flowState.setActive(true);
+                        flowState.setConsumed(true);
+                        flowState.setPending(S.isNotNullOrEmpty(pv.second) ? pv.second : null);
+                    }
+                }
+            }
+            else {
                 context.writer().print(value);
             }
         }

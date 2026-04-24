@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class FruLineRenderSession {
 
-   private final Map<FruField, String> pendingValues = new IdentityHashMap<>();
+   private final Map<FruField, String> pendingValues = new IdentityHashMap<FruField, String>();
    private boolean continuationPass;
 
    public String resolveValue(FruContext context, FruField field) {
@@ -24,14 +24,14 @@ public class FruLineRenderSession {
       return pendingValues.containsKey(field);
    }
 
-   public boolean hasPending() {
-      return !pendingValues.isEmpty();
-   }
-
    public void storeRemainder(FruField field, String remainder) {
       if (S.isNotNullOrEmpty(remainder)) {
          pendingValues.put(field, remainder);
       }
+   }
+
+   public boolean hasPending() {
+      return !pendingValues.isEmpty();
    }
 
    public void nextPass() {

@@ -7,6 +7,7 @@ import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.data.FruDataRow;
 import ru.inversion.fru.generator.exceptions.FruScriptException;
 import ru.inversion.fru.generator.renderer.FruLineRenderSession;
+import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.fields.FruField;
@@ -21,6 +22,8 @@ import ru.inversion.utils.S;
 import javax.script.*;
 
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
@@ -51,6 +54,9 @@ public class FruContext implements AutoCloseable {
     private FruSection currentSection;
 
     private FruLineRenderSession lineRenderSession;
+
+    /** */
+    private final Map<Integer, LocalSplitState> localSplitStates = new HashMap<Integer, LocalSplitState>();
 
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
@@ -91,6 +97,25 @@ public class FruContext implements AutoCloseable {
 
         scriptEngine.setContext( globalScriptContext );
     }
+
+
+    public void clearLocalSplitState() {
+        localSplitStates.clear();
+    }
+
+    public LocalSplitState findLocalSplitState(int valIndex) {
+        return localSplitStates.get(valIndex);
+    }
+
+    public LocalSplitState getOrCreateLocalSplitState(int valIndex) {
+        LocalSplitState state = localSplitStates.get(valIndex);
+        if (state == null) {
+            state = new LocalSplitState();
+            localSplitStates.put(valIndex, state);
+        }
+        return state;
+    }
+
 
     /** */
     public FruLineRenderSession getLineRenderSession() {
@@ -150,6 +175,8 @@ public class FruContext implements AutoCloseable {
             // entry отсутствует — всё равно считаем его завершённым
             runEntry(null);
         }
+
+        clearLocalSplitState();
 
         if( currentSection == null || currentSection.getNum() != row.getSectionNum() )
         {

@@ -279,13 +279,6 @@ public class FruFormatter extends FruItem {
 
         if (split1)
         {
-            String normalized = normalizeLocalSplitCandidate( value, width, fruField );
-
-            if (!normalized.equals(value)) {
-                visibleValue = formatVisiblePart(normalized, width);
-                return Pair.makePair(visibleValue, null);
-            }
-
             Pair<String, String> splitPair = FruUtils.splitString(value, width);
             visibleValue = splitPair.first;
             restValue = splitPair.second;
