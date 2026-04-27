@@ -251,7 +251,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Полезная ширина контента внутри printable area принтера.
      */
     public float getContentWidthPt(PageFormat pf) {
@@ -267,7 +266,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Полезная высота контента внутри printable area принтера.
      */
     public float getContentHeightPt(PageFormat pf) {
@@ -283,7 +281,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Безопасная ширина с запасом для shrink.
      */
     public float getSafeContentWidthPt(PageFormat pf) {
@@ -292,7 +289,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Безопасная высота с запасом для shrink.
      */
     public float getSafeContentHeightPt(PageFormat pf) {
@@ -301,7 +297,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Рассчитать shrink-scale так, чтобы контент влез по width/height,
      * но не увеличивать его и не опускаться ниже minShrinkScale.
      */
@@ -328,7 +323,6 @@ public final class AltPrintPageConfig {
     }
 
     /**
-     * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Собрать итоговый Font документа с fallback на printer default.
      */
     public Font resolveFont( Font printerDefault )

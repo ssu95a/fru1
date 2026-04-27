@@ -9,7 +9,7 @@ public class StyleState {
     private final int     fontSize;
     private final int     fontStyle;
     private final boolean underline;
-    private final float verticalMovePt;
+    private final float   verticalMovePt;
     private final float   leftIndent;
     private final float   upperIndent;
 

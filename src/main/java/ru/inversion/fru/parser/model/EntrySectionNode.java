@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 public class EntrySectionNode extends AbstractSectionNode {
 
     /** entry */
-    protected static final Pattern ENTRY_PATTERN = Pattern.compile ("#?entry\\(\\s*(?<fields>.*?)\\s*\\);?" );
+    protected static final Pattern ENTRY_PATTERN = Pattern.compile ("#?entry\\s*\\(\\s*(?<fields>.*?)\\s*\\);?" );
 
-    /** */
+    /** Форматы в секции entry */
     public Map<String,String> formats;
 
     /** */

@@ -147,7 +147,7 @@ public final class StyledTextParser implements IStyledTextParser {
             return pv;
         }
         else {
-            logger.warn("В словаре не найдена команда");
+            logger.warn("В словаре не найдена команда: " + cmdText);
             return null;
         }
     }
