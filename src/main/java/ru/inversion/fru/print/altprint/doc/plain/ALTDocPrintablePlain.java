@@ -1,10 +1,17 @@
 package ru.inversion.fru.print.altprint.doc.plain;
 
+import org.apache.commons.io.HexDump;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.IAltPrintListener;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
+import ru.inversion.fru.print.altprint.doc.MatrixRawWriter;
+import ru.inversion.fru.print.altprint.doc.styled.IStyledTextParser;
+import ru.inversion.fru.print.altprint.doc.styled.MatrixTextParser;
 import ru.inversion.fru.print.altprint.doc.styled.StyleState;
+import ru.inversion.fru.print.naltprn.AltSettings;
+import ru.inversion.utils.U;
+import ru.inversion.utils.io.RawBAOS;
 
 import javax.print.Doc;
 import javax.print.DocFlavor;
@@ -19,8 +26,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+
+import static ru.inversion.fru.api.FruEngine.csDos866;
 
 /**
  * AWT Printable для plain ALT-документа.
@@ -50,7 +61,8 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
             IAltPrintListener  listener,
             AltPrintPageConfig pageConfig,
             StyleState         baseStyle
-    ) {
+    )
+    {
         super( altDoc, listener, pageConfig );
         this.baseStyle = baseStyle;
         this.planner   = new AltPlainPagePlanner ( altDoc, baseStyle );
@@ -70,11 +82,12 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
             aset.add( this.altDoc.getOrientation() );
             aset.add( this.altDoc.getCopies() );
 
-            try( InputStream is = Files.newInputStream(altDoc.getAltFile()) )
+            try( InputStream is = Files.newInputStream( altDoc.getAltFile() ) )
             {
 
                 if( altDoc.getContentMode() == ALTDoc.AltDocContentMode.PLAIN_WITH_HEADER ) {
                     is.skip( altDoc.getContentOffset() );
+
                 }
 
                 final Doc doc = new SimpleDoc(is, flavor, null);

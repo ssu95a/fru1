@@ -1,13 +1,16 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
 import ru.inversion.fru.print.altprint.ALTPrintException;
+import ru.inversion.fru.print.altprint.doc.MatrixRawWriter;
 import ru.inversion.fru.print.naltprn.cmd.AltCommand;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
 import ru.inversion.utils.ReaderScanner;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
+import java.io.IOException;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -19,15 +22,22 @@ public class MatrixTextParser implements IStyledTextParser {
 
       final private AltCommand command;
       /** */
-      private MatrixCommand(AltCommand c) {
+      private MatrixCommand( AltCommand c ) {
          this.command = c;
       }
+
+      /** */
+      public byte[] toBytea()
+      {
+         if( command == null || command.getMatrixData() == null )
+             return new byte[0];
+         return command.getMatrixData().getPrinterCommand();
+      }
+
       /** */
       @Override
-      public String toString() {
-         if( command == null || command.getMatrixData() == null )
-             return S.EMPTY_STRING;
-         return command.getMatrixData().getPrinterCommand();
+      public void matrixWrite( MatrixRawWriter w ) throws IOException {
+         w.command( toBytea() );
       }
    }
 

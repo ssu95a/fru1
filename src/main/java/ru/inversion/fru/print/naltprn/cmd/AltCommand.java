@@ -134,10 +134,10 @@ public class AltCommand
         }
 
         /** */
-        public String getPrinterCommand()
+        public byte[] getPrinterCommand()
         {
-            if( command instanceof String )
-                return (String)command;
+            if( command instanceof byte[] )
+                return (byte[])command;
 
             List cmdList = (List)command;
 
@@ -151,9 +151,9 @@ public class AltCommand
                     sb.append( ( (AltCommand)o).getMatrixData().getPrinterCommand() );
             }
 
-            command = sb.toString();
+            command = MatrixCommandBytes.compile( sb.toString() );
 
-            return (String) command;
+            return (byte[]) command;
         }
     }
 

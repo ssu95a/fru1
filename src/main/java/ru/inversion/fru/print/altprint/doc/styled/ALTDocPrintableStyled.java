@@ -1,10 +1,11 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
-import org.slf4j.Logger;
+import org.apache.commons.io.HexDump;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.IAltPrintListener;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
+import ru.inversion.fru.print.altprint.doc.MatrixRawWriter;
 import ru.inversion.fru.print.naltprn.AltSettings;
 import ru.inversion.utils.U;
 import ru.inversion.utils.io.RawBAOS;
@@ -22,13 +23,13 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.lang.invoke.MethodHandles;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import static ru.inversion.fru.api.FruEngine.csDos866;
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -49,7 +50,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public final class ALTDocPrintableStyled extends ALTDocPrintable
 {
-    private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+    // private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
 
     private final AltStyledPagePlanner planner;
     private final AltStyledPageRenderer renderer;
@@ -62,8 +63,9 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
         this.renderer = new AltStyledPageRenderer();
     }
 
+    /** */
     @Override
-    public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException
+    public int print( Graphics graphics, PageFormat pageFormat, int pageIndex ) throws PrinterException
     {
         try {
 
@@ -76,9 +78,9 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
 
             try {
 
-                g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                g2d.translate( pageFormat.getImageableX(), pageFormat.getImageableY() );
 
-                if( !beginPrintNotified )
+                if(!beginPrintNotified )
                 {
                     beginPrintNotified = true;
 
@@ -92,7 +94,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
                     finishPrint();
                     return NO_SUCH_PAGE;
                 }
-
+/*
                 log.info(
                         "PRINT pageIndex={}, scale={}, reqW={}, reqH={}, overflowW={}, overflowH={}",
                         pageIndex,
@@ -102,16 +104,14 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
                         prepared.isOverflowByWidth(),
                         prepared.isOverflowByHeight()
                 );
-
+*/
                 if( prepared.getScale() < 0.999f )
                     g2d.scale(prepared.getScale(), prepared.getScale());
 
+                renderer.drawPage( g2d, prepared );
 
-                renderer.drawPage(g2d, prepared);
-
-                if (listener != null) {
+                if( listener != null )
                     listener.onPagePrinted(pageIndex);
-                }
 
                 return PAGE_EXISTS;
 
@@ -122,8 +122,8 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
         } catch (Exception e) {
             finishPrint();
 
-            PrinterException pe = new PrinterException(
-                    "Print failed at pageIndex=" + pageIndex + ": " + e.getMessage()
+            PrinterException pe = new PrinterException (
+                "Print failed at pageIndex=" + pageIndex + ": " + e.getMessage()
             );
             pe.initCause(e);
             throw pe;
@@ -136,6 +136,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
         beginPrintNotified = false;
     }
 
+    /** */
     @Override
     public void printToMatrix( PrintService printer ) throws PrintException, IOException {
 
@@ -147,18 +148,31 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
         aset.add(this.altDoc.getCopies());
 
         try (
-            BufferedReader reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset());
-            RawBAOS baos = new RawBAOS();
+            BufferedReader  reader = Files.newBufferedReader( altDoc.getAltFile(), altDoc.getCharset() );
+            MatrixRawWriter writer = new MatrixRawWriter( new RawBAOS(), altDoc.getCharset() )
         )
         {
             final MatrixTextParser mtp = new MatrixTextParser( reader, AltSettings.INSTANCE().commandDict() );
-            for (IStyledTextParser.ParsedElement pe : U.iterable(mtp)) {
+
+            for( IStyledTextParser.ParsedElement pe : U.iterable(mtp) )
+            {
                 if( pe == null )
                     continue;
-                baos.write( pe.toString().getBytes(StandardCharsets.UTF_8) );
+
+                pe.matrixWrite(writer);
             }
 
-            final Doc doc = new SimpleDoc(baos.inputStream(), flavor, null);
+            /*
+            {
+                byte[] bytes = writer.bytea();
+                try (Writer o = new OutputStreamWriter(Files.newOutputStream(Paths.get("d:\\matrix-output.hex.txt")))) {
+                    Files.write(Paths.get("d:\\matrix-output.prn"), bytes);
+                    HexDump.dump(bytes, o);
+                }
+            }
+            */
+
+            final Doc doc = new SimpleDoc( writer.is(), flavor, null);
             final DocPrintJob pj = printer.createPrintJob();
 
             pj.print(doc, aset);
