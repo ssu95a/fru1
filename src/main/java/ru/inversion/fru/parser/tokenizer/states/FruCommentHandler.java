@@ -50,6 +50,8 @@ public class FruCommentHandler extends AbstractTokenHandler<String>
 	/** */
 	@Override
 	public boolean matches( Tokenizer.IContext ctx ) {
-		return isCommentBegin( ctx.current(), ctx.next() );
+//		if( ctx.current() == '#' && ctx.next() == '#' )
+//			return false;
+		return ctx.previous() == '\n' && ctx.current() == '#' && ITokenHandler.isSpace(ctx.next());
 	}
 }

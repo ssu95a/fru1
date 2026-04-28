@@ -52,6 +52,6 @@ public class FruLineHandler extends AbstractTokenHandler<String> {
     /** */
     @Override
     public boolean matches( Tokenizer.IContext ctx ) {
-        return ctx.current() != '#';
+        return true; //ctx.current() != '#';
     }
 }

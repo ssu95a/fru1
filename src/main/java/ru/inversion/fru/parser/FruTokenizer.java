@@ -76,7 +76,7 @@ public class FruTokenizer extends Tokenizer {
                             ep.states.removeIf (
                                 th -> U.in( th.getClass(), QuotesHandler.class, OperatorHandler.class, SyntaxSymbolHandler.class, ExpressionHandler.class )
                             );
-                            ep.states.addAll( Arrays.asList( new FruLineHandler(), eh ) );
+                            ep.states.addAll( Arrays.asList( new FruLineHandler() ) );
 
                             entryOn.removeListener(this);
                         }

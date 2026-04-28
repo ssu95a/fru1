@@ -60,6 +60,8 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     /** */
     private boolean eof( )
     {
+        if( buffer[0] == null )
+            System.out.println("null");
         return buffer[0] == null || buffer[0] == End;
     }
 
@@ -227,9 +229,11 @@ public class FruParser implements Iterator<AbstractSectionNode> {
         }
         else
         {
+            section.parse(fruBuilder);
+
             // асинхронно - исключение попадёт в CompletableFuture
-            final CompletableFuture<Void> future = CompletableFuture.runAsync( () -> section.parse(fruBuilder), executor );
-            futures.add(future);
+            // final CompletableFuture<Void> future = CompletableFuture.runAsync( () -> section.parse(fruBuilder), executor );
+            // futures.add(future);
         }
     }
 
@@ -258,9 +262,9 @@ public class FruParser implements Iterator<AbstractSectionNode> {
             if( previous != null )
                 submitSection( previous, fruBuilder, executor, futures );
 
-            CompletableFuture
-                .allOf( futures.toArray(new CompletableFuture[0]) )
-                    .join( );
+//            CompletableFuture
+//                .allOf( futures.toArray(new CompletableFuture[0]) )
+//                    .join( );
         }
         catch( CompletionException e ) {
             throw new FruParseException( fruBuilder.fruFile(), "Ошибка при разборе FRU файла", e );
