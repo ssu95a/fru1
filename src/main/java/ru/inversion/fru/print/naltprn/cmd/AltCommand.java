@@ -3,6 +3,7 @@ package ru.inversion.fru.print.naltprn.cmd;
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 /** */
@@ -124,39 +125,79 @@ public class AltCommand
 
 
     /** */
-    public static class AltMatrixData
-    {
+    public static class AltMatrixData {
         private Object command;
+        private boolean resolving;
 
-        public AltMatrixData( Object command )
-        {
+        public AltMatrixData(Object command) {
             this.command = command;
         }
 
-        /** */
-        public byte[] getPrinterCommand()
-        {
+        public synchronized byte[] getPrinterCommand() {
+
             if( command instanceof byte[] )
-                return (byte[])command;
+                return (byte[]) command;
 
-            List cmdList = (List)command;
 
-            final StringBuilder sb = new StringBuilder();
+            if( resolving )
+                throw new IllegalStateException("Cyclic matrix command reference detected");
 
-            for( Object o : cmdList )
-            {
-                if( o instanceof String )
-                    sb.append((String)o);
-                else if( o instanceof AltCommand )
-                    sb.append( ( (AltCommand)o).getMatrixData().getPrinterCommand() );
+            resolving = true;
+
+            try {
+
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                if (command instanceof List)
+                {
+                    List<?> cmdList = (List<?>) command;
+
+                    for (Object part : cmdList) {
+                        writePart(out, part);
+                    }
+                } else {
+                    writePart(out, command);
+                }
+
+                command = out.toByteArray();
+                return (byte[]) command;
+            }
+            finally {
+                resolving = false;
+            }
+        }
+
+        private static void writePart( ByteArrayOutputStream out, Object part) {
+
+            if( part == null ) {
+                return;
             }
 
-            command = MatrixCommandBytes.compile( sb.toString() );
+            if (part instanceof byte[]) {
+                byte[] bytes = (byte[]) part;
+                out.write(bytes, 0, bytes.length);
+                return;
+            }
 
-            return (byte[]) command;
+            if (part instanceof String) {
+                byte[] bytes = MatrixCommandBytes.compile((String) part);
+                out.write(bytes, 0, bytes.length);
+                return;
+            }
+
+            if (part instanceof AltCommand) {
+                AltCommand cmd = (AltCommand) part;
+                if (cmd.getMatrixData() == null) {
+                    return;
+                }
+
+                byte[] bytes = cmd.getMatrixData().getPrinterCommand();
+                out.write(bytes, 0, bytes.length);
+                return;
+            }
+            throw new IllegalArgumentException( "Unsupported matrix command part: " + part.getClass() );
         }
     }
-
 
     /** */
     public AltCommand(String name, String note)

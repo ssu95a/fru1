@@ -36,4 +36,20 @@ public class PageLine {
     public StyleState style() {
         return style;
     }
+
+    public TextLayout getLayout() {
+        return layout;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public float getBaselineY() {
+        return baselineY;
+    }
+
+    public StyleState getStyle() {
+        return style;
+    }
 }

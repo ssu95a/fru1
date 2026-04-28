@@ -111,7 +111,7 @@ public class FruEngine {
 
         if( config.useFru() )
         {
-            final Fru fru = parseFru( config.getFruFile(), csWin1251 );
+            final Fru fru = parseFru( config.getFruFile(), config.getCharset() );
 
             try( FruDataFile datFile = new FruDataFile( config.getDatFile(), config.getCharset() ) ) {
                  engine.generate(fru, datFile, Files.newBufferedWriter( config.getOutFile(), config.getCharset())) ;
@@ -230,7 +230,7 @@ public class FruEngine {
         System.out.println("-E Allow editing");
         System.out.println("-G[D|F|P] Generate to Display, File or Printer");
         System.out.println("-L Light view");
-        System.out.println("-O OEM encoding");
+        System.out.println("-O OEM encoding | -U utf-8 encoding");
         System.out.println("-P<idx> Printer index");
         System.out.println("-S Silent mode");
         System.out.println( );

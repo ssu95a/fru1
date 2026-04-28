@@ -11,6 +11,53 @@ import ru.inversion.utils.S;
 
 public class Renderers {
 
+    private boolean isLineLocalSplitField(FruField field) {
+        return field instanceof FruFieldVal && field.getFormatter() != null && ( field.getFormatter().getSplitMode() == 1 /*|| field.getFormatter().getSplitMode() == 2*/ );
+    }
+
+    private final IRenderer<FruFieldVal> fieldGrpRenderer = new FruFieldGrpRenderer();
+
+    private static final class FruFieldGrpRenderer implements IRenderer<FruFieldVal> {
+
+        @Override
+        public void render(FruContext context, FruFieldVal field) {
+
+            if (context == null) {
+                throw new IllegalArgumentException("context == null");
+            }
+
+            if (field == null) {
+                return;
+            }
+
+            if (field.getFormatter() != null
+                    && field.getFormatter().getSplitMode() == 2) {
+                throw new IllegalStateException(
+                        "FruFieldGrp must not render /x field: " + field
+                );
+            }
+
+            /*
+             * ВАЖНО:
+             * renderFieldGroupSlot(...) должен вернуть уже готовый visible text
+             * для конкретного slot-а группы.
+             *
+             * Grouped fields не должны попадать в:
+             * - FruLineRenderSession
+             * - field.getValue(context)
+             * - LocalSplitState
+             * - cacheRow
+             */
+            String value = context.renderFieldGroupSlot(field);
+
+            if (value == null) {
+                value = S.EMPTY_STRING;
+            }
+
+            context.writer().print(value);
+        }
+    }
+
     // Лямбда-рендереры для простых случаев
     private final IRenderer<FruText> textRenderer = (context, item) ->context.writer().print(item.getText());
 
@@ -27,48 +74,95 @@ public class Renderers {
         @Override
         public void render(FruContext context, FruField field) {
 
+            if (context == null) {
+                throw new IllegalArgumentException("context == null");
+            }
+
+            if (field == null) {
+                return;
+            }
+
+            /*
+             * HOTFIX:
+             * FruFieldGrp перехватывает только конкретные FruFieldVal instances,
+             * заранее найденные FruFieldGrpPlanner через IdentityHashMap.
+             *
+             * Этот блок обязан стоять ДО:
+             * - lineSession.resolveValue(...)
+             * - field.getValue(context)
+             * - field.getFormatter().format(...)
+             *
+             * Иначе @S6/74/l@ tail-slot снова прочитает raw value
+             * и продублирует сумму.
+             */
+            if (field instanceof FruFieldVal) {
+                FruFieldVal fv = (FruFieldVal) field;
+
+                if (context.hasFieldGroup(fv)) {
+                    fieldGrpRenderer.render(context, fv);
+                    return;
+                }
+            }
+
             final FruLineRenderSession lineSession = context.getLineRenderSession();
 
             final String value = lineSession != null
                     ? lineSession.resolveValue(context, field)
                     : field.getValue(context);
 
-            if (field.getFormatter() != null)
-            {
+            if (field.getFormatter() != null) {
                 Pair<String, String> pv = field.getFormatter().format(context, value, field);
+
                 context.writer().print(pv.first);
 
-                // Старый line-local continuation для автопереноса внутри одной физической строки.
-                if (lineSession != null && field.hasFieldSplit()) {
-                    if (S.isNotNullOrEmpty(pv.second) && !pv.second.equals(value)) {
+                if (lineSession != null && isLineContinuationField(field)) {
+                    if (S.isNotNullOrEmpty(pv.second)
+                            && !pv.second.equals(value)
+                            && pv.second.length() < value.length()) {
                         lineSession.storeRemainder(field, pv.second);
                     }
                 }
 
-                // Новый record-local split state по valIndex.
-                if (field instanceof FruFieldVal) {
+                if (isRecordLocalSplitField(field)) {
                     FruFieldVal fv = (FruFieldVal) field;
 
-                    LocalSplitState state = context.findLocalSplitState(fv.getValIndex());
-
-                    // Поле участвует в local split-flow, если:
-                    // 1) текущее поле само split-овое (/z),
-                    // 2) или flow уже был начат предыдущим вхождением этого valIndex.
-                    boolean participatesInLocalFlow =
-                            field.hasFieldSplit()
-                                    || (state != null && state.isActive());
-
-                    if (participatesInLocalFlow) {
-                        LocalSplitState flowState = context.getOrCreateLocalSplitState(fv.getValIndex());
-                        flowState.setActive(true);
-                        flowState.setConsumed(true);
-                        flowState.setPending(S.isNotNullOrEmpty(pv.second) ? pv.second : null);
-                    }
+                    LocalSplitState state = context.getOrCreateLocalSplitState(fv.getValIndex());
+                    state.setActive(true);
+                    state.setConsumed(true);
+                    state.setPending(S.isNotNullOrEmpty(pv.second) ? pv.second : null);
                 }
             }
             else {
                 context.writer().print(value);
             }
+        }
+
+        private boolean isLineContinuationField(FruField field) {
+            if (!(field instanceof FruFieldVal)) {
+                return false;
+            }
+
+            if (field.getFormatter() == null) {
+                return false;
+            }
+
+            int splitMode = field.getFormatter().getSplitMode();
+
+            /*
+             * PROD HOTFIX:
+             * splitMode=2 (/x) оставляем в старом legacy path.
+             *
+             * Не трогать /x через FruFieldGrp.
+             * Не переводить /x на LocalSplitState.
+             * Не пытаться сейчас переписать /x line expansion.
+             */
+            return splitMode == 1 || splitMode == 2;
+        }
+
+        private boolean isRecordLocalSplitField(FruField field) {
+            return field instanceof FruFieldVal
+                    && field.getFormatter() != null
+                    && field.getFormatter().getSplitMode() == 1;
         }
     };
 

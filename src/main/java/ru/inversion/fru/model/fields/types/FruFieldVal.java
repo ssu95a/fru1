@@ -29,10 +29,13 @@ public class FruFieldVal extends FruField {
         if (valIndex == -1)
             return null;
 
+        // Обычное поле без /z не должно попадать в local split-flow.
+        if (!hasFieldSplit()) {
+            return context.data().currentRow().getValue(valIndex);
+        }
+
         LocalSplitState state = context.findLocalSplitState(valIndex);
 
-        // Если local split-flow уже активирован для этого поля в рамках текущей записи,
-        // то следующие вхождения берут либо pending-хвост, либо уже пусто.
         if (state != null && state.isActive()) {
             if (S.isNotNullOrEmpty(state.getPending())) {
                 return state.getPending();
@@ -43,7 +46,6 @@ public class FruFieldVal extends FruField {
             }
         }
 
-        // Важно брать сырое значение, а не старую data-layer split-логику.
         return context.data().currentRow().getValue(valIndex);
     }
 }

@@ -151,11 +151,9 @@ public final class AltStyledPagePlanner {
    {
       try (BufferedReader reader = Files.newBufferedReader(altDoc.getAltFile(), altDoc.getCharset())) {
 
-         IStyledTextParser tmpParser =
-                 new StyledTextParser(reader, AltSettings.INSTANCE().commandDict());
+         IStyledTextParser tmpParser = new StyledTextParser(reader, AltSettings.INSTANCE().commandDict());
 
-         PageLayoutEngine tmpEngine =
-                 new PageLayoutEngine(tmpParser, g2d, pf, altDoc.getPageConfig(), scale);
+         PageLayoutEngine tmpEngine = new PageLayoutEngine(tmpParser, g2d, pf, altDoc.getPageConfig(), scale);
 
          int currentPage = 0;
          PageLayoutEngine.LaidOutPage laidOut;

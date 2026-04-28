@@ -121,6 +121,10 @@ public final class AltPrintPageResolver {
            AltPrintPageConfig cfg,
            AttributeSet contextAttrs
    ) {
+
+if(1>0)
+   return null;
+
       if (service == null) {
          return null;
       }

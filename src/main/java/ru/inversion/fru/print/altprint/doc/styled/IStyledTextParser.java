@@ -42,7 +42,7 @@ public interface IStyledTextParser extends Iterator<IStyledTextParser.ParsedElem
 
     /** */
     enum TextFlowControl implements ParsedElement {
-
+        EMPTY,
         LINE_FEED,
         PAGE_FEED;
 

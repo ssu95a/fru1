@@ -32,7 +32,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
     /** */
     @Override
     public boolean matches( Tokenizer.IContext ctx ) {
-        return ctx.previous() == '\n' && ctx.current() == '#' && ITokenHandler.isAlpha( ctx.next() ) && ctx.next() != '#';
+        return /*ctx.previous() == '\n' &&*/ ctx.current() == '#' && ITokenHandler.isAlpha( ctx.next() ) && ctx.next() != '#';
     }
 
     /** */

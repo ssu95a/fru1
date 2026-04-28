@@ -72,13 +72,17 @@ public class MatrixTextParser implements IStyledTextParser {
 
             if( U.inChar( ch, '\f', '`' ) )
             {
+
                if( ch == '\f' )
                   return new MatrixCommand( commandDict.getCommand("FF") );
+
                if( ch == '\n' )
                   return new MatrixCommand( commandDict.getCommand("LF") );
+
                if( ch == '`' )
                {
                   final StringBuilder sb = new StringBuilder();
+
                   do
                   {
                      scanner.next();

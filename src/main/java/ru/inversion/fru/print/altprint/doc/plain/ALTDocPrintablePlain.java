@@ -69,7 +69,43 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
         this.renderer  = new AltPlainPageRenderer( baseStyle );
     }
 
-    /** */
+
+    @Override
+    public void printToMatrix(PrintService printer) throws PrintException {
+
+        try {
+
+            final DocFlavor flavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
+
+            final PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
+            aset.add( MediaSizeName.ISO_A4 );
+            aset.add( this.altDoc.getOrientation() );
+            aset.add( this.altDoc.getCopies() );
+
+            try (
+                BufferedReader reader = Files.newBufferedReader( altDoc.getAltFile(), altDoc.getCharset() );
+                MatrixRawWriter writer = new MatrixRawWriter( new RawBAOS(), altDoc.getCharset()
+            )
+            )
+            {
+                MatrixTextParser parser = new MatrixTextParser( reader, AltSettings.INSTANCE().commandDict() );
+
+                for (IStyledTextParser.ParsedElement pe : U.iterable(parser)) {
+                    if (pe != null) {
+                        pe.matrixWrite(writer);
+                    }
+                }
+                final Doc doc = new SimpleDoc(writer.is(), flavor, null);
+                final DocPrintJob pj = printer.createPrintJob();
+                pj.print(doc, aset);
+            }
+        }
+        catch (Exception e) {
+            throw new PrintException("Ошибка при печати в режиме матричного принтера", e);
+        }
+    }
+
+    /*
     @Override
     public void printToMatrix( PrintService printer ) throws PrintException
     {
@@ -100,6 +136,7 @@ public class ALTDocPrintablePlain extends ALTDocPrintable {
             throw new PrintException("Ошибка при печати в режиме матричного принтера", e);
         }
     }
+    */
 
     @Override
     public int print( Graphics graphics, PageFormat pageFormat, int pageIndex ) throws PrinterException {

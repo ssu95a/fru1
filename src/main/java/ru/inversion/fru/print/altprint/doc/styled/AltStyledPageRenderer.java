@@ -1,7 +1,6 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.font.TextLayout;
 
 /**
@@ -19,33 +18,54 @@ import java.awt.font.TextLayout;
  */
 public final class AltStyledPageRenderer {
 
-   public void drawPage( Graphics2D g2d, AltStyledPreparedPage page )
+   private static final Stroke UNDERLINE_STROKE = new BasicStroke(0.35f);
+
+   public void drawPage(Graphics2D g2d, AltStyledPreparedPage page)
    {
-      if( g2d == null )
+      if (g2d == null)
          throw new IllegalArgumentException("g2d == null");
-      if( page == null )
+      if (page == null)
          throw new IllegalArgumentException("page == null");
 
-      g2d.setColor( Color.BLACK );
+      Color oldColor   = g2d.getColor();
+      Stroke oldStroke = g2d.getStroke();
 
-      for( PageLine line : page.getLines() )
-      {
-         line.layout().draw( g2d, line.x(), line.baselineY() );
+      try {
 
-         if( line.style().underline() )
-             drawUnderline( g2d, line );
+         g2d.setColor( Color.BLACK );
 
+         for( PageLine line : page.getLines() )
+         {
+            line.layout().draw( g2d, line.x(), line.baselineY() );
+
+            if( line.style().underline() ) {
+                drawUnderline(g2d, line);
+            }
+         }
+      }
+      finally {
+         g2d.setColor(oldColor);
+         g2d.setStroke(oldStroke);
       }
    }
 
-   private void drawUnderline( Graphics2D g2d, PageLine line ) {
-
+   private void drawUnderline(Graphics2D g2d, PageLine line)
+   {
       TextLayout layout = line.layout();
 
       float x1 = line.x();
       float x2 = x1 + layout.getAdvance();
-      float y  = line.baselineY() + 1.0f;
 
-      g2d.draw( new java.awt.geom.Line2D.Float(x1, y, x2, y) );
+      float y = line.baselineY() + Math.max(0.75f, layout.getDescent() * 0.35f);
+
+      Stroke oldStroke = g2d.getStroke();
+
+      try {
+         g2d.setStroke(UNDERLINE_STROKE);
+         g2d.draw(new java.awt.geom.Line2D.Float(x1, y, x2, y));
+      }
+      finally {
+         g2d.setStroke(oldStroke);
+      }
    }
 }

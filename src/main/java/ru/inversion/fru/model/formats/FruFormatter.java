@@ -36,7 +36,7 @@ public class FruFormatter extends FruItem {
     }
 
     /** */
-    public int getSplitMode( ) { return 1; }//parameter(Split); }
+    public int getSplitMode( ) { return parameter(Split); }
 
     /** */
     public int getWidth( ) {
@@ -108,8 +108,16 @@ public class FruFormatter extends FruItem {
 
         final int width = getWidth();
 
-        if( width > 0 && value.length() > width && getSplitMode( ) == 0 )
-            value = value.substring(0,width);
+        if( width > 0 && value.length() > width && getSplitMode() == 0 ) {
+            String trimmed = value.trim();
+
+            if (trimmed.length() <= width) {
+                value = trimmed;
+            }
+            else {
+                value = value.substring(0, width);
+            }
+        }
 
         CaseModeEnum caseMode = parameter(CaseMode);
 
@@ -296,9 +304,15 @@ public class FruFormatter extends FruItem {
                 remainderHolder
         );
 
-        if (split2 && remainderHolder.isPresent()) {
+        if (split2 && remainderHolder.isPresent() && S.isNotNullOrEmpty(remainderHolder.get())) {
             restValue = remainderHolder.get();
-            context.data().put2CacheRow(restValue, ((FruFieldVal) fruField).getValIndex());
+
+            if (context.getLineRenderSession() == null) {
+                context.data().put2CacheRow(
+                        restValue,
+                        ((FruFieldVal) fruField).getValIndex()
+                );
+            }
         }
 
         return Pair.makePair(visibleValue, restValue);

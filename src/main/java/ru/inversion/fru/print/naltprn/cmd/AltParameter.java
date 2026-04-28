@@ -188,7 +188,8 @@ public abstract class AltParameter<T>
 
         public StyleState applyTo(StyleState style, Object param)
         {
-            boolean on = Boolean.TRUE.equals(param); return style.toBuilder().underline(on).build();
+            boolean on = param == null ? getValue() : Boolean.TRUE.equals(param);
+            return style.toBuilder().underline(on).build();
         }
     }
 
@@ -217,7 +218,8 @@ public abstract class AltParameter<T>
         /** */
         public StyleState applyTo(StyleState style, Object param)
         {
-            boolean on = Boolean.TRUE.equals(param); return style.toBuilder().italic(on).build();
+            boolean on = param == null ? getValue() : Boolean.TRUE.equals(param);
+            return style.toBuilder().italic(on).build();
         }
     }
 

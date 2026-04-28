@@ -24,13 +24,18 @@ public class FruTableBodyLineRenderer implements IRenderer<FruLine> {
       context.setLineRenderSession(session);
 
       try {
+
          renderMainPass(context, line, itemWidths);
 
          int guard = 0;
 
          while (session.hasPending()) {
+
             if (++guard > MAX_CONTINUATION_PASSES) {
-               throw new IllegalStateException("Infinite split continuation detected for line: " + line);
+               throw new IllegalStateException(
+                       "Infinite split continuation detected for line: " + line
+                               + ", pending=[" + session.debugPending() + "]"
+               );
             }
 
             context.writer().newLine();
@@ -85,7 +90,7 @@ public class FruTableBodyLineRenderer implements IRenderer<FruLine> {
            int width,
            FruLineRenderSession session
    ) {
-      if (field.hasFieldSplit() && session.hasPendingFor(field)) {
+      if (session.hasPendingFor(field)) {
          renderAndPad(context, field, width);
       }
       else if (width > 0) {
@@ -113,7 +118,7 @@ public class FruTableBodyLineRenderer implements IRenderer<FruLine> {
       }
 
       for (FruField field : formatCall.getFields()) {
-         if (field != null && field.hasFieldSplit() && session.hasPendingFor(field)) {
+         if (field != null && session.hasPendingFor(field)) {
             return true;
          }
       }

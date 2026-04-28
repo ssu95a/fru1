@@ -13,6 +13,23 @@ import java.util.List;
 
 public final class PageLayoutEngine {
 
+    private static final class LinePart {
+
+        private final TextLayout layout;
+        private final float x;
+        private final StyleState style;
+
+        private LinePart(
+                TextLayout layout,
+                float x,
+                StyleState style
+        ) {
+            this.layout = layout;
+            this.x = x;
+            this.style = style;
+        }
+    }
+
     private static final class ChunkLayoutResult {
 
         private final int     nextSpanIndex;
@@ -328,99 +345,238 @@ public final class PageLayoutEngine {
     /**
      * @return результат layout chunk:
      *         - nextSpanIndex == -1, если chunk обработан целиком
-     *         - иначе индекс span, который надо продолжить на следующей странице
+     *         - иначе индекс span, с которого надо продолжить на следующей странице.
+     *
+     * ВАЖНО:
+     * В новой логике StyledTextChunk считается одной логической строкой.
+     * Span внутри chunk — это горизонтальный styled-фрагмент, а не отдельная строка.
      */
     private ChunkLayoutResult layoutChunk(
             IStyledTextParser.StyledTextChunk chunk,
             int startSpanIndex,
             List<PageLine> page
-    ) {
+    )
+    {
+        if (chunk == null) {
+            return new ChunkLayoutResult(
+                    -1,
+                    cursorY - startY,
+                    false,
+                    0f,
+                    false
+            );
+        }
+
         final String text = chunk.text();
         final List<IStyledTextParser.Span> spans = chunk.spans();
 
         float localRequiredHeightPt = cursorY - startY;
+
         if (localRequiredHeightPt < 0f) {
             localRequiredHeightPt = 0f;
         }
 
-        float localRequiredWidthPt = 0f;
+        if (text == null || text.length() == 0 || spans == null || spans.isEmpty()) {
+            return new ChunkLayoutResult(
+                    -1,
+                    localRequiredHeightPt,
+                    false,
+                    0f,
+                    false
+            );
+        }
+
+        if (startSpanIndex < 0) {
+            startSpanIndex = 0;
+        }
+
+        if (startSpanIndex >= spans.size()) {
+            return new ChunkLayoutResult(
+                    -1,
+                    localRequiredHeightPt,
+                    false,
+                    0f,
+                    false
+            );
+        }
+
+        /*
+         * StyledTextChunk — одна логическая строка.
+         * Все spans должны лечь на один baseline.
+         */
+        final List<LinePart> lineParts = new ArrayList<LinePart>();
+
+        float maxAscent = 0f;
+        float maxDescent = 0f;
+        float maxLeading = 0f;
+
+        float requiredWidthPt = 0f;
         boolean overflowByWidth = false;
+
+        /*
+         * LEFT по текущей ALT-семантике — indent строки.
+         * Берём indent первого span-а строки.
+         *
+         * Если когда-нибудь выяснится, что LEFT внутри строки означает
+         * абсолютную табуляцию/позиционирование, это надо будет вынести
+         * в отдельный draw/layout primitive. Сейчас это не трогаем.
+         */
+        StyleState firstStyle = spans.get(startSpanIndex).style();
+        float xCursor = startX + firstStyle.leftIndent();
 
         for (int i = startSpanIndex; i < spans.size(); i++) {
             IStyledTextParser.Span span = spans.get(i);
-            StyleState style = span.style();
 
-            TextLayout layout = new TextLayout(
-                    text.substring(span.start(), span.end()),
-                    style.font(),
-                    frc
-            );
-
-            float ascent = layout.getAscent();
-            float descent = layout.getDescent();
-
-            float baselineY = cursorY + ascent;
-            float bottomY = baselineY + descent;
-            float neededHeight = bottomY - startY;
-
-            if (neededHeight > localRequiredHeightPt) {
-                localRequiredHeightPt = neededHeight;
+            if (span == null) {
+                continue;
             }
 
-            float x = startX + style.leftIndent();
-            float rightX = x + layout.getAdvance();
+            int spanStart = span.start();
+            int spanEnd   = span.end();
+
+            if (spanStart < 0) {
+                spanStart = 0;
+            }
+
+            if (spanEnd > text.length()) {
+                spanEnd = text.length();
+            }
+
+            if (spanStart >= spanEnd) {
+                continue;
+            }
+
+            StyleState style = span.style();
+
+            if (style == null || style.font() == null) {
+                continue;
+            }
+
+            String spanText = text.substring(spanStart, spanEnd);
+
+            if (spanText.length() == 0) {
+                continue;
+            }
+
+            TextLayout layout = new TextLayout(spanText, style.font(), frc);
+
+            float ascent  = layout.getAscent();
+            float descent = layout.getDescent();
+            float leading = layout.getLeading();
+
+            if (ascent > maxAscent) {
+                maxAscent = ascent;
+            }
+
+            if (descent > maxDescent) {
+                maxDescent = descent;
+            }
+
+            if (leading > maxLeading) {
+                maxLeading = leading;
+            }
+
+            float rightX = xCursor + layout.getAdvance();
             float neededWidth = rightX - startX;
 
-            if (neededWidth > localRequiredWidthPt) {
-                localRequiredWidthPt = neededWidth;
+            if (neededWidth > requiredWidthPt) {
+                requiredWidthPt = neededWidth;
             }
 
             if (neededWidth > pageWidth) {
                 overflowByWidth = true;
             }
 
-            if (bottomY > endY) {
+            lineParts.add(new LinePart(layout, xCursor, style));
 
-                /*
-                 * Защита от бесконечного цикла:
-                 * если span не помещается даже на пустую страницу,
-                 * всё равно кладём его один раз.
-                 * Это даст requiredHeightPt > availableHeight,
-                 * и внешний код сможет попробовать shrink.
-                 */
-                if (page.isEmpty() && cursorY == startY) {
-                    page.add(new PageLine(layout, x, baselineY, style));
-                    cursorY = bottomY;
+            xCursor = rightX;
+        }
 
-                    return new ChunkLayoutResult(
-                            -1,
-                            neededHeight,
-                            true,
-                            localRequiredWidthPt,
-                            overflowByWidth
-                    );
-                }
+        if (lineParts.isEmpty()) {
+            return new ChunkLayoutResult(
+                    -1,
+                    localRequiredHeightPt,
+                    false,
+                    requiredWidthPt,
+                    overflowByWidth
+            );
+        }
+
+        float baselineY = cursorY + maxAscent;
+        float bottomY = baselineY + maxDescent + maxLeading;
+        float neededHeight = bottomY - startY;
+
+        if (neededHeight > localRequiredHeightPt) {
+            localRequiredHeightPt = neededHeight;
+        }
+
+        /*
+         * Если строка целиком не помещается на текущую страницу,
+         * переносим весь chunk.
+         *
+         * Нельзя переносить только с i-го span-а:
+         * spans — это части одной строки, а не строки документа.
+         */
+        if (bottomY > endY) {
+
+            /*
+             * Строка не помещается даже на пустую страницу.
+             * Кладём её принудительно один раз, чтобы не получить
+             * бесконечный перенос страниц.
+             */
+            if (page.isEmpty() && cursorY == startY) {
+                appendLineParts(page, lineParts, baselineY);
+                cursorY = bottomY;
 
                 return new ChunkLayoutResult(
-                        i,
+                        -1,
                         neededHeight,
                         true,
-                        localRequiredWidthPt,
+                        requiredWidthPt,
                         overflowByWidth
                 );
             }
 
-            page.add(new PageLine(layout, x, baselineY, style));
-            cursorY = bottomY;
+            return new ChunkLayoutResult(
+                    startSpanIndex,
+                    neededHeight,
+                    true,
+                    requiredWidthPt,
+                    overflowByWidth
+            );
         }
+
+        appendLineParts(page, lineParts, baselineY);
+
+        /*
+         * Cursor двигается один раз за всю логическую строку.
+         * Раньше он двигался после каждого span-а — из-за этого
+         * styled-фрагменты типа kassir уезжали вниз.
+         */
+        cursorY = bottomY;
 
         return new ChunkLayoutResult(
                 -1,
                 localRequiredHeightPt,
                 false,
-                localRequiredWidthPt,
+                requiredWidthPt,
                 overflowByWidth
         );
+    }
+
+    private void appendLineParts(
+            List<PageLine> page,
+            List<LinePart> lineParts,
+            float baselineY
+    ) {
+        for (LinePart part : lineParts) {
+            page.add(new PageLine(
+                    part.layout,
+                    part.x,
+                    baselineY,
+                    part.style
+            ));
+        }
     }
 
     private float defaultLineHeight() {

@@ -60,7 +60,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
     public ALTDocPrintableStyled(ALTDoc altDoc, IAltPrintListener listener, AltPrintPageConfig pageConfig) {
         super(altDoc, listener, pageConfig);
         this.planner = new AltStyledPagePlanner(altDoc);
-        this.renderer = new AltStyledPageRenderer();
+        this.renderer= new AltStyledPageRenderer();
     }
 
     /** */
@@ -161,16 +161,6 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
 
                 pe.matrixWrite(writer);
             }
-
-            /*
-            {
-                byte[] bytes = writer.bytea();
-                try (Writer o = new OutputStreamWriter(Files.newOutputStream(Paths.get("d:\\matrix-output.hex.txt")))) {
-                    Files.write(Paths.get("d:\\matrix-output.prn"), bytes);
-                    HexDump.dump(bytes, o);
-                }
-            }
-            */
 
             final Doc doc = new SimpleDoc( writer.is(), flavor, null);
             final DocPrintJob pj = printer.createPrintJob();

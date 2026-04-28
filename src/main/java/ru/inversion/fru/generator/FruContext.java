@@ -11,6 +11,11 @@ import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.fields.FruField;
+import ru.inversion.fru.model.fields.types.FruFieldVal;
+import ru.inversion.fru.model.fields.types.grp.DefaultFruLineFieldExtractor;
+import ru.inversion.fru.model.fields.types.grp.FruFieldGrpPlan;
+import ru.inversion.fru.model.fields.types.grp.FruFieldGrpPlanner;
+import ru.inversion.fru.model.fields.types.grp.FruFieldGrpRuntimeRegistry;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.fru.model.script.FruScript;
@@ -58,6 +63,24 @@ public class FruContext implements AutoCloseable {
     /** */
     private final Map<Integer, LocalSplitState> localSplitStates = new HashMap<Integer, LocalSplitState>();
 
+    private final FruFieldGrpRuntimeRegistry fieldGrpRuntimeRegistry =
+            new FruFieldGrpRuntimeRegistry();
+
+
+    public void setFieldGrpPlan(FruFieldGrpPlan plan) {
+        fieldGrpRuntimeRegistry.setPlan(plan);
+    }
+
+    public boolean hasFieldGroup(FruFieldVal field) {
+        return fieldGrpRuntimeRegistry.hasGroup(field);
+    }
+
+    public String renderFieldGroupSlot(FruFieldVal field) {
+        return fieldGrpRuntimeRegistry.render(this, field);
+    }
+
+
+
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
 
@@ -101,6 +124,8 @@ public class FruContext implements AutoCloseable {
 
     public void clearLocalSplitState() {
         localSplitStates.clear();
+        fieldGrpRuntimeRegistry.clearRecordLocalState();
+
     }
 
     public LocalSplitState findLocalSplitState(int valIndex) {
@@ -162,6 +187,9 @@ public class FruContext implements AutoCloseable {
     /** */
     final private Set<Integer> missingSectionsSet = new TreeSet<>();
 
+
+    private final FruFieldGrpPlanner fieldGrpPlanner =
+            new FruFieldGrpPlanner(new DefaultFruLineFieldExtractor());
     /** */
     private void setCurrentRow( FruDataRow row )
     {
@@ -185,8 +213,11 @@ public class FruContext implements AutoCloseable {
 
             currentSection = fru.sections().get( row.getSectionNum() );
 
-            if( currentSection != null )
-                currentSection.beforeUse( this );
+            if( currentSection != null ) {
+                FruFieldGrpPlan grpPlan = fieldGrpPlanner.plan(currentSection);
+                setFieldGrpPlan(grpPlan);
+                currentSection.beforeUse(this);
+            }
             else {
                 if( missingSectionsSet.add(row.getSectionNum() ) )
                     log.warn("В файле формы не найдена секция с номером {}", row.getSectionNum() );
@@ -259,7 +290,18 @@ public class FruContext implements AutoCloseable {
     /** */
     @Override
     public void close() throws Exception {
-        writer.close();
+
+        try {
+
+            if( currentSection != null )
+            {
+                currentSection.afterUse(this);
+                currentSection = null;
+            }
+        }
+        finally {
+            writer.close();
+        }
     }
 
     /** */

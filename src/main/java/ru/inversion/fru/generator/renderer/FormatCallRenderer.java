@@ -87,9 +87,10 @@ public class FormatCallRenderer implements IRenderer<FruFormatCall> {
             } else {
                 final FruField field = fields.get(i++);
 
-                if (field.hasFieldSplit() && lineSession.hasPendingFor(field)) {
+                if (lineSession.hasPendingFor(field)) {
                     fieldRenderer.render(context, field);
-                } else {
+                }
+                else {
                     context.writer().print(renderEmptyField(context, field));
                 }
             }
