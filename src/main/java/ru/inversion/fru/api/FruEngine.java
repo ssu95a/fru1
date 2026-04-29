@@ -9,6 +9,7 @@ import ru.inversion.fru.data.FruDataFile;
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.Fru;
 import ru.inversion.fru.model.FruBuilder;
+import ru.inversion.fru.parser.FruEntryProbe;
 import ru.inversion.fru.parser.FruParser;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.AltPrinter;
@@ -48,7 +49,7 @@ public class FruEngine {
     /** Основной метод генерации отчета из готовых объектов */
     private void generate( Fru fru, FruDataFile dataFile, Writer output )
     {
-        try ( FruContext context  = new FruContext( fru, output, dataFile ) ) {
+        try( FruContext context  = new FruContext( fru, output, dataFile ) ) {
             // Запускаем процесс генерации
             while(!context.data().eof()) {
                    context.data().next(); // зовет рендеринг через FruContext.setCurrentRow()
@@ -59,45 +60,60 @@ public class FruEngine {
     }
 
     /** Парсит FRU форму из файла */
-    private static Fru parseFru( Path fruFile, Charset charset )  {
+    private static Fru parseFru(Path fruFile, Charset charset) {
 
         boolean repeat = false;
 
         do {
 
-            try( Reader reader = Files.newBufferedReader( fruFile, charset ) )
-            {
-                 FruBuilder fruBuilder = new FruBuilder(fruFile, charset);
-                 FruParser.parseFru( reader, fruBuilder);
+            try {
 
-                 return fruBuilder.build();
+                final boolean hasExplicitEntry = FruEntryProbe.hasExplicitEntry( fruFile, charset );
+                final boolean entryImplicit    = !hasExplicitEntry;
 
-            } catch( Throwable th ) {
+                if( entryImplicit )
+                    log.debug("FRU {}: explicit #entry not found, entryImplicit=true", fruFile );
 
-                if( !repeat )
+                try (Reader reader = Files.newBufferedReader(fruFile, charset)) {
+                    FruBuilder fruBuilder = new FruBuilder(fruFile, charset);
+
+                    FruParser.parseFru(reader, fruBuilder, entryImplicit);
+
+                    return fruBuilder.build();
+                }
+
+            }
+            catch (Throwable th) {
+
+                if (!repeat)
                 {
                     Throwable th1 = th;
 
-                    while( th1 != null )
+                    while (th1 != null)
                     {
-                        if( th1 instanceof UnmappableCharacterException ) {
+                        if( th1 instanceof UnmappableCharacterException) {
                             repeat = true;
                             break;
                         }
+
+                        if (th1 instanceof java.nio.charset.MalformedInputException) {
+                            repeat = true;
+                            break;
+                        }
+
                         th1 = th1.getCause();
                     }
 
-                    if( repeat ) {
+                    if (repeat) {
                         charset = charset == csWin1251 ? csDos866 : csWin1251;
                         log.warn("Смена кодировки файла формы на {}", charset);
                         continue;
                     }
                 }
-
-                throw new FruException("Ошибка разбора тела формы из файла " + fruFile + ", в кодировке " + charset, th );
+                throw new FruException( "Ошибка разбора тела формы из файла " + fruFile + ", в кодировке " + charset, th );
             }
         }
-        while( repeat );
+        while (repeat);
 
         return null;
     }
@@ -183,6 +199,8 @@ public class FruEngine {
     {
         try {
 
+            BuildInfo.installSystemProperties();
+
             final URL logbackUrl = FruEngine.class.getResource("/logback.xml");
 
             if( logbackUrl != null )
@@ -197,6 +215,8 @@ public class FruEngine {
 
             StdOutRedirector.install();
             System.setErr( new PrintStream( System.err, true, "CP866" ) );
+
+            log.info("LastBuildTime={}", System.getProperty("app.lastBuildTime", BuildInfo.UNKNOWN));
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );

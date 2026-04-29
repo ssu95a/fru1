@@ -38,30 +38,52 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     private boolean insideEntry = false;
 
     /** */
-    public FruParser( Iterator<Token<?>> base ) {
+    private final boolean entryImplicit;
+
+    /** */
+    private boolean implicitEntryReturned = false;
+
+    /** */
+    public FruParser( Iterator<Token<?>> base, boolean entryImplicit ) {
 
         this.base = Objects.requireNonNull( base, "'base' is null" );
+        this.entryImplicit = entryImplicit;
 
         for( int i = 0; i < buffer.length; i++ )
              buffer[i] = base.hasNext() ? base.next() : null;
 
-        while( !eof() ) {
+        if( !entryImplicit )
+        {
+            skipUntilFirstSectionHeader();
 
-            if( buffer[0] instanceof SectionHeaderToken)
+            if( eof() )
+                throw new IllegalStateException("buffer[0] instanceof HeaderSectionToken - false");
+        }
+        else
+            if( !eof() && !(buffer[0] instanceof SectionHeaderToken) )
+            {
+            /*
+             * FRU has no explicit #entry. Everything before the first real
+             * section is treated as implicit entry-level content.
+             */
+            currentSection = new EntrySectionNode("#entry();", 0, 0);
+            insideEntry = true;
+        }
+    }
+
+    /** */
+    private void skipUntilFirstSectionHeader() {
+        while( !eof() ) {
+            if( buffer[0] instanceof SectionHeaderToken )
                 break;
 
             shift(1);
         }
-
-        if( eof() )
-            throw new IllegalStateException("buffer[0] instanceof HeaderSectionToken - false");
     }
 
     /** */
     private boolean eof( )
     {
-        if( buffer[0] == null )
-            System.out.println("null");
         return buffer[0] == null || buffer[0] == End;
     }
 
@@ -96,18 +118,36 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     }
 
     /** */
+    private void ensureEntrySection() {
+
+        if( currentSection == null ) {
+            currentSection = new EntrySectionNode("#entry();", 0, 0);
+            insideEntry = true;
+            implicitEntryReturned = true;
+        }
+    }
+
+    /** */
     private boolean tryFormatOrString()
     {
-        if( ( buffer[0] == Format || buffer[0] == Token.Str ) && buffer[1].isExpression() && buffer[2] == Equals && buffer[3].getType() == TEXT_IN_QUOTES )
+        if( buffer[0] != Format && buffer[0] != Token.Str )
+            return false;
+
+        if( buffer[1] == null || buffer[2] == null || buffer[3] == null )
+            return false;
+
+        if( buffer[1].isExpression() && buffer[2] == Equals && buffer[3].getType() == TEXT_IN_QUOTES )
         {
-              if( buffer[0] == Format )
-                  currentSection.addFormat( buffer[1].getValue().toString(), buffer[3].getValue().toString() );
-              else
-                  currentSection.addString( buffer[1].getValue().toString(), buffer[3].getValue().toString() );
+            ensureEntrySection();
 
-              shift(5);
+            if( buffer[0] == Format )
+                currentSection.addFormat( buffer[1].getValue().toString(), buffer[3].getValue().toString() );
+            else
+                currentSection.addString( buffer[1].getValue().toString(), buffer[3].getValue().toString() );
 
-              return true;
+            shift(5);
+
+            return true;
         }
 
         return false;
@@ -116,31 +156,37 @@ public class FruParser implements Iterator<AbstractSectionNode> {
     /** */
     private boolean tryEntryParam( )
     {
-        if( buffer[0].isExpression() )
+        if( buffer[0] == null || !buffer[0].isExpression() )
+            return false;
+
+        String name = String.valueOf(buffer[0].getValue());
+
+        if( !S.in( name, "width", "lines", "paging", "first" ) )
+            return false;
+
+        ensureEntrySection();
+
+        shift(1);
+
+        if( buffer[0] == Equals )
+            shift(1);
+
+        final StringBuilder sb = new StringBuilder();
+
+        while( !eof() && buffer[0] != Token.Semicolon )
         {
-            String name = (String)buffer[0].getValue();
+            if( buffer[0] != null && buffer[0].getValue() != null )
+                sb.append( buffer[0].getValue().toString() );
 
-            if (
-                S.in( name, "width", "lines", "paging", "first" )
-            )
-            {
-                shift(1);
-
-                final StringBuilder sb = new StringBuilder();
-
-                while( shift(1) && buffer[0] != Token.Semicolon )
-                {
-                    sb.append( (buffer[0].getValue()).toString() );
-                }
-
-                shift(1);
-
-                currentSection.addParameter( name, sb.toString() );
-
-                return true;
-            }
+            shift(1);
         }
-        return false;
+
+        if( buffer[0] == Token.Semicolon )
+            shift(1);
+
+        currentSection.addParameter( name, sb.toString() );
+
+        return true;
     }
 
     /** */
@@ -170,6 +216,17 @@ public class FruParser implements Iterator<AbstractSectionNode> {
         if( !hasNext() )
             throw new NoSuchElementException();
 
+        if( entryImplicit
+                && currentSection != null
+                && currentSection.isEntry()
+                && !implicitEntryReturned
+                && !(buffer[0] instanceof SectionHeaderToken) )
+        {
+            implicitEntryReturned = true;
+            insideEntry = true;
+            return currentSection;
+        }
+
         do {
 
             AbstractSectionNode result = trySectionHeader();
@@ -189,8 +246,8 @@ public class FruParser implements Iterator<AbstractSectionNode> {
             if( buffer[0].getType() == COMMENT )
                 ;
             else
-                if( !insideEntry && tryLine() )
-                    ;
+            if( !insideEntry && tryLine() )
+                ;
 
             shift(1);
 
@@ -220,68 +277,50 @@ public class FruParser implements Iterator<AbstractSectionNode> {
 
 
     /** */
-    private static void submitSection( AbstractSectionNode section, FruBuilder fruBuilder, ExecutorService executor, List<CompletableFuture<Void>> futures)
+    private static void submitSection( AbstractSectionNode section, FruBuilder fruBuilder)
     {
         if( section.isEntry())
-        {
             // синхронно - исключение летит сразу
             section.parse(fruBuilder);
-        }
         else
-        {
             section.parse(fruBuilder);
-
-            // асинхронно - исключение попадёт в CompletableFuture
-            // final CompletableFuture<Void> future = CompletableFuture.runAsync( () -> section.parse(fruBuilder), executor );
-            // futures.add(future);
-        }
     }
 
     /** */
-    public static void parseFru( Reader r, FruBuilder fruBuilder )
-    {
-        final Iterator<AbstractSectionNode> sectionIter = new FruParser(FruTokenizer.parse(r).iterator());
-        final ExecutorService executor                  = Executors.newFixedThreadPool(3);
-        final List<CompletableFuture<Void>> futures     = new ArrayList<>();
+    public static void parseFru(
+            Reader r,
+            FruBuilder fruBuilder,
+            boolean entryImplicit
+    ) {
+        final Iterator<AbstractSectionNode> sectionIter =
+                new FruParser(
+                        FruTokenizer.parse(r, entryImplicit).iterator(),
+                        entryImplicit
+                );
 
         AbstractSectionNode previous = null;
 
         try {
-
-            while( sectionIter.hasNext() )
-            {
+            while (sectionIter.hasNext()) {
                 AbstractSectionNode current = sectionIter.next();
 
-                if( previous != null )
-                    submitSection(previous, fruBuilder, executor, futures);
+                if (previous != null) {
+                    submitSection(previous, fruBuilder);
+                }
 
                 previous = current;
             }
 
-            // обработать последний элемент
-            if( previous != null )
-                submitSection( previous, fruBuilder, executor, futures );
-
-//            CompletableFuture
-//                .allOf( futures.toArray(new CompletableFuture[0]) )
-//                    .join( );
-        }
-        catch( CompletionException e ) {
-            throw new FruParseException( fruBuilder.fruFile(), "Ошибка при разборе FRU файла", e );
-        }
-        finally {
-
-            executor.shutdown();
-
-            try {
-
-                if(!executor.awaitTermination(1, TimeUnit.SECONDS) )
-                    executor.shutdownNow();
-
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
+            if (previous != null) {
+                submitSection(previous, fruBuilder);
             }
+        }
+        catch (RuntimeException e) {
+            throw new FruParseException(
+                    fruBuilder.fruFile(),
+                    "Ошибка при разборе FRU файла",
+                    e
+            );
         }
     }
 }

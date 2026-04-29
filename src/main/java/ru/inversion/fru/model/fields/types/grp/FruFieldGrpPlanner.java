@@ -78,7 +78,7 @@ public final class FruFieldGrpPlanner {
             if (group == null) {
                continue;
             }
-debugGroup(group);
+//debugGroup(group);
             groups.add(group);
 
             for (FruFieldGrpSlot slot : group.getSlots()) {

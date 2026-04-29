@@ -54,12 +54,13 @@ public class StyleState {
     public float leftIndent() {
         return leftIndent;
     }
+
     /** */
     public float upperIndent() {
         return upperIndent;
     }
 
-    // точка входа для ALTCommand
+    /** точка входа для ALTCommand */
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -71,18 +72,19 @@ public class StyleState {
         private int     fontSize;
         private int     fontStyle;
         private boolean underline;
-        private float verticalMovePt;
+        private float   verticalMovePt;
         private float   leftIndent;
         private float   upperIndent;
 
+        /** */
         private Builder(StyleState base) {
-            this.fontName    = base.fontName;
-            this.fontSize    = base.fontSize;
-            this.fontStyle   = base.fontStyle;
-            this.underline   = base.underline;
+            this.fontName       = base.fontName;
+            this.fontSize       = base.fontSize;
+            this.fontStyle      = base.fontStyle;
+            this.underline      = base.underline;
             this.verticalMovePt = base.verticalMovePt;
-            this.leftIndent  = base.leftIndent;
-            this.upperIndent = base.upperIndent;
+            this.leftIndent     = base.leftIndent;
+            this.upperIndent    = base.upperIndent;
         }
 
         public Builder fontName(String v) {

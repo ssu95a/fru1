@@ -29,7 +29,7 @@ public final class FruFieldGrp {
 
       this.sectionNum = sectionNum;
       this.valIndex   = valIndex;
-      this.slots      = Collections.unmodifiableList( new ArrayList<FruFieldGrpSlot>(slots) );
+      this.slots      = Collections.unmodifiableList( new ArrayList<>(slots) );
 
       // log.debug( "FruFieldGrp created: section={}, valIndex={}, slots={}", sectionNum, valIndex, slots.size() );
    }
@@ -46,7 +46,7 @@ public final class FruFieldGrp {
       return slots;
    }
 
-   public boolean contains(FruFieldVal field) {
+   public boolean contains( FruFieldVal field) {
 
       for( FruFieldGrpSlot slot : slots )
       {

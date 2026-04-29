@@ -57,6 +57,12 @@ public class FruTokenizer extends Tokenizer {
     /** */
     private static Iterable<Token<?>> tokenize(Reader r )
     {
+        return tokenize(r, false);
+    }
+
+    /** */
+    private static Iterable<Token<?>> tokenize(Reader r, final boolean entryImplicit )
+    {
         final FruTokenizer ep = new FruTokenizer(r);
         final IContext ctx = ep.context();
 
@@ -74,7 +80,7 @@ public class FruTokenizer extends Tokenizer {
                             ITokenHandler<?> eh = ep.states.get( ep.states.size() - 1 );
 
                             ep.states.removeIf (
-                                th -> U.in( th.getClass(), QuotesHandler.class, OperatorHandler.class, SyntaxSymbolHandler.class, ExpressionHandler.class )
+                                    th -> U.in( th.getClass(), QuotesHandler.class, OperatorHandler.class, SyntaxSymbolHandler.class, ExpressionHandler.class )
                             );
                             ep.states.addAll( Arrays.asList( new FruLineHandler() ) );
 
@@ -83,7 +89,16 @@ public class FruTokenizer extends Tokenizer {
                     }
                 });
 
-                new FruOnStartHandle().apply(ctx);
+                /*
+                 * Старое поведение: для FRU с явным #entry пропускаем мусор
+                 * до первой section header.
+                 *
+                 * Для FRU без #entry это делать нельзя: до первой реальной
+                 * секции могут быть format/string/width/lines/paging,
+                 * которые parser должен собрать в synthetic #entry.
+                 */
+                if( !entryImplicit )
+                    new FruOnStartHandle().apply(ctx);
             }
 
             /** */
@@ -135,6 +150,7 @@ public class FruTokenizer extends Tokenizer {
         return U.iterable( iter );
     }
 
+
     /** */
     public static Iterable<Token<?>> parse(Reader r )
     {
@@ -142,8 +158,20 @@ public class FruTokenizer extends Tokenizer {
     }
 
     /** */
+    public static Iterable<Token<?>> parse(Reader r, boolean entryImplicit )
+    {
+        return U.iterable ( tokenize(r, entryImplicit).iterator() );
+    }
+
+    /** */
     public static Iterable<Token<?>> parse(String s )
     {
         return parse( new StringReader(s) );
+    }
+
+    /** */
+    public static Iterable<Token<?>> parse(String s, boolean entryImplicit )
+    {
+        return parse( new StringReader(s), entryImplicit );
     }
 }
