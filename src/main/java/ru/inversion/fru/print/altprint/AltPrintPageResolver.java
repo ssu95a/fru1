@@ -13,22 +13,35 @@ import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
 
+import java.awt.print.Paper;
+
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
- * Resolver параметров страницы для AWT-печати.
+ * Разрешение print request attributes + PageFormat для AWT/WYSIWYG печати.
  *
- * Отвечает за:
- * - сбор PrintRequestAttributeSet
- * - подбор MediaPrintableArea
- * - получение PageFormat через PrinterJob
- *
- * НЕ ОТВЕЧАЕТ ЗА:
- * - layout документа
- * - shrink контента
- * - рисование страницы
- * - matrix/raw-печать
+ * Важно:
+ * - Не просить драйвер печатать "на весь лист" автоматически.
+ * - PageFormat после validatePage() является layout contract для Printable.
+ * - Если драйвер/PDF printer вернул imageableX/Y = 0, применяем safe fallback.
  */
 public final class AltPrintPageResolver {
+
+   private static final double PT_PER_MM = 72.0 / 25.4;
+
+   /*
+    * Safe fallback для драйверов, которые возвращают full-page imageable area:
+    *   imageableX=0
+    *   imageableY=0
+    *
+    * 5 мм — компромиссный legacy-safe отступ.
+    * Если нужно — позже вынести в AltPrintPageConfig / settings.
+    */
+   private static final double SAFE_FALLBACK_MARGIN_MM = 5.0;
+   private static final double SAFE_FALLBACK_MARGIN_PT =
+           SAFE_FALLBACK_MARGIN_MM * PT_PER_MM;
+
+   private static final double EPS_PT = 0.10;
+   private static final float  EPS_MM = 0.10f;
 
    /**
     * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -73,20 +86,43 @@ public final class AltPrintPageResolver {
            int copies
    )
    {
-      if (job == null) { throw new IllegalArgumentException("job == null"); }
-      if (service == null) { throw new IllegalArgumentException("service == null");}
-      if (cfg == null) { throw new IllegalArgumentException("cfg == null"); }
+      if (job == null) {
+         throw new IllegalArgumentException("job == null");
+      }
+      if (service == null) {
+         throw new IllegalArgumentException("service == null");
+      }
+      if (cfg == null) {
+         throw new IllegalArgumentException("cfg == null");
+      }
 
       PrintRequestAttributeSet attrs = buildAttributes(cfg, copies);
 
+      /*
+       * Не добавляем full-page printable area.
+       * Если драйвер даёт нормальную область — используем.
+       * Если нет — ниже подстрахуем PageFormat.
+       */
       MediaPrintableArea printableArea = resolvePrintableArea(service, cfg, attrs);
-      if( printableArea != null )
+
+      if (printableArea != null) {
          attrs.add(printableArea);
+      }
 
       PageFormat pf = job.getPageFormat(attrs);
       pf = job.validatePage(pf);
 
-      return new ResolvedPageSetup( attrs, pf, printableArea );
+      /*
+       * Критичный fallback:
+       * некоторые драйверы возвращают imageableX/Y = 0 и full-page area.
+       * Для legacy форм это означает печать от самого края.
+       *
+       * Не трогаем драйвер attrs, а корректируем PageFormat/Paper как
+       * layout contract для Printable.
+       */
+      pf = applySafePageFormatFallbackIfNeeded(pf);
+
+      return new ResolvedPageSetup(attrs, pf, printableArea);
    }
 
    /**
@@ -113,18 +149,19 @@ public final class AltPrintPageResolver {
 
    /**
     * ЗОНА ОТВЕТСТВЕННОСТИ:
-    * Подобрать printable area, максимально близкую к печати на весь лист,
-    * но только в рамках того, что реально поддерживает PrintService.
+    * Подобрать printable area без требования печати "на весь лист".
+    *
+    * Важно:
+    * - Не строим MediaPrintableArea(0,0,w,h) автоматически.
+    * - Не выбираем largest area, потому что она часто означает full-page.
+    * - Если нормальной области нет, пробуем safe area 5 мм по MediaSize.
+    * - Если драйвер не принимает safe area, возвращаем null.
     */
    public MediaPrintableArea resolvePrintableArea(
            PrintService service,
            AltPrintPageConfig cfg,
            AttributeSet contextAttrs
    ) {
-
-if(1>0)
-   return null;
-
       if (service == null) {
          return null;
       }
@@ -132,19 +169,38 @@ if(1>0)
          return null;
       }
 
-      MediaPrintableArea fullArea = buildFullMediaArea(cfg);
-      if (fullArea != null) {
-         boolean supported = service.isAttributeValueSupported(
-                 fullArea,
-                 DocFlavor.SERVICE_FORMATTED.PRINTABLE,
-                 contextAttrs
-         );
+      /*
+       * 1. Если когда-нибудь появится явная printable area в cfg,
+       * её надо строить здесь.
+       *
+       * Сейчас в AltPrintPageConfig таких полей нет, поэтому null.
+       * Document margins НЕ являются MediaPrintableArea.
+       */
+      MediaPrintableArea explicitArea = buildExplicitPrintableArea(cfg);
 
-         if (supported) {
-            return fullArea;
+      if (explicitArea != null && isSupported(service, explicitArea, contextAttrs)) {
+         return explicitArea;
+      }
+
+      /*
+       * 2. Default area драйвера.
+       * Берём только если у неё есть ненулевой left/top origin.
+       */
+      Object def = service.getDefaultAttributeValue(MediaPrintableArea.class);
+
+      if (def instanceof MediaPrintableArea) {
+         MediaPrintableArea area = (MediaPrintableArea) def;
+
+         if (hasNonZeroLeftTop(area) && isSupported(service, area, contextAttrs)) {
+            return area;
          }
       }
 
+      /*
+       * 3. Supported values.
+       * Не выбираем "самую большую" область.
+       * Выбираем самую большую из тех, где left/top ненулевые.
+       */
       Object raw = service.getSupportedAttributeValues(
               MediaPrintableArea.class,
               DocFlavor.SERVICE_FORMATTED.PRINTABLE,
@@ -152,59 +208,169 @@ if(1>0)
       );
 
       if (raw instanceof MediaPrintableArea) {
-         return (MediaPrintableArea) raw;
+         MediaPrintableArea area = (MediaPrintableArea) raw;
+
+         if (hasNonZeroLeftTop(area) && isSupported(service, area, contextAttrs)) {
+            return area;
+         }
       }
 
       if (raw instanceof MediaPrintableArea[]) {
-         return chooseLargestArea((MediaPrintableArea[]) raw);
+         MediaPrintableArea area = chooseLargestAreaWithNonZeroLeftTop(
+                 (MediaPrintableArea[]) raw
+         );
+
+         if (area != null && isSupported(service, area, contextAttrs)) {
+            return area;
+         }
       }
 
-      Object def = service.getDefaultAttributeValue(MediaPrintableArea.class);
-      if (def instanceof MediaPrintableArea) {
-         return (MediaPrintableArea) def;
+      /*
+       * 4. Safe request к драйверу.
+       * Если cfg.getMedia() задан, можно построить safe printable area.
+       *
+       * Если драйвер её не примет — вернём null, но потом сработает
+       * PageFormat fallback после validatePage().
+       */
+      MediaPrintableArea safeArea = buildSafeMediaAreaFromConfig(cfg);
+
+      if (safeArea != null && isSupported(service, safeArea, contextAttrs)) {
+         return safeArea;
       }
 
       return null;
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
-    * Построить идеальную printable area на весь лист для media из config.
+    * Сейчас явной printable area в AltPrintPageConfig нет.
+    *
+    * Document margins не использовать здесь:
+    * они являются layout margins внутри imageable area,
+    * а не request к драйверу.
     */
-   private MediaPrintableArea buildFullMediaArea(AltPrintPageConfig cfg) {
+   private MediaPrintableArea buildExplicitPrintableArea(AltPrintPageConfig cfg) {
+      return null;
+   }
+
+   /**
+    * Safe MediaPrintableArea по cfg.getMedia().
+    *
+    * Не использует getPaperWidthMm/getPaperHeightMm.
+    */
+   private MediaPrintableArea buildSafeMediaAreaFromConfig(AltPrintPageConfig cfg) {
+      if (cfg == null) {
+         return null;
+      }
+
       MediaSizeName media = cfg.getMedia();
+
       if (media == null) {
          return null;
       }
 
       MediaSize ms = MediaSize.getMediaSizeForName(media);
+
       if (ms == null) {
-         throw new IllegalStateException("Unsupported media: " + media);
+         return null;
       }
 
-      float wMm = ms.getX(MediaSize.MM);
-      float hMm = ms.getY(MediaSize.MM);
+      float paperW = ms.getX(MediaSize.MM);
+      float paperH = ms.getY(MediaSize.MM);
 
-      return new MediaPrintableArea(0f, 0f, wMm, hMm, MediaPrintableArea.MM);
+      return buildSafeMediaArea(paperW, paperH, (float) SAFE_FALLBACK_MARGIN_MM);
+   }
+
+   private MediaPrintableArea buildSafeMediaArea(
+           float paperWmm,
+           float paperHmm,
+           float marginMm
+   ) {
+      if (paperWmm <= 0f || paperHmm <= 0f) {
+         return null;
+      }
+
+      float x = marginMm;
+      float y = marginMm;
+      float w = paperWmm - marginMm - marginMm;
+      float h = paperHmm - marginMm - marginMm;
+
+      if (w <= 0f || h <= 0f) {
+         return null;
+      }
+
+      return new MediaPrintableArea(
+              x,
+              y,
+              w,
+              h,
+              MediaPrintableArea.MM
+      );
+   }
+
+   private boolean isSupported(
+           PrintService service,
+           MediaPrintableArea area,
+           AttributeSet attrs
+   ) {
+      if (service == null || area == null) {
+         return false;
+      }
+
+      if (!service.isAttributeCategorySupported(MediaPrintableArea.class)) {
+         return false;
+      }
+
+      return service.isAttributeValueSupported(
+              area,
+              DocFlavor.SERVICE_FORMATTED.PRINTABLE,
+              attrs
+      );
    }
 
    /**
-    * ЗОНА ОТВЕТСТВЕННОСТИ:
-    * Выбрать самую большую printable area из набора поддержанных.
+    * Для текущей проблемы важны именно left/top.
+    * Если x=0/y=0, форма физически уезжает к краю.
     */
-   private MediaPrintableArea chooseLargestArea( MediaPrintableArea[] areas) {
+   private boolean hasNonZeroLeftTop(MediaPrintableArea area) {
+      if (area == null) {
+         return false;
+      }
 
-      if( areas == null || areas.length == 0 )
+      float x = area.getX(MediaPrintableArea.MM);
+      float y = area.getY(MediaPrintableArea.MM);
+
+      return x > EPS_MM && y > EPS_MM;
+   }
+
+   /**
+    * Выбираем максимально большую область, но только из тех,
+    * у которых left/top не равны нулю.
+    */
+   private MediaPrintableArea chooseLargestAreaWithNonZeroLeftTop(
+           MediaPrintableArea[] areas
+   ) {
+      if (areas == null || areas.length == 0) {
          return null;
+      }
 
+      MediaPrintableArea best = null;
+      float bestSquare = -1f;
 
-      MediaPrintableArea best = areas[0];
-      float bestSquare = areaSquareMm(best);
+      for (int i = 0; i < areas.length; i++) {
+         MediaPrintableArea area = areas[i];
 
-      for (int i = 1; i < areas.length; i++) {
-         float current = areaSquareMm(areas[i]);
+         if (area == null) {
+            continue;
+         }
+
+         if (!hasNonZeroLeftTop(area)) {
+            continue;
+         }
+
+         float current = areaSquareMm(area);
+
          if (current > bestSquare) {
-            best = areas[i];
+            best = area;
             bestSquare = current;
          }
       }
@@ -213,19 +379,99 @@ if(1>0)
    }
 
    /**
-    *  Расчёт площади printable area.
+    * Критичный fallback по PageFormat.
+    *
+    * Срабатывает, если validatePage() всё равно вернул:
+    *   imageableX == 0
+    *   imageableY == 0
+    *
+    * Не зависит от cfg.getMedia().
+    * Использует реальные Paper width/height из PageFormat.
+    */
+   private PageFormat applySafePageFormatFallbackIfNeeded(PageFormat pf) {
+      if (pf == null) {
+         return null;
+      }
+
+      if (!needsSafePageFormatFallback(pf)) {
+         return pf;
+      }
+
+      Paper oldPaper = pf.getPaper();
+
+      if (oldPaper == null) {
+         return pf;
+      }
+
+      double paperW = oldPaper.getWidth();
+      double paperH = oldPaper.getHeight();
+
+      if (paperW <= 0.0 || paperH <= 0.0) {
+         return pf;
+      }
+
+      double left = SAFE_FALLBACK_MARGIN_PT;
+      double top = SAFE_FALLBACK_MARGIN_PT;
+      double right = SAFE_FALLBACK_MARGIN_PT;
+      double bottom = SAFE_FALLBACK_MARGIN_PT;
+
+      double imageableW = paperW - left - right;
+      double imageableH = paperH - top - bottom;
+
+      if (imageableW <= 0.0 || imageableH <= 0.0) {
+         return pf;
+      }
+
+      Paper newPaper = new Paper();
+      newPaper.setSize(paperW, paperH);
+      newPaper.setImageableArea(
+              left,
+              top,
+              imageableW,
+              imageableH
+      );
+
+      PageFormat copy = (PageFormat) pf.clone();
+      copy.setPaper(newPaper);
+
+      return copy;
+   }
+
+   /**
+    * Считаем full-page подозрительным, если left/top == 0.
+    *
+    * Даже если imageableW/H чуть отличаются от pageW/H из-за float-округления,
+    * отсутствие left/top offset уже достаточно опасно для legacy forms.
+    */
+   private boolean needsSafePageFormatFallback(PageFormat pf) {
+      if (pf == null) {
+         return false;
+      }
+
+      return pf.getImageableX() <= EPS_PT
+              || pf.getImageableY() <= EPS_PT;
+   }
+
+   /**
+    * Расчёт площади printable area.
     */
    private float areaSquareMm(MediaPrintableArea area) {
-      return area.getWidth(MediaPrintableArea.MM) * area.getHeight(MediaPrintableArea.MM);
+      if (area == null) {
+         return -1f;
+      }
+
+      return area.getWidth(MediaPrintableArea.MM)
+              * area.getHeight(MediaPrintableArea.MM);
    }
 
    /**
     * Строковое представление printable area для логов.
     */
-   public String printableAreaToString( MediaPrintableArea area )
+   public String printableAreaToString(MediaPrintableArea area)
    {
-      if( area == null)
+      if (area == null) {
          return "<null>";
+      }
 
       return String.format(
               "x=%.3fmm, y=%.3fmm, w=%.3fmm, h=%.3fmm",

@@ -3,6 +3,7 @@ package ru.inversion.fru.model.formats;
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
+import ru.inversion.fru.model.fields.types.grp.FruWordSplitter;
 import ru.inversion.fru.model.items.FruItem;
 import ru.inversion.fru.utils.FruUtils;
 import ru.inversion.utils.Holder;
@@ -99,8 +100,8 @@ public class FruFormatter extends FruItem {
             final Set<Character> es = context.excludeSymbols();
             boolean doIt = false;
 
-            for(int i = 0; i < value.length() && !doIt; i++)
-                doIt = es.contains( value.charAt(i) );
+            for( int i = 0; i < value.length() && !doIt; i++)
+                 doIt = es.contains( value.charAt(i) );
 
             if (doIt)
                 value = value.chars().filter(c -> !context.excludeSymbols().contains((char) c)).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
@@ -141,66 +142,6 @@ public class FruFormatter extends FruItem {
         }
         return value;
     }
-
-    /*
-    public Pair<String,String> format( FruContext context, String value, FruField fruField )
-    {
-
-        int width = getWidth();
-
-        if( S.isNullOrEmpty(value) )
-        {
-            if( width > 0 )
-                return Pair.makePair( S.space( width, fillChar() ), null );
-            else
-                return Pair.makePair( S.EMPTY_STRING, null );
-        }
-
-        value = prepareValue( context, value );
-
-        if( width <= 0 )
-            width = context.getWidth();
-
-        String restValue = null;
-
-        if( width > 0 )
-        {
-            if( getSplitMode() == 1 && fruField instanceof FruFieldVal && value.length() > width )
-            {
-                // Split=1: только inline-продолжение в рендерере строки.
-                // НИЧЕГО не кладём в cacheRow, иначе верхний pipeline
-                // повторно прогонит всю секцию/форму.
-                final Pair<String, String> splitPair = FruUtils.splitString( value, width );
-                restValue = splitPair.second;
-                value     = FormatHelper.formatString( splitPair.first, width, align(), fillChar(), new Holder<>() );
-            }
-            else
-            {
-                Holder<String> rem = new Holder<>();
-                value = FormatHelper.formatString( value, width, align(), fillChar(), rem );
-
-                if( fruField != null && rem.isPresent() )
-                {
-                    if( getSplitMode() == 2 && fruField instanceof FruFieldVal )
-                    {
-                        // Split=2: continuation как synthetic row через cacheRow.
-                        context.data().put2CacheRow( rem.get(), ((FruFieldVal) fruField).getValIndex() );
-                        restValue = rem.get();
-                    }
-                }
-            }
-        }
-        else
-            if( Boolean.TRUE.equals( parameter(FillRight)) && context.getWidth() > 0 )
-            {
-                int fillLength = context.getWidth() - context.getCurrentPosition();
-                if( fillLength > value.length() )
-                    value = S.space( fillLength - value.length(), fillChar() ) + value;
-            }
-
-        return Pair.makePair( value, restValue );
-    }
-    */
 
     /** */
     private static boolean isDigitAll( String s )
@@ -266,7 +207,7 @@ public class FruFormatter extends FruItem {
     }
 
     /** */
-    public Pair<String, String> format(FruContext context, String value, FruField fruField)
+    public Pair<String, String> format( FruContext context, String value, FruField fruField )
     {
         int width = resolveEffectiveWidth(context);
 
@@ -278,62 +219,36 @@ public class FruFormatter extends FruItem {
         if (width <= 0)
             return Pair.makePair( applyFillRightIfNeeded(context, value), null );
 
-
         final boolean split1 = isSplitMode1FieldValueOverflow(value, width, fruField);
         final boolean split2 = isSplitMode2FieldValue(fruField);
 
-        String visibleValue = value;
-        String restValue = null;
-
-        if (split1)
+        if( split1 || split2 )
         {
-            Pair<String, String> splitPair = FruUtils.splitString(value, width);
-            visibleValue = splitPair.first;
-            restValue = splitPair.second;
+            Pair<String, String> splitPair = FruWordSplitter.split( value, width );
 
-            visibleValue = formatVisiblePart(visibleValue, width);
+            String visibleRaw = splitPair.first;
+            String restValue  = splitPair.second;
+
+            String visibleValue = FormatHelper.formatString( visibleRaw, width, align(), fillChar(), new Holder<String>() );
+
+            if( S.isNullOrEmpty(restValue) )
+                restValue = null;
+
+            if( split2 && S.isNotNullOrEmpty(restValue) )
+            {
+                if( context.getLineRenderSession() == null && fruField instanceof FruFieldVal ) {
+                    context.data().put2CacheRow( restValue, ((FruFieldVal) fruField).getValIndex() );
+                }
+            }
+
             return Pair.makePair(visibleValue, restValue);
         }
 
         Holder<String> remainderHolder = new Holder<>();
-        visibleValue = FormatHelper.formatString(
-                value,
-                width,
-                align(),
-                fillChar(),
-                remainderHolder
-        );
 
-        if (split2 && remainderHolder.isPresent() && S.isNotNullOrEmpty(remainderHolder.get())) {
-            restValue = remainderHolder.get();
+        String visibleValue = FormatHelper.formatString( value, width, align(), fillChar(), remainderHolder );
 
-            if (context.getLineRenderSession() == null) {
-                context.data().put2CacheRow(
-                        restValue,
-                        ((FruFieldVal) fruField).getValIndex()
-                );
-            }
-        }
-
-        return Pair.makePair(visibleValue, restValue);
-    }
-
-    /** */
-    private String normalizeLocalSplitCandidate(String value, int width, FruField fruField)
-    {
-        if (!(fruField instanceof FruFieldVal) || S.isNullOrEmpty(value)) {
-            return value;
-        }
-
-        String trimmed = value.trim();
-
-        // Если переполнение вызвано только внешним padding из DAT,
-        // считаем его незначимым и не уводим поле на continuation.
-        if (!trimmed.equals(value) && trimmed.length() <= width) {
-            return trimmed;
-        }
-
-        return value;
+        return Pair.makePair( visibleValue, null );
     }
 
     /** */
@@ -341,40 +256,30 @@ public class FruFormatter extends FruItem {
     {
         int width = getWidth();
 
-        if (width <= 0) {
+        if( width <= 0 )
             width = context.getWidth();
-        }
 
         return width;
     }
 
     private Pair<String, String> formatEmptyValue(int width)
     {
-        if (width > 0)
-            return Pair.makePair( S.space(width, fillChar()), null );
+        if( width > 0 )
+            return Pair.makePair( S.space(width, fillChar() ), null );
 
-        return Pair.makePair(S.EMPTY_STRING, null );
+        return Pair.makePair( S.EMPTY_STRING, null );
     }
 
     /** */
     private boolean isSplitMode1FieldValueOverflow(String value, int width, FruField fruField)
     {
-        return getSplitMode() == 1
-                && fruField instanceof FruFieldVal
-                && value.length() > width;
+        return getSplitMode() == 1 && fruField instanceof FruFieldVal && value.length() > width;
     }
 
     /** */
     private boolean isSplitMode2FieldValue(FruField fruField)
     {
-        return getSplitMode() == 2
-                && fruField instanceof FruFieldVal;
-    }
-
-    /** */
-    private String formatVisiblePart(String value, int width)
-    {
-        return FormatHelper.formatString( value, width, align(), fillChar(), new Holder<String>() );
+        return getSplitMode() == 2 && fruField instanceof FruFieldVal;
     }
 
     /** */

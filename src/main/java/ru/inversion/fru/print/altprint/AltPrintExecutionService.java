@@ -6,7 +6,10 @@ import ru.inversion.fru.print.altprint.doc.ALTDocPrintable;
 import ru.inversion.fru.print.naltprn.AltSettings;
 
 import javax.print.PrintService;
+import java.awt.*;
 import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
@@ -85,15 +88,64 @@ public final class AltPrintExecutionService {
       job.setJobName( "ALT: " + doc.getAltFile() );
 
       AltPrintPageResolver.ResolvedPageSetup setup = pageResolver.resolve( job, printer, doc.getPageConfig(), doc.getCopies().getValue());
-      /*
-         log.info("Resolved printable area: {}", pageResolver.printableAreaToString(setup.getPrintableArea()));
-         log.info("PF orientation={}", setup.getPageFormat().getOrientation());
-         log.info("PF imageableX={}, imageableY={}", setup.getPageFormat().getImageableX(), setup.getPageFormat().getImageableY());
-         log.info("PF imageableW={}, imageableH={}", setup.getPageFormat().getImageableWidth(), setup.getPageFormat().getImageableHeight());
-         log.info("PF pageW={}, pageH={}", setup.getPageFormat().getWidth(), setup.getPageFormat().getHeight());
-      */
+//         log.info("Resolved printable area: {}", pageResolver.printableAreaToString(setup.getPrintableArea()));
+//         log.info("PF orientation={}", setup.getPageFormat().getOrientation());
+//         log.info("PF imageableX={}, imageableY={}", setup.getPageFormat().getImageableX(), setup.getPageFormat().getImageableY());
+//         log.info("PF imageableW={}, imageableH={}", setup.getPageFormat().getImageableWidth(), setup.getPageFormat().getImageableHeight());
+//         log.info("PF pageW={}, pageH={}", setup.getPageFormat().getWidth(), setup.getPageFormat().getHeight());
 
-      job.setPrintable( printable, setup.getPageFormat() );
+
+      Printable fixedPrintable =
+              new FixedPageFormatPrintable(printable, setup.getPageFormat());
+      job.setPrintable( fixedPrintable, setup.getPageFormat() );
       job.print( setup.getAttributes() );
+   }
+
+   private static final class FixedPageFormatPrintable implements Printable {
+
+      private final Printable delegate;
+      private final PageFormat fixedPageFormat;
+
+      private FixedPageFormatPrintable(
+              Printable delegate,
+              PageFormat fixedPageFormat
+      ) {
+         if (delegate == null) {
+            throw new IllegalArgumentException("delegate == null");
+         }
+
+         if (fixedPageFormat == null) {
+            throw new IllegalArgumentException("fixedPageFormat == null");
+         }
+
+         this.delegate = delegate;
+         this.fixedPageFormat = fixedPageFormat;
+      }
+
+      @Override
+      public int print(
+              Graphics graphics,
+              PageFormat incomingPageFormat,
+              int pageIndex
+      ) throws PrinterException {
+
+         /*
+          * TEMP DEBUG:
+          * Оставить на пару прогонов, потом убрать или перевести в log.debug.
+         System.out.println(
+                 "FIXED PF WRAPPER pageIndex=" + pageIndex
+                         + " incomingX=" + incomingPageFormat.getImageableX()
+                         + " incomingY=" + incomingPageFormat.getImageableY()
+                         + " fixedX=" + fixedPageFormat.getImageableX()
+                         + " fixedY=" + fixedPageFormat.getImageableY()
+         );
+          */
+
+         return delegate.print(
+                 graphics,
+                 fixedPageFormat,
+                 pageIndex
+         );
+      }
    }
 }
