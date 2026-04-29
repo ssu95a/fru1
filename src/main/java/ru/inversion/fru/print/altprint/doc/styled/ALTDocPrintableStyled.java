@@ -1,6 +1,8 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
-import org.apache.commons.io.HexDump;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.IAltPrintListener;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
@@ -24,12 +26,8 @@ import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import static ru.inversion.fru.api.FruEngine.csDos866;
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -50,7 +48,7 @@ import static ru.inversion.fru.api.FruEngine.csDos866;
  */
 public final class ALTDocPrintableStyled extends ALTDocPrintable
 {
-    // private static final Logger log = getLogger(MethodHandles.lookup().lookupClass());
+     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final AltStyledPagePlanner planner;
     private final AltStyledPageRenderer renderer;
@@ -63,11 +61,27 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
         this.renderer= new AltStyledPageRenderer();
     }
 
+
+    private void logPrintPageFormat(String label, PageFormat pf) {
+        System.out.println(
+                label
+                        + " orientation=" + pf.getOrientation()
+                        + " imageableX=" + pf.getImageableX()
+                        + " imageableY=" + pf.getImageableY()
+                        + " imageableW=" + pf.getImageableWidth()
+                        + " imageableH=" + pf.getImageableHeight()
+                        + " pageW=" + pf.getWidth()
+                        + " pageH=" + pf.getHeight()
+        );
+    }
+
     /** */
     @Override
     public int print( Graphics graphics, PageFormat pageFormat, int pageIndex ) throws PrinterException
     {
         try {
+
+            //logPrintPageFormat("PRINTABLE ACTUAL PF", pageFormat);
 
             if( listener != null && listener.isCancelled() ) {
                 finishPrint();
@@ -77,8 +91,9 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
             Graphics2D g2d = (Graphics2D) graphics.create();
 
             try {
-
+                //System.out.println("BEFORE translate transform=" + g2d.getTransform());
                 g2d.translate( pageFormat.getImageableX(), pageFormat.getImageableY() );
+                //System.out.println("AFTER translate transform=" + g2d.getTransform());
 
                 if(!beginPrintNotified )
                 {
@@ -94,17 +109,7 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
                     finishPrint();
                     return NO_SUCH_PAGE;
                 }
-/*
-                log.info(
-                        "PRINT pageIndex={}, scale={}, reqW={}, reqH={}, overflowW={}, overflowH={}",
-                        pageIndex,
-                        prepared.getScale(),
-                        prepared.getRequiredWidthPt(),
-                        prepared.getRequiredHeightPt(),
-                        prepared.isOverflowByWidth(),
-                        prepared.isOverflowByHeight()
-                );
-*/
+
                 if( prepared.getScale() < 0.999f )
                     g2d.scale(prepared.getScale(), prepared.getScale());
 
@@ -162,6 +167,11 @@ public final class ALTDocPrintableStyled extends ALTDocPrintable
                 pe.matrixWrite(writer);
             }
 
+//byte[] bytes = writer.bytea();
+//Files.write(Paths.get("d:\\XXI\\fru\\ap\\matrix-java-output.prn"), bytes);
+//try( OutputStream os =  Files.newOutputStream(Paths.get("d:\\XXI\\fru\\ap\\matrix-java-output.hex.txt")) ) {
+//    HexDump.dump(bytes, 0L, os, 0);
+//}
             final Doc doc = new SimpleDoc( writer.is(), flavor, null);
             final DocPrintJob pj = printer.createPrintJob();
 
