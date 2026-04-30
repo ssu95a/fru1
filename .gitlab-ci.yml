@@ -1,4 +1,3 @@
-# .gitlab-ci.yml
 stages:
   - build
   - deploy
@@ -6,42 +5,65 @@ stages:
 variables:
   MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Djava.awt.headless=true"
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
-  # Имя итогового JAR-файла (можно определить из pom.xml, здесь задано явно)
-  JAR_NAME: "fru.jar"
-  COPY_PATH:  "/oradev/bin"        # ru.inversion.copy
-  COPY_PATH2: "/oradev/japp.2"     # ru.inversion.copy.2
-  COPYSERVER: "/data/apache-tomcat-6.0.26/webapps/fxdoc" # ru.inversion.copyserver  
+  # Целевые каталоги для копирования (рекомендую задать в Settings → CI/CD → Variables)
+  COPY_PATH: "/oradev/bin"
+  COPY_PATH2: "/oradev/japp.2"
+  COPYSERVER: "/data/apache-tomcat-6.0.26/webapps/fxdoc"
+  # Настройки SVN (замените на реальные или храните в Masked Variables)
+  SVN_LOGIN: "jenkins"
+  SVN_PASSWORD: "jk4987s"
 
-# Кэшируем локальный репозиторий Maven для ускорения последующих сборок
 cache:
   paths:
     - .m2/repository/
 
-# Сборка проекта
+# Стадия сборки
 build:
   stage: build
-  image: maven:3.8.6-openjdk-8   # Образ с Maven и Java 8
+  image: maven:3.8.6-openjdk-8
   script:
     - mvn $MAVEN_CLI_OPTS clean package -DskipTests
   artifacts:
     paths:
-      - target/*.jar              # Сохраняем все JAR-файлы из target
-    expire_in: 1 hour             # Храним артефакт 1 час (можно изменить)
+      - target/*.jar
+    expire_in: 1 hour
   only:
-    - main                        # Собираем только при пуше в main (опционально)
+    - main
 
-deploy-job:
+# Стадия деплоя (копирование на сетевой диск)
+deploy:
   stage: deploy
-  image: maven:3.8.6-openjdk-8      # или любой другой образ с Maven и Java
+  image: maven:3.8.6-openjdk-8
+  before_script:
+    # Копируем settings.xml, если он нужен для резолва зависимостей (даже для одиночного плагина)
+    - |
+      if [ ! -f "$HOME/.m2/settings.xml" ]; then
+        if [ -f "$CI_PROJECT_DIR/settings.xml" ]; then
+          mkdir -p "$HOME/.m2"
+          cp "$CI_PROJECT_DIR/settings.xml" "$HOME/.m2/settings.xml"
+        else
+          echo "WARNING: settings.xml not found, proceeding without it."
+        fi
+      fi
+    # Создаём локальный репозиторий (на всякий случай)
+    - mkdir -p "$CI_PROJECT_DIR/.m2/repository"
   script:
-    - mvn -B -U -e
-        -f pom.xml
-        -Dmaven.repo.local="$CI_PROJECT_DIR/.m2repo"
-        -Dru.inversion.copy="$COPY_PATH"
-        -Dru.inversion.copy.2="$COPY_PATH2"
-        -Dru.inversion.copyserver="$COPYSERVER"
-        -DskipTests
-        -Pbuild
-        clean deploy
+    # Выполняем только копирование ресурсов, не пересобирая проект.
+    # Параметры -Dru.inversion.copy и другие передаются плагину.
+    - |
+      mvn -B -U -e \
+        -Dmaven.repo.local="$CI_PROJECT_DIR/.m2/repository" \
+        -Dru.inversion.copy="$COPY_PATH" \
+        -Dru.inversion.copy.2="$COPY_PATH2" \
+        -Dru.inversion.copyserver="$COPYSERVER" \
+        -DsvnLogin="$SVN_LOGIN" \
+        -DsvnPassword="$SVN_PASSWORD" \
+        -DskipTests \
+        -s "$HOME/.m2/settings.xml" \
+        -Pbuild \
+        resources:copy-resources@copy-resources.2
+  dependencies:
+    - build
   only:
-    - main   
+    - main
+  when: manual   # Можно убрать, если хотите автоматический деплой
