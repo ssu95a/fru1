@@ -9,10 +9,7 @@ variables:
   COPY_PATH: "/oradev/bin"
   COPY_PATH2: "/oradev/japp.2"
   COPYSERVER: "/data/apache-tomcat-6.0.26/webapps/fxdoc"
-  # Настройки SVN (замените на реальные или храните в Masked Variables)
-  SVN_LOGIN: "jenkins"
-  SVN_PASSWORD: "jk4987s"
-
+  
 cache:
   paths:
     - .m2/repository/
