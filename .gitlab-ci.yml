@@ -1,0 +1,47 @@
+# .gitlab-ci.yml
+stages:
+  - build
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  # Имя итогового JAR-файла (можно определить из pom.xml, здесь задано явно)
+  JAR_NAME: "fru.jar"
+  COPY_PATH:  "/oradev/bin"        # ru.inversion.copy
+  COPY_PATH2: "/oradev/japp.2"     # ru.inversion.copy.2
+  COPYSERVER: "/data/apache-tomcat-6.0.26/webapps/fxdoc" # ru.inversion.copyserver  
+
+# Кэшируем локальный репозиторий Maven для ускорения последующих сборок
+cache:
+  paths:
+    - .m2/repository/
+
+# Сборка проекта
+build:
+  stage: build
+  image: maven:3.8.6-openjdk-8   # Образ с Maven и Java 8
+  script:
+    - mvn $MAVEN_CLI_OPTS clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar              # Сохраняем все JAR-файлы из target
+    expire_in: 1 hour             # Храним артефакт 1 час (можно изменить)
+  only:
+    - main                        # Собираем только при пуше в main (опционально)
+
+deploy-job:
+  stage: deploy
+  image: maven:3.8.6-openjdk-8      # или любой другой образ с Maven и Java
+  script:
+    - mvn -B -U -e
+        -f pom.xml
+        -Dmaven.repo.local="$CI_PROJECT_DIR/.m2repo"
+        -Dru.inversion.copy="$COPY_PATH"
+        -Dru.inversion.copy.2="$COPY_PATH2"
+        -Dru.inversion.copyserver="$COPYSERVER"
+        -DskipTests
+        -Pbuild
+        clean deploy
+  only:
+    - main   
