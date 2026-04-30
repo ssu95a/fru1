@@ -36,7 +36,7 @@ public final class BuildInfo {
 
                String value = attrs.getValue("LastBuildTime");
 
-               if (value != null && value.trim().length() > 0) {
+               if (value != null && !value.trim().isEmpty()) {
                   return value.trim();
                }
             }
