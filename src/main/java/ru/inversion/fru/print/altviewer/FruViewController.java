@@ -331,7 +331,7 @@ public class FruViewController implements Initializable {
     /** */
     private Stage getStage()
     {
-        return (Stage) toolBar.getScene().getWindow();
+        return toolBar == null ? null : (Stage) toolBar.getScene().getWindow();
     }
 
 

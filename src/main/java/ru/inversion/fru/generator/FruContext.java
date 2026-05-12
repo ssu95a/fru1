@@ -63,8 +63,7 @@ public class FruContext implements AutoCloseable {
     /** */
     private final Map<Integer, LocalSplitState> localSplitStates = new HashMap<Integer, LocalSplitState>();
 
-    private final FruFieldGrpRuntimeRegistry fieldGrpRuntimeRegistry =
-            new FruFieldGrpRuntimeRegistry();
+    private final FruFieldGrpRuntimeRegistry fieldGrpRuntimeRegistry = new FruFieldGrpRuntimeRegistry();
 
 
     public void setFieldGrpPlan(FruFieldGrpPlan plan) {
@@ -78,7 +77,6 @@ public class FruContext implements AutoCloseable {
     public String renderFieldGroupSlot(FruFieldVal field) {
         return fieldGrpRuntimeRegistry.render(this, field);
     }
-
 
 
     /** */

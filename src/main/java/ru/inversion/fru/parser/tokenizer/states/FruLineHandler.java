@@ -27,22 +27,41 @@ public class FruLineHandler extends AbstractTokenHandler<String> {
 
         final StringBuilder text = new StringBuilder();
 
-        do {
+        boolean firstChar = true;
 
-            ch =  t.current();
+        while( true )
+        {
+            ch = t.current();
 
-            text.append( ch );
+            if( firstChar && ch == '#' && t.next() == '#' )
+            {
+                text.append('#');
+                firstChar = false;
 
-            if( ch == '\n' ) {
+                if( !t.shift() )
+                    break;
+
+                if( !t.shift() )
+                    break;
+
+                continue;
+            }
+
+            text.append(ch);
+            firstChar = false;
+
+            if( ch == '\n' )
+            {
                 t.shift();
                 break;
             }
 
-        } while( t.shift() );
-
+            if( !t.shift() )
+                break;
+        }
         return new Token<>( TypeEnum.FRU_LINE, text.toString() );
     }
-
+    
     /** */
     @Override
     public String getName() {

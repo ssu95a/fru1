@@ -90,9 +90,8 @@ public abstract class AltParameter<T>
             {
                 return getCommand().applyTo( style, U.nvl( param, this.getParam() ) );
             }
-            catch (Exception ex)
-            {
-                throw new RuntimeException( "cdm: " + getCommand().getName(), ex);
+            catch (Exception ex) {
+                throw new RuntimeException( "cmd: " + getCommand().getName(), ex );
             }
         }
     }

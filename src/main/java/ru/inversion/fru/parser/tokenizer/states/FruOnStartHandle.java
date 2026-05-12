@@ -24,7 +24,8 @@ public class FruOnStartHandle extends AbstractTokenHandler<String> {
     public Token<String> apply(Tokenizer.IContext ctx ) {
 
         do {
-            if( ctx.current() == '#' && !ITokenHandler.isSpace( ctx.next() ) )
+
+            if( FruSectionHeaderHandler.isSectionOrScriptBegin(ctx) )
                 return null;
         }
         while( ctx.shift() );

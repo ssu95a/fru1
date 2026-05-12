@@ -69,7 +69,7 @@ public class Fru {
         this.initScript = initScript;
 
         {
-            String excludeStr = (String) parameters.get("FILTER");
+            String excludeStr = strings.get("FILTER");
 
             if( !S.isNullOrEmpty(excludeStr) )
             {
@@ -98,8 +98,8 @@ public class Fru {
                 paging = null;
             else
             {
-                final String pageEnd  = (String) parameters.get("PAGE_END");
-                final String pageLine = U.nvl((String) parameters.get("PAGELINE"), "- @ /0 @- ");
+                final String pageEnd  = U.nvl( strings.get("PAGE_END"), "`PAGE_END`");
+                final String pageLine = U.nvl( strings.get("PAGELINE"), "- @ /0 @- ");
 
                 final String first_s = (String) parameters.get("first");
                 boolean first = !S.isNullOrEmpty(first_s) && !"off".equals(first_s);

@@ -10,18 +10,23 @@ import ru.inversion.utils.S;
 import java.util.*;
 
 /**
- * Быстрый парсер AltPrinter-тегов вида `TAG`, `TAG+`, `TAG-`
- * без regex/matcher, с минимальными аллокациями.
+ * Парсер AltPrinter-тегов вида `TAG`, `TAG+`, `TAG-`
  *
  * Формат:
  *  - текст может содержать последовательности, начинающиеся и заканчивающиеся '`'
- *  - внутри: [\\w,]+[+-]? (как в вашем regex), иначе считается обычным текстом
+ *  - внутри: [\\w,]+[+-]? иначе считается обычным текстом
  *
  * Возвращает:
  *  - cleanText: исходный текст без тегов
  *  - styleSpans: spans для RichTextFX по cleanText
  */
 public class TagProcessor {
+
+    private static final String PAGE_END_TAG = "PAGE_END";
+
+    private static final String PAGE_SEPARATOR_STYLE = "page-separator";
+    private static final String PAGE_SEPARATOR_TITLE = " Разделитель страниц ";
+    private static final String PAGE_SEPARATOR_FALLBACK = "====== Разделитель страниц ======";
 
     private static final AltCommandDict DICT = AltSettings.INSTANCE().commandDict();
 
@@ -49,8 +54,182 @@ public class TagProcessor {
         }
     }
 
+    /** */
+    private static boolean isPageEndTag(String tag) {
+        return PAGE_END_TAG.equalsIgnoreCase(tag) || "FF".equalsIgnoreCase(tag);
+    }
+
+    /**
+     * Вычисляет ширину страницы для preview по самой длинной видимой строке ALT.
+     *
+     * Важно:
+     * - ALT tags между `...` не считаются видимым текстом;
+     * - PAGE_END / FF не считаются строкой контента;
+     * - \r\n считается одним переводом строки;
+     * - если ширину определить не удалось, возвращаем -1.
+     */
+    private static int guessVisiblePageWidth(CharSequence text) {
+
+        if( text == null || text.length() == 0 )
+            return -1;
+
+        int max     = 0;
+        int current = 0;
+
+        final int n = text.length();
+
+        for( int i = 0; i < n; i++ )
+        {
+            char ch = text.charAt(i);
+
+            if( ch == TAG_CHAR )
+            {
+                int close = indexOf( text, TAG_CHAR, i + 1, n );
+
+                if( close > i )
+                {
+                    String tag = text.subSequence(i + 1, close).toString();
+
+                    /*
+                     * PAGE_END является page marker, а не частью строки.
+                     * Остальные валидные ALT tags тоже не считаем видимыми символами.
+                     */
+                    if( isValidTagBody(text, i + 1, close) ) {
+                        i = close;
+                        continue;
+                    }
+                }
+
+                /*
+                 * Некорректный одинокий ` считаем обычным символом.
+                 */
+                current++;
+                continue;
+            }
+
+            if( ch == '\r' )
+            {
+                if( current > max )
+                    max = current;
+
+                current = 0;
+
+                if( i + 1 < n && text.charAt(i + 1) == '\n' )
+                    i++;
+
+                continue;
+            }
+
+            if( ch == '\n' || ch == '\f' )
+            {
+                if( current > max )
+                    max = current;
+
+                current = 0;
+                continue;
+            }
+
+            current++;
+        }
+
+        if( current > max )
+            max = current;
+
+        return max > 0 ? max : -1;
+    }
+
+    /** */
+    private static void appendPageSeparator(
+            StringBuilder out,
+            StyleSpansBuilder<Collection<String>> spans,
+            int pageWidth
+    ) {
+        if( out.length() > 0 && !endsWithLineBreak(out) ) {
+            out.append('\n');
+            spans.add(Collections.<String>emptyList(), 1);
+        }
+
+        String line = makePageSeparatorLine(pageWidth);
+
+        out.append(line);
+        spans.add(Collections.singleton(PAGE_SEPARATOR_STYLE), line.length());
+
+        out.append('\n');
+        spans.add(Collections.<String>emptyList(), 1);
+    }
+
+    private static String makePageSeparatorLine(int pageWidth) {
+
+        if( pageWidth <= 0 )
+            return PAGE_SEPARATOR_FALLBACK;
+
+        String title = PAGE_SEPARATOR_TITLE;
+
+        if( pageWidth <= title.length() )
+            return title.trim();
+
+        int fill = pageWidth - title.length();
+
+        int left = fill / 2;
+        int right = fill - left;
+
+        StringBuilder sb = new StringBuilder(pageWidth);
+
+        appendChars(sb, '=', left);
+        sb.append(title);
+        appendChars(sb, '=', right);
+
+        return sb.toString();
+    }
+
+    private static void appendChars(StringBuilder sb, char ch, int count) {
+        for( int i = 0; i < count; i++ )
+            sb.append(ch);
+    }
+
+    private static boolean endsWithLineBreak(StringBuilder sb) {
+
+        if( sb.length() == 0 )
+            return true;
+
+        char ch = sb.charAt(sb.length() - 1);
+        return ch == '\n' || ch == '\r';
+    }
+
+    private static int skipSingleLineBreak(CharSequence text, int index, int n) {
+
+        if( index >= n )
+            return index;
+
+        char ch = text.charAt(index);
+
+        if( ch == '\r' ) {
+            if( index + 1 < n && text.charAt(index + 1) == '\n' )
+                return index + 2;
+
+            return index + 1;
+        }
+
+        if( ch == '\n' )
+            return index + 1;
+
+        return index;
+    }
+
+    /** */
+    public static ParseResult parseForFormattedMode(CharSequence text) {
+        int width = guessVisiblePageWidth(text);
+        return parseForFormattedMode(text, width);
+    }
+
+    /** */
+    public static ParseResult parseForPlainTextMode(CharSequence text) {
+        int width = guessVisiblePageWidth(text);
+        return parseForPlainTextMode(text, width);
+    }
+
     /** Форматированный режим: теги убираются, стили применяются к cleanText */
-    public static ParseResult parseForFormattedMode( CharSequence text )
+    public static ParseResult parseForFormattedMode( CharSequence text, int pageWidth )
     {
         if( text == null || text.length() == 0 )
             return new ParseResult( S.EMPTY_STRING, StyleSpans.singleton( Collections.emptyList(), 0));
@@ -117,6 +296,17 @@ public class TagProcessor {
 
             // применяем тег
             String tag = text.subSequence(innerStart, innerEnd).toString();
+
+            if( isPageEndTag(tag) )
+            {
+                appendPageSeparator(clean, spans, pageWidth);
+
+                i = skipSingleLineBreak(text, close + 1, n);
+                lastTextStart = i;
+
+                continue;
+            }
+
             mask = applyTagToMaskAndList(tag, mask, currentCss);
 
             i = close + 1;
@@ -141,11 +331,127 @@ public class TagProcessor {
         return new ParseResult(resultText, styleSpans);
     }
 
+
     /** Plain text режим: подсвечиваем сами теги как "tag" */
+    public static ParseResult parseForPlainTextMode(CharSequence text, int pageWidth) {
+
+        if( text == null || text.length() == 0 )
+            return new ParseResult( S.EMPTY_STRING, StyleSpans.singleton(Collections.emptyList(), 0));
+
+        final int n = text.length();
+        final StringBuilder out = new StringBuilder(n);
+        final StyleSpansBuilder<Collection<String>> spans = new StyleSpansBuilder<>();
+
+        int i = 0;
+        int lastTextStart = 0;
+
+        while( i < n )
+        {
+            char ch = text.charAt(i);
+
+            if( ch != TAG_CHAR ) {
+                i++;
+                continue;
+            }
+
+            int tagStart = i;
+            int close = indexOf(text, TAG_CHAR, i + 1, n);
+
+            if( close < 0 ) {
+                i++;
+                continue;
+            }
+
+            if( tagStart > lastTextStart ) {
+                appendPlainSegment(
+                        text,
+                        lastTextStart,
+                        tagStart,
+                        out,
+                        spans,
+                        Collections.<String>emptyList()
+                );
+            }
+
+            int innerStart = tagStart + 1;
+            int innerEnd = close;
+
+            boolean valid = (innerEnd > innerStart) && isValidTagBody(text, innerStart, innerEnd);
+
+            appendPlainSegment(
+                    text,
+                    tagStart,
+                    close + 1,
+                    out,
+                    spans,
+                    valid ? Collections.singleton("tag") : Collections.<String>emptyList()
+            );
+
+            if( valid )
+            {
+                String tag = text.subSequence(innerStart, innerEnd).toString();
+
+                if( isPageEndTag(tag) )
+                {
+                    appendPageSeparator(out, spans, pageWidth);
+
+                    i = skipSingleLineBreak(text, close + 1, n);
+                    lastTextStart = i;
+
+                    continue;
+                }
+            }
+
+            i = close + 1;
+            lastTextStart = i;
+        }
+
+        if( lastTextStart < n ) {
+            appendPlainSegment(
+                    text,
+                    lastTextStart,
+                    n,
+                    out,
+                    spans,
+                    Collections.<String>emptyList()
+            );
+        }
+
+        String resultText = out.toString();
+        StyleSpans<Collection<String>> styleSpans = spans.create();
+
+        if( styleSpans.length() != resultText.length() ) {
+            throw new IllegalStateException(
+                    "StyleSpans length (" + styleSpans.length()
+                            + ") doesn't match text length (" + resultText.length() + ")."
+            );
+        }
+
+        return new ParseResult(resultText, styleSpans);
+    }
+
+    private static void appendPlainSegment(
+            CharSequence src,
+            int start,
+            int end,
+            StringBuilder out,
+            StyleSpansBuilder<Collection<String>> spans,
+            Collection<String> style
+    ) {
+        int len = end - start;
+
+        if( len <= 0 )
+            return;
+
+        out.append(src, start, end);
+        spans.add(style, len);
+    }
+
+    /** Plain text режим: подсвечиваем сами теги как "tag"
     public static ParseResult parseForPlainTextMode(CharSequence text) {
 
         if( text == null || text.length() == 0 )
-            return new ParseResult(S.EMPTY_STRING, StyleSpans.singleton(Collections.emptyList(), 0));
+            return new ParseResult( S.EMPTY_STRING, StyleSpans.singleton(Collections.emptyList(), 0));
 
         final int n = text.length();
         final StyleSpansBuilder<Collection<String>> spans = new StyleSpansBuilder<>();
@@ -170,8 +476,8 @@ public class TagProcessor {
             }
 
             // обычный текст до '`'
-            if (tagStart > lastTextStart) {
-                spans.add(Collections.emptyList(), tagStart - lastTextStart);
+            if( tagStart > lastTextStart ) {
+                spans.add( Collections.emptyList(), tagStart - lastTextStart );
             }
 
             int innerStart = tagStart + 1;
@@ -197,19 +503,23 @@ public class TagProcessor {
 
         return new ParseResult(text.toString(), styleSpans);
     }
+    */
 
     /** */
     private static void appendSegment ( CharSequence src, int start, int end, StringBuilder clean, StyleSpansBuilder<Collection<String>> spans, int mask, List<String> currentCss )
     {
         int len = end - start;
-        if (len <= 0) return;
 
-        clean.append(src, start, end);
-        spans.add(stylesForMask(mask, currentCss), len);
+        if( len <= 0 )
+            return;
+
+        clean.append( src, start, end );
+        spans.add   ( stylesForMask( mask, currentCss ), len );
     }
 
     /** */
     private static int indexOf( CharSequence s, char c, int from, int to ) {
+
         for (int i = from; i < to; i++)
         {
             if( s.charAt(i) == c )
@@ -261,7 +571,8 @@ public class TagProcessor {
     }
 
     /** */
-    private static Collection<String> stylesForMask(int mask, List<String> currentCss) {
+    private static Collection<String> stylesForMask( int mask, List<String> currentCss )
+    {
 
         Collection<String> cached = MASK_TO_STYLES.get(mask);
         if( cached != null )
@@ -271,6 +582,7 @@ public class TagProcessor {
             return Collections.emptyList();
 
         Collection<String> res = Collections.unmodifiableList(new ArrayList<>(currentCss) );
+
         MASK_TO_STYLES.put( mask, res);
 
         return res;
@@ -296,12 +608,13 @@ public class TagProcessor {
     }
 
     /** */
-    private static int applyTagToMaskAndList(String tag, int mask, ArrayList<String> currentCss)
+    private static int applyTagToMaskAndList( String tag, int mask, ArrayList<String> currentCss )
     {
         if( tag == null || tag.isEmpty() )
             return mask;
 
         char lastCh = S.lastChar(tag);
+
         boolean hasSign = (lastCh == '+' || lastCh == '-');
         boolean remove  = (lastCh == '-');
 

@@ -26,3 +26,8 @@
 .status-bar .right-items {
     -fx-spacing: 5px !important;
 }
+
+.page-separator {
+    -fx-fill: #808080;
+    -fx-font-size: 10;
+}

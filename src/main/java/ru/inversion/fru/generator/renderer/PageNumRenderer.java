@@ -3,6 +3,7 @@ package ru.inversion.fru.generator.renderer;
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.fru.model.items.FruPaging;
+import ru.inversion.utils.S;
 
 public class PageNumRenderer implements IRenderer<FruPaging> {
 
@@ -16,6 +17,10 @@ public class PageNumRenderer implements IRenderer<FruPaging> {
 
         final FruFormatter formatter = paging.getFormatter();
 
-        context.writer().print( formatter.format( context, "`PAGE_END`", null ).first, true );
+        String pageEnd = paging.getPageEnd();
+        if( S.isNullOrEmpty(pageEnd) )
+            pageEnd = "`PAGE_END`";
+
+        context.writer().print( formatter.format( context, pageEnd, null ).first, true );
     }
 }
