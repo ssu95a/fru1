@@ -1,8 +1,6 @@
 package ru.inversion.fru.api;
 
-import ch.qos.logback.classic.util.ContextInitializer;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import org.xml.sax.InputSource;
 import ru.inversion.fru.api.exceptions.FruCommandLineException;
 import ru.inversion.fru.api.exceptions.FruException;
 import ru.inversion.fru.data.FruDataFile;
@@ -18,7 +16,6 @@ import ru.inversion.fru.print.altviewer.FruApp;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -121,7 +118,7 @@ public class FruEngine {
     /** */
     public static void print( String[] args ) throws Exception
     {
-        final FruEngineConfig config = FruEngineConfig.fromCommandLine(args);
+        final FruEngineConfig config = FruEngineConfig.parseCommandLine(args);
 
         final FruEngine engine = new FruEngine();
 

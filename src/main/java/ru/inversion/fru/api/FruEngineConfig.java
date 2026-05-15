@@ -4,6 +4,7 @@ import ru.inversion.fru.api.exceptions.FruCommandLineException;
 
 import javax.print.attribute.standard.Copies;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -222,27 +223,25 @@ public class FruEngineConfig {
     }
 
     /** */
-    public static FruEngineConfig fromCommandLine( String[] args )
+    public static FruEngineConfig parseCommandLine(String[] args )
     {
         if( args.length < 2 )
-            throw new FruCommandLineException("Отсутствуют обязательные параметры в командной строке.");
+            throw new FruCommandLineException( "Отсутствуют обязательные параметры в командной строке." );
 
-        FruEngineConfig config = new FruEngineConfig();
+        FruEngineConfig config = new FruEngineConfig( );
 
-        for( String s : args ) {
-
+        for( String s : args )
+        {
             if( s.startsWith("-") )
                 parseOption( config, s );
             else
             {
-                final Path file = Paths.get( normalizeFru(s) );
-
-                if (config.datFile == null)
-                    config.datFile = file;
+                if( config.datFile == null)
+                    config.datFile = Paths.get(s);
                 else if (config.fruFile == null)
-                    config.fruFile = file;
+                    config.fruFile = Paths.get( normalizeFru(s) );
                 else
-                    config.outFile = file;
+                    config.outFile = Paths.get(s);
             }
         }
 
@@ -259,7 +258,7 @@ public class FruEngineConfig {
             try {
                 config.outFile = Files.createTempFile( "alt", "fru" );
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
 
             /*
@@ -298,6 +297,7 @@ public class FruEngineConfig {
             }
 
             Files.copy( outFile, datFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING );
+
             outFile = datFile;
         }
 
