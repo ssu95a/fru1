@@ -76,7 +76,8 @@ public final class StyledTextParser implements IStyledTextParser {
                  * Для непустой строки НЕ возвращаем LINE_FEED следом,
                  * иначе с текущим PageLayoutEngine будет двойной межстрочный шаг.
                  */
-                if (ch == '\n') {
+                if(ch == '\n')
+                {
                     currentStyle = spanStyle;
 
                     if (!isBlank(text)) {
@@ -248,7 +249,8 @@ public final class StyledTextParser implements IStyledTextParser {
 
         Optional<AltParameter<?>> altParameter = dict.resolveCommand(cmdText);
 
-        if (altParameter.isPresent()) {
+        if( altParameter.isPresent() )
+        {
             final AltParameter<?> pv = altParameter.get();
 
             if (U.in(

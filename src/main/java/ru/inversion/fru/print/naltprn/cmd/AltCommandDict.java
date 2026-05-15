@@ -82,11 +82,10 @@ public class AltCommandDict
         String cmd;
         String prm = null;
 
-        int ix = str.indexOf(',');
-
-        if( ix > 0 )
+        if( S.contains( str, ',', '=' ) )
         {
-            String[] as = str.split(",");
+            String[] as = str.split("[,=]");
+
             if( as.length > 1 ) {
                 cmd = as[0];
                 prm = as[1];
@@ -97,7 +96,7 @@ public class AltCommandDict
         else
             cmd = str;
 
-        AltParameter<?> parameter = AltParameter.createParameter( cmd, prm, this );
+        AltParameter<?> parameter = AltParameter.createParameter( cmd, prm, this, true );
 
         if( parameter == null )
             return Optional.empty();
@@ -157,7 +156,7 @@ public class AltCommandDict
                     cmdData.second.entrySet().forEach(new Consumer<Map.Entry<String, String>>() {
                         @Override
                         public void accept(Map.Entry<String, String> e) {
-                            AltParameter<?> parameter = AltParameter.createParameter( e.getKey(), e.getValue(), dict );
+                            AltParameter<?> parameter = AltParameter.createParameter( e.getKey(), e.getValue(), dict, false );
                             if( parameter != null )
                                 parameterList.add( parameter );
                         }

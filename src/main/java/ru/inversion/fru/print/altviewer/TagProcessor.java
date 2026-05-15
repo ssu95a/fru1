@@ -558,7 +558,7 @@ public class TagProcessor {
             }
 
             // Для совместимости разрешим Character.isLetterOrDigit + '_' + ','
-            if( ch == '_' || ch == ',')
+            if( ch == '_' || ch == ',' || ch == '=')
                 continue;
 
             if( Character.isLetterOrDigit(ch) )

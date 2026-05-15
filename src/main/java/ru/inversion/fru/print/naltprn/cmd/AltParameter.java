@@ -2,6 +2,7 @@ package ru.inversion.fru.print.naltprn.cmd;
 
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
+import ru.inversion.fru.print.altprint.ALTPrintException;
 import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.U;
@@ -84,13 +85,19 @@ public abstract class AltParameter<T>
         }
 
         /** */
-        public StyleState applyTo(StyleState style, Object param)
+        public StyleState applyTo( StyleState style, Object param)
         {
             try
             {
-                return getCommand().applyTo( style, U.nvl( param, this.getParam() ) );
+                AltCommand command = getCommand();
+                if( command != null && command.getGraphicData() != null ) {
+                    return command.applyTo( style, U.nvl( param, this.getParam() ));
+                }
+
+                throw new IllegalStateException("Неизвестная команда: " + ( command == null ? "<none>" : command.getName() ) );
+
             }
-            catch (Exception ex) {
+            catch( Exception ex) {
                 throw new RuntimeException( "cmd: " + getCommand().getName(), ex );
             }
         }
@@ -361,7 +368,7 @@ public abstract class AltParameter<T>
     public static final AltParameter<Integer> g_pageEnd  = new PageEndParameter ();
     public static final AltParameter<Integer> g_lineFeed = new LineFeedParameter();
 
-    public static AltParameter<?> createParameter( String name, String value, AltCommandDict dict)
+    public static AltParameter<?> createParameter( String name, String value, AltCommandDict dict, boolean add )
             throws ALTException
     {
         AltParameter<?> parameter = null;
@@ -376,7 +383,11 @@ public abstract class AltParameter<T>
                 if( "PORTRAIT".equalsIgnoreCase(name) )
                     return g_portrait;
 
-                return new CommandParameter( Pair.makePair( dict.getCommand(name, true), value) );
+                AltCommand command = dict.getCommand( name, add );
+                if( command == null )
+                    throw new IllegalStateException( "Команда " + name + " не найдена в словаре команд из Altprnt5.ini");
+
+                return new CommandParameter( Pair.makePair( command, value) );
             }
 
             switch (type)
