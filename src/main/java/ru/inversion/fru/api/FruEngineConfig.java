@@ -15,13 +15,14 @@ import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.inversion.fru.utils.config.ConfigSource;
 import ru.inversion.utils.U;
 
 import static ru.inversion.fru.api.FruEngine.csDos866;
 import static ru.inversion.fru.api.FruEngine.csWin1251;
 
 /** */
-public class FruEngineConfig {
+public class FruEngineConfig implements ConfigSource {
 
     private static final Logger log = LoggerFactory.getLogger(FruEngineConfig.class);
 
@@ -84,6 +85,9 @@ public class FruEngineConfig {
 
     /** */
     private boolean outExplicitlySet = false;
+
+    /** */
+    private String altPrint5IniPath = null;
 
     private FruEngineConfig()
     { }
@@ -223,7 +227,7 @@ public class FruEngineConfig {
     }
 
     /** */
-    public static FruEngineConfig parseCommandLine(String[] args )
+    public static FruEngineConfig parseCommandLine( String[] args )
     {
         if( args.length < 2 )
             throw new FruCommandLineException( "Отсутствуют обязательные параметры в командной строке." );
@@ -234,6 +238,9 @@ public class FruEngineConfig {
         {
             if( s.startsWith("-") )
                 parseOption( config, s );
+            else
+                if( s.startsWith("--PATH_ALTPRINT=") )
+                    config.altPrint5IniPath = s.substring("--PATH_ALTPRINT=".length() );
             else
             {
                 if( config.datFile == null)
@@ -303,5 +310,34 @@ public class FruEngineConfig {
 
     }
 
+    @Override
+    public String name() {
+        return "fru-engine-config";
+    }
+
+    @Override
+    public Object get( String key ) {
+/*
+         Copies copies = null;
+         boolean allowEditing = false;
+         boolean lightView = false;
+         Charset charset = csWin1251;
+         int printerIndex = -1;
+         boolean silentMode = false;
+         Path datFile = null;
+         Path fruFile = null;
+         Path outFile = null;
+         GenerateModeEnum generateMode;
+*/
+        if( "PATH_ALTPRINT".equalsIgnoreCase(key) )
+             return altPrint5IniPath;
+        else if( "alt.copies".equalsIgnoreCase(key) )
+            return copies;
+        else if( "alt.printerIndex".equalsIgnoreCase(key) )
+            return copies;
+
+        return null;
+    }
+    
 
 }

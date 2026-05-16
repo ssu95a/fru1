@@ -4,7 +4,6 @@ import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.nio.file.Path;
 
 import static ru.inversion.fru.print.naltprn.AltSettings.INI_FILE_NAME;
 
@@ -12,7 +11,7 @@ public final class AltPrintFileChooser {
 
     private AltPrintFileChooser() {}
 
-    public static File chooseAltPrint( )
+    public static File chooseAltPrint5ini( )
     {
         // если headless (сервер/CI) — не падаем
         if( GraphicsEnvironment.isHeadless() ) {

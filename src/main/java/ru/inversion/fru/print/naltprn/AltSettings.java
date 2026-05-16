@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.ALTException;
 import ru.inversion.fru.print.altprint.ALTLog;
 import ru.inversion.fru.print.naltprn.cmd.AltCommandDict;
+import ru.inversion.fru.utils.config.Config;
 import ru.inversion.utils.S;
 
 import java.io.File;
@@ -19,20 +20,27 @@ import static org.slf4j.LoggerFactory.getLogger;
 /** */
 public class AltSettings
 {
+    /** */
     private final static Logger logger = getLogger( MethodHandles.lookup().lookupClass() );
 
+    /** */
     public static final String INI_FILE_NAME = "ALTPRNT5.INI";
 
+    /** */
     private static AltSettings instance;
 
+    /** */
     private AltCommandDict commandDict;
 
+    /** */
     private Map<String,Boolean> printerMap;
 
+    /** */
     private Path altPrnt5File;
 
+
     /** */
-    private static File getINIFilePath()
+    private static File getINIFilePath1()
     {
         File file = new File(INI_FILE_NAME);
 
@@ -67,7 +75,26 @@ public class AltSettings
 
         if( file == null || !file.exists() || !file.isFile() )
         {
-            file = AltPrintFileChooser.chooseAltPrint();
+            file = AltPrintFileChooser.chooseAltPrint5ini();
+
+            if( file != null )
+                Preferences.userRoot().node("ALTPRINT").put( "PATH_ALTPRINT", file.getParent() );
+        }
+
+        return file;
+    }
+
+
+    /** */
+    private static File getINIFilePath( )
+    {
+        String filePath = Config.instance().getString("PATH_ALTPRINT");
+
+        File file = S.isNullOrEmpty(filePath) ? null : new File(filePath, INI_FILE_NAME);
+
+        if( file == null || !file.exists() || !file.isFile() )
+        {
+            file = AltPrintFileChooser.chooseAltPrint5ini();
 
             if( file != null )
                 Preferences.userRoot().node("ALTPRINT").put( "PATH_ALTPRINT", file.getParent() );
@@ -106,6 +133,7 @@ public class AltSettings
         return altSettings;
     }
 
+
     /** */
     public static AltSettings INSTANCE()
     {
@@ -116,6 +144,7 @@ public class AltSettings
         }
         return instance;
     }
+
 
     /** */
     public AltCommandDict commandDict()
