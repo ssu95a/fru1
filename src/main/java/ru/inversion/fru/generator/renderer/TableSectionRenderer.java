@@ -4,6 +4,7 @@ import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.model.items.FruLine;
 import ru.inversion.fru.model.sections.FruSectionLine;
 import ru.inversion.fru.model.sections.FruSectionTable;
+import ru.inversion.utils.S;
 
 
 /** */
@@ -44,7 +45,7 @@ public class TableSectionRenderer implements IRenderer<FruSectionTable> {
             tableBodyLineRenderer.render( context, line );
 context.writer().marker = "TableSectionRenderer: " + table.getNum();
             context.writer().newLine();
-context.writer().marker = null;
+context.writer().marker = S.EMPTY_STRING;
             if( lineSectionRenderer != null )
                 lineSectionRenderer.render( context, table.getLine() );
         }

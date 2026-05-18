@@ -314,9 +314,9 @@ public class FruContext implements AutoCloseable {
 
             if( currentSection != null )
                 globalScriptContext.setValuesSupplier(name -> currentSection.getFieldValue( FruContext.this, name ) );
-
+writer.marker = "scriptEngine";
             scriptEngine.eval( script.getBody() );
-
+writer.marker = S.EMPTY_STRING;
         } catch( ScriptException e ) {
             throw new FruScriptException( "Ошибка при выполнении скрипта", e, script.getBody() );
         }
