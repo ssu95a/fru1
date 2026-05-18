@@ -1,10 +1,12 @@
 package ru.inversion.fru.generator.impl;
 
+import ru.inversion.utils.S;
+
 import java.io.FilterWriter;
 import java.io.IOException;
 import java.io.Writer;
 
-/** */
+/** Обрезает все пробелы справа до \n при выводе текста */
 public final class RTrimWriter extends FilterWriter {
 
    /** */
@@ -20,7 +22,7 @@ public final class RTrimWriter extends FilterWriter {
 
    private final WrittenCharListener listener;
 
-   public RTrimWriter(Writer out, WrittenCharListener listener) {
+   public RTrimWriter( Writer out, WrittenCharListener listener ) {
       super(out);
       this.listener = listener;
    }
@@ -49,8 +51,8 @@ public final class RTrimWriter extends FilterWriter {
    @Override
    public void write(char[] cbuf, int off, int len) throws IOException {
 
-      if (cbuf == null)
-         throw new NullPointerException("cbuf is null");
+      if( cbuf == null )
+          throw new NullPointerException("cbuf is null");
 
       if (off < 0 || len < 0 || off + len > cbuf.length)
          throw new IndexOutOfBoundsException();
@@ -65,11 +67,11 @@ public final class RTrimWriter extends FilterWriter {
       if (str == null)
          throw new NullPointerException("str is null");
 
-      if (off < 0 || len < 0 || off + len > str.length())
+      if( off < 0 || len < 0 || off + len > str.length())
          throw new IndexOutOfBoundsException();
 
-      for (int i = off; i < off + len; i++)
-         writeChar(str.charAt(i), true);
+      for( int i = off; i < off + len; i++ )
+           writeChar(str.charAt(i), true);
    }
 
    /**
@@ -78,23 +80,26 @@ public final class RTrimWriter extends FilterWriter {
     */
    public void writeForced(String value) throws IOException {
 
-      if (value == null || value.length() == 0)
+      if( S.isNullOrEmpty(value) )
          return;
 
-      for (int i = 0; i < value.length(); i++)
-         writeChar(value.charAt(i), false);
+      for( int i = 0; i < value.length(); i++ )
+           writeChar( value.charAt(i), false );
    }
 
-   private void writeChar(char ch, boolean count) throws IOException {
+   /** */
+   private void writeChar( char ch, boolean count) throws IOException {
 
-      if (ch == '\n') {
-         flushLineBeforeLineBreak(count);
+      if( ch == '\n' )
+      {
+         flushLine(count);
          writeDirect('\n', count);
          return;
       }
 
-      if (ch == '\r') {
-         flushLineBeforeLineBreak(count);
+      if( ch == '\r')
+      {
+         flushLine(count);
          writeDirect('\r', count);
          return;
       }
@@ -102,12 +107,13 @@ public final class RTrimWriter extends FilterWriter {
       lineBuffer.append(ch);
    }
 
-   private void flushLineBeforeLineBreak(boolean count) throws IOException {
+   /** */
+   private void flushLine(boolean count) throws IOException {
 
-      int end = rTrimmedLength(lineBuffer);
+      int end = rTrimmedLength( lineBuffer );
 
-      for (int i = 0; i < end; i++)
-         writeDirect(lineBuffer.charAt(i), count);
+      for( int i = 0; i < end; i++)
+           writeDirect( lineBuffer.charAt(i), count );
 
       lineBuffer.setLength(0);
    }
@@ -118,8 +124,8 @@ public final class RTrimWriter extends FilterWriter {
     */
    public void flushLineRaw(boolean count) throws IOException {
 
-      for (int i = 0; i < lineBuffer.length(); i++)
-         writeDirect(lineBuffer.charAt(i), count);
+      for( int i = 0; i < lineBuffer.length(); i++)
+           writeDirect(lineBuffer.charAt(i), count);
 
       lineBuffer.setLength(0);
    }
@@ -128,22 +134,23 @@ public final class RTrimWriter extends FilterWriter {
     * EOF считается концом строки.
     */
    public void finish() throws IOException {
-      flushLineBeforeLineBreak(true);
+      flushLine(true);
    }
 
    private void writeDirect(char ch, boolean count) throws IOException {
 
       out.write(ch);
 
-      if (!count)
-         return;
+      if( !count )
+          return;
 
       updateStats(ch);
 
-      if (listener != null)
+      if( listener != null )
          listener.written(ch);
    }
 
+   /** */
    private void updateStats(char ch) {
 
       totalChars++;
@@ -164,7 +171,9 @@ public final class RTrimWriter extends FilterWriter {
       }
    }
 
-   private static int rTrimmedLength(CharSequence value) {
+   /** */
+   private static int rTrimmedLength( CharSequence value )
+   {
 
       int end = value.length();
 

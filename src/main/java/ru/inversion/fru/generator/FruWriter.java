@@ -32,25 +32,23 @@ public class FruWriter extends Writer {
 
     /** */
     public FruWriter(Writer out) {
-        this.paging = null;
+
+        this.paging       = null;
         this.pageConsumer = null;
 
-        this.out = new RTrimWriter(
-                Objects.requireNonNull(out, "'out' is null"),
-                this::onWrittenChar
-        );
+        this.out     = new RTrimWriter( Objects.requireNonNull(out, "'out' is null"), this::onWrittenChar );
 
         this.current = this.out;
     }
 
     /** */
     public FruWriter(Writer out, FruPaging paging, BiConsumer<Integer, FruPaging> pc) {
-        this.paging = paging;
+        this.paging       = paging;
         this.pageConsumer = pc;
 
         this.out = new RTrimWriter(
-                Objects.requireNonNull(out, "'out' is null"),
-                this::onWrittenChar
+            Objects.requireNonNull(out, "'out' is null"),
+            this::onWrittenChar
         );
 
         this.current = this.out;
@@ -92,10 +90,11 @@ public class FruWriter extends Writer {
     }
 
     /** Использовать внешний Writer как буфер */
-    public void startBuffer(Writer externalBuffer) {
-        Objects.requireNonNull(externalBuffer, "externalBuffer");
+    public void startBuffer( Writer externalBuffer )
+    {
+        Objects.requireNonNull( externalBuffer, "externalBuffer" );
 
-        if (buffer != null)
+        if( buffer != null )
             throw new IllegalStateException("Buffer already started");
 
         try {
@@ -109,7 +108,7 @@ public class FruWriter extends Writer {
             throw new RuntimeException("Error on start buffer", e);
         }
 
-        buffer = externalBuffer;
+        buffer  = externalBuffer;
         current = buffer;
     }
 
@@ -272,7 +271,9 @@ public class FruWriter extends Writer {
     /** */
     public FruWriter newLine() {
         try {
+            //write(marker);
             write('\n');
+            //marker = S.EMPTY_STRING;
         }
         catch (IOException e) {
             throw new RuntimeException("Error on write nl value", e);
