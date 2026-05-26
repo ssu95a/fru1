@@ -22,6 +22,7 @@ import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.script.FruScriptContext;
 import ru.inversion.fru.model.sections.FruSection;
 import ru.inversion.property.IProperty;
+import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 
 import javax.script.*;
@@ -32,6 +33,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+import static javax.script.ScriptContext.GLOBAL_SCOPE;
 
 /** */
 public class FruContext implements AutoCloseable {
@@ -252,7 +256,7 @@ public class FruContext implements AutoCloseable {
     /** */
     public String getArgument( String name )
     {
-        Object v = globalScriptContext.getAttribute( name, ScriptContext.GLOBAL_SCOPE );
+        Object v = globalScriptContext.getAttribute( name, GLOBAL_SCOPE );
         return v == null ? null : String.valueOf(v);
     }
 
@@ -272,7 +276,7 @@ public class FruContext implements AutoCloseable {
         final String arg = fru.arguments().get(num);
 
         if (!S.isNullOrEmpty(arg) )
-            globalScriptContext.setAttribute( arg, value, ScriptContext.GLOBAL_SCOPE );
+            globalScriptContext.setAttribute( arg, value, GLOBAL_SCOPE );
     }
 
     /** */
@@ -313,10 +317,33 @@ public class FruContext implements AutoCloseable {
         try {
 
             if( currentSection != null )
-                globalScriptContext.setValuesSupplier(name -> currentSection.getFieldValue( FruContext.this, name ) );
+                globalScriptContext.setValuesSupplier(new Function<String, Pair<Object, Boolean>>() {
+                    @Override
+                    public Pair<Object, Boolean> apply( String name ) {
+                        //name -> currentSection.getFieldValue( FruContext.this, name )
+                        return Pair.makePair (
+                            currentSection.getFieldValue( FruContext.this, name ),
+                            script.hasImportArg(name)
+                        );
+                    }
+                });
+
 writer.marker = "scriptEngine";
-            scriptEngine.eval( script.getBody() );
+
+                script.beforeExecute();
+
+//                if( script.getExecuteCount() == 0 && !script.getImportArgs().isEmpty() )
+//                    script.getImportArgs().forEach(s->globalScriptContext.setAttribute(s,null,GLOBAL_SCOPE));
+
+                try {
+                    scriptEngine.eval( script.getBody());
+                }
+                finally {
+                    script.afterExecute();
+                }
+
 writer.marker = S.EMPTY_STRING;
+
         } catch( ScriptException e ) {
             throw new FruScriptException( "Ошибка при выполнении скрипта", e, script.getBody() );
         }

@@ -1,5 +1,7 @@
 package ru.inversion.fru.model.script;
 
+import ru.inversion.utils.Pair;
+
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.SimpleScriptContext;
@@ -45,7 +47,7 @@ public class FruScriptContext extends SimpleScriptContext {
     }
 
     /** */
-    public void setValuesSupplier( Function<String, Object> valuesSupplier ) {
+    public void setValuesSupplier( Function<String, Pair<Object,Boolean>> valuesSupplier ) {
         ((FruBindings)this.globalScope).setValuesSupplier(valuesSupplier);
     }
 
