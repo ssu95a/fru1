@@ -82,20 +82,8 @@ public class Renderers {
                 return;
             }
 
-            /*
-             * HOTFIX:
-             * FruFieldGrp перехватывает только конкретные FruFieldVal instances,
-             * заранее найденные FruFieldGrpPlanner через IdentityHashMap.
-             *
-             * Этот блок обязан стоять ДО:
-             * - lineSession.resolveValue(...)
-             * - field.getValue(context)
-             * - field.getFormatter().format(...)
-             *
-             * Иначе @S6/74/l@ tail-slot снова прочитает raw value
-             * и продублирует сумму.
-             */
-            if (field instanceof FruFieldVal) {
+            if( field instanceof FruFieldVal )
+            {
                 FruFieldVal fv = (FruFieldVal) field;
 
                 if (context.hasFieldGroup(fv)) {

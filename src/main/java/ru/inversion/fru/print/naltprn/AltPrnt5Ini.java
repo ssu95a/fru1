@@ -227,7 +227,7 @@ public class AltPrnt5Ini {
 
         try( IniFileEventReader r = IniFileEventReader.newBuilder().iniFile(file).semicolonPartOfValue(true).build() )
         {
-            for (IniFileEvent e : r)
+            for (IniFileEvent e : U.iterable(r))
             {
                 if (e.type() == IniFileEvent.Type.Section) {
                     currentSection = iniFile.getSection(e.value());

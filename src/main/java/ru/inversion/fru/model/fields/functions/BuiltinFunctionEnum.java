@@ -187,7 +187,7 @@ public enum BuiltinFunctionEnum {
             return null;
 
         for( BuiltinFunctionEnum value : BuiltinFunctionEnum.class.getEnumConstants() )  {
-            if( value.name().equalsIgnoreCase(name))
+            if( value.name().equals(name))
                 return value;
         }
 

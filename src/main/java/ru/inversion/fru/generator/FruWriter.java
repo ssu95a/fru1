@@ -54,17 +54,16 @@ public class FruWriter extends Writer {
         this.current = this.out;
     }
 
-    /**
-     * Legacy-compatible:
-     * строка внутри текущей FRU-страницы.
-     */
+   /**
+    * Строка внутри текущей FRU-страницы.
+    */
     public int currentLine() {
         return currentPageLine;
     }
 
-    /**
-     * Позиция в физической output-строке после rtrim.
-     */
+   /**
+    * Позиция в физической output-строке после rtrim.
+    */
     public int currentCharInLine() {
         return out.currentCharInLine();
     }
@@ -248,7 +247,6 @@ public class FruWriter extends Writer {
                 }
                 else {
                     /*
-                     * Legacy force:
                      * при активном external buffer пишем напрямую,
                      * без статистики и paging.
                      */

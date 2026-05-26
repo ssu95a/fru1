@@ -192,8 +192,18 @@ public class TagProcessor {
         if( sb.length() == 0 )
             return true;
 
-        char ch = sb.charAt(sb.length() - 1);
-        return ch == '\n' || ch == '\r';
+//        char ch = sb.charAt(sb.length() - 1);
+//        return ch == '\n' || ch == '\r';
+
+        for( int i = sb.length() - 1; i >= 0; i-- ) {
+             char ch = sb.charAt(i);
+             if( ch == '\n' || ch == '\r' )
+                 return true;
+            if( !Character.isSpaceChar(ch) )
+                 break;
+        }
+
+        return false;
     }
 
     private static int skipSingleLineBreak(CharSequence text, int index, int n) {

@@ -76,7 +76,6 @@ public final class RTrimWriter extends FilterWriter {
 
    /**
     * Запись через rtrim-фильтр, но без статистики и listener-а.
-    * Нужна для legacy print(value, true).
     */
    public void writeForced(String value) throws IOException {
 

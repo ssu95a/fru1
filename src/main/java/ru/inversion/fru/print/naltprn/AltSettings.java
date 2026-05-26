@@ -40,60 +40,19 @@ public class AltSettings
 
 
     /** */
-    private static File getINIFilePath1()
-    {
-        File file = new File(INI_FILE_NAME);
-
-        if( file.exists() )
-            return file;
-
-        file = null;
-
-        for( int i = 0; (file == null) && (i < 3); i++ )
-        {
-            try {
-
-                String iniDir = null;
-
-                if( i == 2 )
-                    iniDir = System.getProperty("PATH_ALTPRINT");
-                else {
-                    Preferences preferences = i == 0 ? Preferences.userRoot() : Preferences.systemRoot();
-
-                    if( preferences.nodeExists("ALTPRINT") ) {
-                        iniDir = preferences.node("ALTPRINT").get("PATH_ALTPRINT", null);
-                    }
-                }
-
-                if( !S.isNullOrEmpty( iniDir ) )
-                    file = new File ( iniDir, INI_FILE_NAME );
-            }
-            catch( Exception ex ) {
-                logger.trace("Ошибка при поиске в реестре пути до файла ALTPRNT5.INI", ex );
-            }
-        }
-
-        if( file == null || !file.exists() || !file.isFile() )
-        {
-            file = AltPrintFileChooser.chooseAltPrint5ini();
-
-            if( file != null )
-                Preferences.userRoot().node("ALTPRINT").put( "PATH_ALTPRINT", file.getParent() );
-        }
-
-        return file;
-    }
-
-
-    /** */
     private static File getINIFilePath( )
     {
         String filePath = Config.instance().getString("PATH_ALTPRINT");
 
         File file = S.isNullOrEmpty(filePath) ? null : new File(filePath, INI_FILE_NAME);
 
+        logger.info("define '{}' file path as: {}", INI_FILE_NAME, file == null ? "<NULL>" : file.getAbsolutePath() );
+
         if( file == null || !file.exists() || !file.isFile() )
         {
+            if( file != null )
+                logger.error("file path set for '{}' = {} but not exists!", INI_FILE_NAME, file.getAbsolutePath() );
+
             file = AltPrintFileChooser.chooseAltPrint5ini();
 
             if( file != null )
