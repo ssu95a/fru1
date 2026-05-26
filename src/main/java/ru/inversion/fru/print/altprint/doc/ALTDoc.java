@@ -132,7 +132,7 @@ public class ALTDoc {
             int realOffset = 0;
 
             boolean sawStyleCommand = false;
-            boolean textStarted    = false;
+            boolean textStarted     = false;
 
             while((ch = br.read()) != -1) {
 
@@ -148,7 +148,8 @@ public class ALTDoc {
                     String cmdText = readCommand( br, Integer.MAX_VALUE );
                     offset += cmdText.length() + 1;
 
-                    realOffset = offset;
+                    if( !textStarted )
+                         realOffset = offset;
 
                     Optional<AltParameter<?>> altParameter = dict.resolveCommand(cmdText);
                     if(!altParameter.isPresent() )

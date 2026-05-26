@@ -55,8 +55,10 @@ public class AltSettings
 
             file = AltPrintFileChooser.chooseAltPrint5ini();
 
-            if( file != null )
-                Preferences.userRoot().node("ALTPRINT").put( "PATH_ALTPRINT", file.getParent() );
+            if( file != null ) {
+                logger.info("set file path '{}' to: {}", INI_FILE_NAME, file.getParent() );
+                Preferences.userRoot().node("ALTPRINT").put("PATH_ALTPRINT", file.getParent());
+            }
         }
 
         return file;

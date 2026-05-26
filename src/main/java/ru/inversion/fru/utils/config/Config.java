@@ -96,8 +96,10 @@ public final class Config implements Configuration, AutoCloseable {
 
         for( ConfigSource s : sources ) {
             Object v = s.get(key);
-            if (v != null)
-                return v.toString();
+            if( v != null ) {
+                if( !(v instanceof String) || !((String)v).isEmpty() )
+                    return v.toString();
+            }
         }
 
         if( required )
