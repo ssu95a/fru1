@@ -100,12 +100,13 @@ public final class AltPlainPagePlanner {
                       ? configuredLineStep
                       : naturalLineStep;
 
-      logicalLineStep = Math.round(effectiveLineStep);
+      //logicalLineStep = Math.round(effectiveLineStep);
+      logicalLineStep = (int)effectiveLineStep;
 
       if( logicalLineStep <= 0 )
          throw new IllegalStateException("Invalid logical line step");
 
-      linesPerPage = (int) (pf.getImageableHeight() / effectiveLineStep);
+      linesPerPage = (int) (pf.getImageableHeight() / logicalLineStep );
 
       if(linesPerPage <= 0 )
          throw new IllegalStateException("Invalid page layout: linesPerPage <= 0");

@@ -141,10 +141,10 @@ public class FruEngine {
             final AltPrinter altPrinter = new AltPrinter( );
 
             final ALTDoc altDoc
-                    = ALTDoc.loadFile (
-                        config.getOutFile(),
-                        resolveCharset( config.getOutFile(), config.getCharset() )
-                    );
+                = ALTDoc.loadFile (
+                    config.getOutFile(),
+                    resolveCharset( config.getOutFile(), config.getCharset() )
+                );
 
             if( config.getGenerateMode() == FruEngineConfig.GenerateModeEnum.Printer )
                 altPrinter.print( altDoc, null);
