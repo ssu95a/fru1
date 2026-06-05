@@ -77,6 +77,62 @@ public final class AltPrintPageResolver {
       }
    }
 
+   private PageFormat normalizeVerticalMargins(PageFormat pf) {
+
+      if (pf == null)
+         return null;
+
+      Paper oldPaper = pf.getPaper();
+
+      if (oldPaper == null)
+         return pf;
+
+      double paperW = oldPaper.getWidth();
+      double paperH = oldPaper.getHeight();
+
+      double left = oldPaper.getImageableX();
+      double top = oldPaper.getImageableY();
+
+      double right =
+              paperW - oldPaper.getImageableX() - oldPaper.getImageableWidth();
+
+      double bottom =
+              paperH - oldPaper.getImageableY() - oldPaper.getImageableHeight();
+
+      double safeVertical =
+              Math.max(top, bottom);
+
+      safeVertical =
+              Math.max(safeVertical, SAFE_FALLBACK_MARGIN_PT);
+
+      double imageableH =
+              paperH - safeVertical - safeVertical;
+
+      if (imageableH <= 0.0d)
+         return pf;
+
+      Paper newPaper = new Paper();
+
+      newPaper.setSize(
+              paperW,
+              paperH
+      );
+
+      newPaper.setImageableArea(
+              left,
+              safeVertical,
+              oldPaper.getImageableWidth(),
+              imageableH
+      );
+
+      PageFormat copy =
+              (PageFormat) pf.clone();
+
+      copy.setPaper(newPaper);
+
+      return copy;
+   }
+
    public ResolvedPageSetup resolve(
            PrinterJob job,
            PrintService service,
@@ -122,6 +178,7 @@ public final class AltPrintPageResolver {
 
       pf = job.validatePage(pf);
       pf = applySafePageFormatFallbackIfNeeded(pf);
+      pf = normalizeVerticalMargins(pf);
 
       return new ResolvedPageSetup(
               attrs,

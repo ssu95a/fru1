@@ -50,7 +50,7 @@ public final class AltPrintPageConfig {
         private HeightOverflowPolicy heightOverflowPolicy = HeightOverflowPolicy.SHRINK_TO_FIT;
 
         // не ужимать ниже этого значения
-        private Double minShrinkScale = SCALE_COEFF;
+        private Double minShrinkScale = DEFAULT_MIN_SHRINK_SCALE ;
 
         // запас, чтобы не печатать "в кончик страницы"
         private Double shrinkReserveMm = 2.0d;
@@ -217,15 +217,15 @@ public final class AltPrintPageConfig {
     }
 
     /** */
-    final static private double SCALE_COEFF = 0.5d;
+    final static private double DEFAULT_MIN_SHRINK_SCALE  = 0.5d;
 
     /** */
     public double getMinShrinkScaleOrDefault()
     {
-        double v = (minShrinkScale != null) ? minShrinkScale.doubleValue() : SCALE_COEFF;
+        double v = (minShrinkScale != null) ? minShrinkScale.doubleValue() : DEFAULT_MIN_SHRINK_SCALE ;
 
-        if( v <= SCALE_COEFF )
-            return SCALE_COEFF;
+        if( v < DEFAULT_MIN_SHRINK_SCALE  )
+            return DEFAULT_MIN_SHRINK_SCALE ;
 
         if( v > 1.0d )
             return 1.0d;

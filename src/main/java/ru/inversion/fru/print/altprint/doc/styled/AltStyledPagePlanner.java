@@ -1,5 +1,6 @@
 package ru.inversion.fru.print.altprint.doc.styled;
 
+import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.naltprn.AltSettings;
@@ -9,10 +10,14 @@ import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -28,6 +33,9 @@ import java.util.Objects;
  * - matrix/raw-печать
  */
 public final class AltStyledPagePlanner {
+
+   private static final Logger log =
+           getLogger(MethodHandles.lookup().lookupClass());
 
    private static final int PAGES_CACHE_SIZE = 4;
 
@@ -67,50 +75,134 @@ public final class AltStyledPagePlanner {
    /**
     * Один раз вычислить effective scale для всего документа.
     */
+   /**
+    * Один раз вычислить effective scale для всего документа.
+    */
+   /**
+    * Один раз вычислить effective scale для всего документа.
+    */
    private float resolveEffectiveScale(Graphics2D g2d, PageFormat pf) throws IOException {
 
-      if( effectiveScaleResolved )
-         return effectiveScale;
+      if (effectiveScaleResolved)
+         return effectiveScale.floatValue();
 
-      final AltPrintPageConfig cfg = altDoc.getPageConfig();
+      final AltPrintPageConfig cfg =
+              altDoc.getPageConfig();
 
-      if( !cfg.isShrinkEnabled() )
-      {
-         effectiveScale         = 1.0f;
+      if (!cfg.isShrinkEnabled()) {
+         effectiveScale = Float.valueOf(1.0f);
          effectiveScaleResolved = true;
          return 1.0f;
       }
 
-      DocumentMetrics metrics = inspectDocumentAtScale(g2d, pf, 1.0f);
+      /*
+       * 1. Базовый scale из-за перехода от full-page layout к safe printable area.
+       *
+       * Раньше Microsoft Print to PDF фактически давал почти всю страницу.
+       * Теперь PageFormat честно ограничен imageable area.
+       * Чтобы отчёт, который "влезал в PDF", продолжил влезать в safe-area,
+       * считаем shrink от физического размера страницы к safe content area.
+       */
+      float legacyContentWidthPt =
+              (float) pf.getWidth()
+                      - cfg.getMarginLeftPtOrZero()
+                      - cfg.getMarginRightPtOrZero();
 
-      if (!metrics.hasPages) {
-         effectiveScale = 1.0f;
-         effectiveScaleResolved = true;
-         return 1.0f;
+      float legacyContentHeightPt =
+              (float) pf.getHeight()
+                      - cfg.getMarginTopPtOrZero()
+                      - cfg.getMarginBottomPtOrZero();
+
+      if (legacyContentWidthPt <= 0.0f) {
+         legacyContentWidthPt =
+                 cfg.getContentWidthPt(pf);
       }
 
-      boolean needShrink =
-              metrics.anyOverflowByHeight
-                      || metrics.anyOverflowByWidth
-                      || metrics.maxRequiredHeightPt > cfg.getSafeContentHeightPt(pf) + 0.01f
-                      || metrics.maxRequiredWidthPt > cfg.getSafeContentWidthPt(pf) + 0.01f;
-
-      float resolved = 1.0f;
-
-      if (needShrink)
-      {
-         resolved = cfg.resolveShrinkScale( pf, metrics.maxRequiredWidthPt, metrics.maxRequiredHeightPt );
-
-         if( resolved >= 0.99f )
-             resolved = 1.0f;
+      if (legacyContentHeightPt <= 0.0f) {
+         legacyContentHeightPt =
+                 cfg.getContentHeightPt(pf);
       }
 
-      effectiveScale = Float.valueOf(resolved);
-      effectiveScaleResolved = true;
+      float pageContractScale =
+              cfg.resolveShrinkScale(
+                      pf,
+                      legacyContentWidthPt,
+                      legacyContentHeightPt
+              );
+
+      /*
+       * 2. Дополнительный scale по реальным styled-метрикам.
+       * Он нужен, если отдельные строки/куски всё равно шире/выше safe area.
+       */
+      DocumentMetrics metrics =
+              inspectDocumentAtScale(
+                      g2d,
+                      pf,
+                      1.0f
+              );
+
+      float metricsScale =
+              1.0f;
+
+      if (metrics.hasPages) {
+         boolean needShrink =
+                 metrics.anyOverflowByHeight
+                         || metrics.anyOverflowByWidth
+                         || metrics.maxRequiredHeightPt > cfg.getSafeContentHeightPt(pf) + 0.01f
+                         || metrics.maxRequiredWidthPt > cfg.getSafeContentWidthPt(pf) + 0.01f;
+
+         if (needShrink) {
+            metricsScale =
+                    cfg.resolveShrinkScale(
+                            pf,
+                            metrics.maxRequiredWidthPt,
+                            metrics.maxRequiredHeightPt
+                    );
+         }
+      }
+
+      float resolved =
+              Math.min(
+                      pageContractScale,
+                      metricsScale
+              );
+
+      if (resolved >= 0.99f)
+         resolved = 1.0f;
+
+      effectiveScale =
+              Float.valueOf(resolved);
+
+      effectiveScaleResolved =
+              true;
+
+      log.info(
+              "Styled effective scale: resolved={}, pageContractScale={}, metricsScale={}, " +
+                      "pf[w={},h={},ix={},iy={},iw={},ih={}], " +
+                      "safeContent={}x{}, legacyContent={}x{}, " +
+                      "metricsRequired={}x{}, overflowW={}, overflowH={}, minShrink={}",
+              Float.valueOf(resolved),
+              Float.valueOf(pageContractScale),
+              Float.valueOf(metricsScale),
+              Double.valueOf(pf.getWidth()),
+              Double.valueOf(pf.getHeight()),
+              Double.valueOf(pf.getImageableX()),
+              Double.valueOf(pf.getImageableY()),
+              Double.valueOf(pf.getImageableWidth()),
+              Double.valueOf(pf.getImageableHeight()),
+              Float.valueOf(cfg.getSafeContentWidthPt(pf)),
+              Float.valueOf(cfg.getSafeContentHeightPt(pf)),
+              Float.valueOf(legacyContentWidthPt),
+              Float.valueOf(legacyContentHeightPt),
+              Float.valueOf(metrics.maxRequiredWidthPt),
+              Float.valueOf(metrics.maxRequiredHeightPt),
+              Boolean.valueOf(metrics.anyOverflowByWidth),
+              Boolean.valueOf(metrics.anyOverflowByHeight),
+              Double.valueOf(cfg.getMinShrinkScaleOrDefault())
+      );
 
       return resolved;
    }
-
    /**
     * Один полный прогон документа на заданном scale, чтобы собрать
     * максимальные требования по ширине/высоте для всех страниц.
