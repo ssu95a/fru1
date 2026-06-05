@@ -78,22 +78,6 @@ public final class AltPrintExecutionService {
       printable.printToMatrix(printer);
    }
 
-   private static PrintRequestAttributeSet mergeAttributes(
-           PrintRequestAttributeSet base,
-           PrintRequestAttributeSet override
-   ) {
-      PrintRequestAttributeSet result =
-              new HashPrintRequestAttributeSet();
-
-      if (base != null)
-         result.addAll(base);
-
-      if (override != null)
-         result.addAll(override);
-
-      return result;
-   }
-
    /**
     * Запуск AWT/WYSIWYG-печати.
     */

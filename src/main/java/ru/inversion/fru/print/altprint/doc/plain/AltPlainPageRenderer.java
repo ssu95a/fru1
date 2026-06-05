@@ -39,65 +39,25 @@ public final class AltPlainPageRenderer {
            Graphics2D g2d,
            PageFormat pf,
            AltPlainPreparedPage page
-   ) {
-      if (g2d == null)
+   )
+   {
+      if( g2d == null )
          throw new IllegalArgumentException("g2d == null");
-
-      if (pf == null)
+      if( pf == null )
          throw new IllegalArgumentException("pf == null");
-
-      if (page == null)
+      if( page == null )
          throw new IllegalArgumentException("page == null");
 
-      float scale =
-              page.getContentScale();
-
-      if (scale <= 0.0f)
-         scale = 1.0f;
-
-      Font scaledFont =
-              font.deriveFont(
-                      (float) (font.getSize2D() * scale)
-              );
-
-      g2d.setFont(scaledFont);
+      g2d.setFont(font);
       g2d.setColor(Color.BLACK);
 
-      float x =
-              (float) pf.getImageableX()
-                      + page.getMarginLeftPt()
-                      + baseStyle.leftIndent() * scale;
+      float x = (float)(pf.getImageableX() + baseStyle.leftIndent());
+      float y = (float) pf.getImageableY() + page.getAscent();
 
-      float y =
-              (float) pf.getImageableY()
-                      + page.getMarginTopPt()
-                      + page.getAscent() * scale;
-
-      float scaledLineStep =
-              page.getLogicalLineStep() * scale;
-
-      float lastBaseline =
-              y + Math.max(0, page.getLines().size() - 1) * scaledLineStep;
-
-      log.info(
-              "drawPage: lines={}, scale={}, fontSize={} -> {}, ascent={} -> {}, step={} -> {}, x={}, y0={}, lastBaseline={}, imageableBottom={}",
-              Integer.valueOf(page.getLines().size()),
-              Float.valueOf(scale),
-              Float.valueOf(font.getSize2D()),
-              Float.valueOf(scaledFont.getSize2D()),
-              Float.valueOf(page.getAscent()),
-              Float.valueOf(page.getAscent() * scale),
-              Float.valueOf(page.getLogicalLineStep()),
-              Float.valueOf(scaledLineStep),
-              Float.valueOf(x),
-              Float.valueOf(y),
-              Float.valueOf(lastBaseline),
-              Double.valueOf(pf.getImageableY() + pf.getImageableHeight())
-      );
-
-      for (String line : page.getLines()) {
+      for( String line : page.getLines() )
+      {
          g2d.drawString(line, x, y);
-         y += scaledLineStep;
+         y += page.getLogicalLineStep();
       }
    }
 

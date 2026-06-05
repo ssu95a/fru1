@@ -75,12 +75,6 @@ public final class AltStyledPagePlanner {
    /**
     * Один раз вычислить effective scale для всего документа.
     */
-   /**
-    * Один раз вычислить effective scale для всего документа.
-    */
-   /**
-    * Один раз вычислить effective scale для всего документа.
-    */
    private float resolveEffectiveScale(Graphics2D g2d, PageFormat pf) throws IOException {
 
       if (effectiveScaleResolved)
