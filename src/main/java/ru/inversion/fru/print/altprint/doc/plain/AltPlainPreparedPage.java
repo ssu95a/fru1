@@ -1,6 +1,11 @@
 package ru.inversion.fru.print.altprint.doc.plain;
 
+import org.slf4j.Logger;
+
+import java.lang.invoke.MethodHandles;
 import java.util.List;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -20,6 +25,11 @@ public final class AltPlainPreparedPage {
       this.lines = lines;
       this.ascent = ascent;
       this.logicalLineStep = logicalLineStep;
+
+      if( logicalLineStep < ascent ) {
+         Logger log = getLogger( MethodHandles.lookup().lookupClass() );
+         log.warn( "Suspicious plain page metrics: ascent={}, logicalLineStep={}", ascent, logicalLineStep );
+      }
    }
 
    public List<String> getLines() {

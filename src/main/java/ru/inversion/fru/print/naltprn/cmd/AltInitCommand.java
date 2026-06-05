@@ -113,6 +113,12 @@ public class AltInitCommand extends AltCommand {
             if (p == null || p.getType() == null)
                 continue;
 
+            AltParameterTypeEnum type = p.getType();
+
+            if( type == AltParameterTypeEnum.FRU_COMMAND ) {
+                b = p.applyTo( b.build(), null ).toBuilder();
+            }
+
             switch (p.getType()) {
                 case FONT_NAME:
                     b.fontName((String) p.getValue());

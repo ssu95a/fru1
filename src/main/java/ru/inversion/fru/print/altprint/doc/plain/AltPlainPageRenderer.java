@@ -1,11 +1,15 @@
 package ru.inversion.fru.print.altprint.doc.plain;
 
+import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
+import java.lang.invoke.MethodHandles;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Отрисовка prepared plain-page на Graphics2D.
@@ -16,6 +20,8 @@ import java.awt.print.PageFormat;
  * - PrinterJob / PrintService
  */
 public final class AltPlainPageRenderer {
+
+   private static final Logger log = getLogger( MethodHandles.lookup().lookupClass() );
 
    private final StyleState baseStyle;
    private final Font font;
@@ -53,6 +59,7 @@ public final class AltPlainPageRenderer {
            g2d.drawString(line, x, y);
            y += page.getLogicalLineStep();
       }
+
    }
 
    public Font getFont() {

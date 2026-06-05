@@ -101,6 +101,7 @@ public class PrintableTask extends Task<Boolean> implements IAltPrintListener {
         executionService.print(
                 printContext.getAltDoc(),
                 printContext.getAwtPrinter(),
+                printContext.getAttributes(),
                 this
         );
     }

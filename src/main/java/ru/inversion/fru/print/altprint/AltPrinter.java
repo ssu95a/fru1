@@ -6,6 +6,7 @@ import ru.inversion.fru.print.naltprn.AltSettings;
 
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
+import javax.print.attribute.HashPrintRequestAttributeSet;
 import java.util.Optional;
 
 /**
@@ -43,13 +44,12 @@ public class AltPrinter {
                                 )
                         );
 
-        executionService.print(doc, printer, listener);
+        executionService.print(doc, printer, new HashPrintRequestAttributeSet(), listener);
     }
 
     /**
      * ЗОНА ОТВЕТСТВЕННОСТИ:
      * Напечатать документ на уже выбранный принтер.
-     */
     public void print(ALTDoc doc, IAltPrintListener listener, PrintService printer) throws Exception {
         if (printer == null) {
             throw new ALTPrintException("Принтер не задан");
@@ -57,6 +57,7 @@ public class AltPrinter {
 
         executionService.print(doc, printer, listener);
     }
+     */
 
     /**
      * Проверка, относится ли принтер к matrix backend.

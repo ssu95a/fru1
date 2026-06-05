@@ -1,5 +1,6 @@
 package ru.inversion.fru.print.altprint.doc.plain;
 
+import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.doc.styled.StyleState;
 import ru.inversion.utils.Pair;
@@ -10,11 +11,14 @@ import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * ЗОНА ОТВЕТСТВЕННОСТИ:
@@ -29,6 +33,8 @@ import java.util.List;
  * - PrinterJob / PrintService
  */
 public final class AltPlainPagePlanner {
+
+   private static final Logger log = getLogger( MethodHandles.lookup().lookupClass() );
 
    private static final int PAGES_CACHE_SIZE = 3;
 
@@ -81,36 +87,51 @@ public final class AltPlainPagePlanner {
     * Рассчитать метрики plain-layout для текущего шрифта.
     */
    private void initPageLayout(Graphics2D g2d, PageFormat pf) {
-      if (linesPerPage > 0) {
-         return;
-      }
+
+      if( linesPerPage > 0 )
+          return;
 
       g2d.setFont(font);
 
       FontMetrics fm = g2d.getFontMetrics(font);
       ascent = fm.getAscent();
 
-      float naturalLineStep = fm.getHeight();
-
-      // verticalMovePt — если задан как полный шаг строки
       float configuredLineStep = baseStyle.verticalMovePt();
 
       float effectiveLineStep =
               configuredLineStep > 0.01f
                       ? configuredLineStep
-                      : naturalLineStep;
+                      : (float) font.getSize2D() * 1.2f;
 
-      //logicalLineStep = Math.round(effectiveLineStep);
-      logicalLineStep = (int)effectiveLineStep;
+      logicalLineStep = Math.max(1, Math.round(effectiveLineStep));
 
-      if( logicalLineStep <= 0 )
-         throw new IllegalStateException("Invalid logical line step");
+      double printableHeight = pf.getImageableHeight();
 
-      linesPerPage = (int) (pf.getImageableHeight() / logicalLineStep );
+      linesPerPage = (int) Math.floor(printableHeight / logicalLineStep);
 
-      if(linesPerPage <= 0 )
-         throw new IllegalStateException("Invalid page layout: linesPerPage <= 0");
-
+      if( linesPerPage <= 0 )
+          throw new IllegalStateException("Invalid page layout: linesPerPage <= 0");
+      /*
+      log.info(
+              "initPageLayout: font={}, fmHeight={}, fmAscent={}, configuredStep={}, effectiveStep={}, logicalStep={}, " +
+                      "pf[w={},h={},ix={},iy={},iw={},ih={},orient={}], linesPerPage={}, usedHeight={}",
+              font,
+              Integer.valueOf(fm.getHeight()),
+              Integer.valueOf(fm.getAscent()),
+              Float.valueOf(configuredLineStep),
+              Float.valueOf(effectiveLineStep),
+              (int)(logicalLineStep),
+              Double.valueOf(pf.getWidth()),
+              Double.valueOf(pf.getHeight()),
+              Double.valueOf(pf.getImageableX()),
+              Double.valueOf(pf.getImageableY()),
+              Double.valueOf(pf.getImageableWidth()),
+              Double.valueOf(pf.getImageableHeight()),
+              Integer.valueOf(pf.getOrientation()),
+              Integer.valueOf(linesPerPage),
+              (int)(linesPerPage * logicalLineStep)
+      );
+       */
    }
 
    /**
@@ -146,11 +167,10 @@ public final class AltPlainPagePlanner {
          }
       }
 
-      if (pageLines.isEmpty()) {
-         return null;
-      }
+      if( pageLines.isEmpty() )
+          return null;
 
-      return new AltPlainPreparedPage(pageLines, logicalLineStep, ascent );
+      return new AltPlainPreparedPage( pageLines, ascent, logicalLineStep  );
    }
 
    public void clearCache() {

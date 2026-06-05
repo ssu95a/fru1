@@ -34,6 +34,7 @@ import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
+import org.slf4j.Logger;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.ALTPrintException;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
@@ -46,9 +47,11 @@ import ru.inversion.utils.S;
 import ru.inversion.utils.U;
 
 import javax.print.PrintService;
-import javax.print.attribute.standard.OrientationRequested;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.*;
 import java.io.File;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -58,10 +61,13 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static ru.inversion.fru.print.altprint.AltPrinter.*;
 
 /** */
 public class FruViewController implements Initializable {
+
+    private static final Logger log = getLogger( MethodHandles.lookup().lookupClass() );
 
     /** */
     private enum ViewModeEnum {
@@ -361,8 +367,41 @@ public class FruViewController implements Initializable {
                     .orElse( findAWTPrinterByIndex( 0 )
                         .orElseThrow( ()->new IllegalStateException("Невозможно определить принтер для печати") ) );
 
+            final PrintRequestAttributeSet awtAttributes =
+                    JavaFxPrintAttributes.toAwt(
+                            fxJob.getJobSettings()
+                    );
+
             final PrintAwtContext context =
-                  new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage() );
+                    new PrintAwtContext(
+                            awtPrinter,
+                            isMatrix(awtPrinter),
+                            altDoc,
+                            getStage(),
+                            awtAttributes
+                    );
+
+            log.info(
+                    "FX print settings: printer={}, sides={}, copies={}, collation={}, quality={}, ranges={}",
+                    fxJob.getPrinter().getName(),
+                    fxJob.getJobSettings().getPrintSides(),
+                    Integer.valueOf(fxJob.getJobSettings().getCopies()),
+                    fxJob.getJobSettings().getCollation(),
+                    fxJob.getJobSettings().getPrintQuality(),
+                    Arrays.toString(fxJob.getJobSettings().getPageRanges())
+            );
+
+            log.info(
+                    "AWT print attrs: sides={}, copies={}, sheetCollate={}, quality={}, ranges={}",
+                    awtAttributes.get(Sides.class),
+                    awtAttributes.get(Copies.class),
+                    awtAttributes.get(SheetCollate.class),
+                    awtAttributes.get(javax.print.attribute.standard.PrintQuality.class),
+                    awtAttributes.get(PageRanges.class)
+            );
+
+//            final PrintAwtContext context =
+//                  new PrintAwtContext( awtPrinter, isMatrix(awtPrinter), altDoc, getStage() );
 
             final PrintableTask printTask = new PrintableTask ( context );
 
