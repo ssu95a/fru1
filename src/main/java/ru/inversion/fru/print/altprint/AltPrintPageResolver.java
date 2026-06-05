@@ -1,5 +1,7 @@
 package ru.inversion.fru.print.altprint;
 
+import ru.inversion.utils.Checks;
+
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 
@@ -75,6 +77,21 @@ public final class AltPrintPageResolver {
       }
    }
 
+   public ResolvedPageSetup resolve(
+           PrinterJob job,
+           PrintService service,
+           AltPrintPageConfig cfg,
+           int copies
+   ) {
+      return resolve(
+              job,
+              service,
+              cfg,
+              copies,
+              null
+      );
+   }
+
    /**
     * ЗОНА ОТВЕТСТВЕННОСТИ:
     * Построить полный setup страницы для конкретного принтера.
@@ -83,46 +100,34 @@ public final class AltPrintPageResolver {
            PrinterJob job,
            PrintService service,
            AltPrintPageConfig cfg,
-           int copies
+           int copies,
+           PrintRequestAttributeSet overrideAttributes
    )
    {
-      if (job == null) {
-         throw new IllegalArgumentException("job == null");
-      }
-      if (service == null) {
-         throw new IllegalArgumentException("service == null");
-      }
-      if (cfg == null) {
-         throw new IllegalArgumentException("cfg == null");
-      }
+      Checks.Require.objects(job,"job", service, "service", cfg, "cfg");
 
       PrintRequestAttributeSet attrs = buildAttributes(cfg, copies);
 
-      /*
-       * Не добавляем full-page printable area.
-       * Если драйвер даёт нормальную область — используем.
-       * Если нет — ниже подстрахуем PageFormat.
-       */
-      MediaPrintableArea printableArea = resolvePrintableArea(service, cfg, attrs);
+      if(overrideAttributes != null)
+         attrs.addAll(overrideAttributes);
 
-      if (printableArea != null) {
+      MediaPrintableArea printableArea =
+              resolvePrintableArea(service, cfg, attrs);
+
+      if (printableArea != null)
          attrs.add(printableArea);
-      }
 
-      PageFormat pf = job.getPageFormat(attrs);
+      PageFormat pf =
+              job.getPageFormat(attrs);
+
       pf = job.validatePage(pf);
-
-      /*
-       * Критичный fallback:
-       * некоторые драйверы возвращают imageableX/Y = 0 и full-page area.
-       * Для legacy форм это означает печать от самого края.
-       *
-       * Не трогаем драйвер attrs, а корректируем PageFormat/Paper как
-       * layout contract для Printable.
-       */
       pf = applySafePageFormatFallbackIfNeeded(pf);
 
-      return new ResolvedPageSetup(attrs, pf, printableArea);
+      return new ResolvedPageSetup(
+              attrs,
+              pf,
+              printableArea
+      );
    }
 
    /**

@@ -50,6 +50,6 @@ public class PrintAwtContext {
 
     /** */
     public PrintRequestAttributeSet getAttributes() {
-        return attributes;
+        return new HashPrintRequestAttributeSet(attributes);
     }
 }

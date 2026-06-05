@@ -97,22 +97,43 @@ public final class AltPrintExecutionService {
    /**
     * Запуск AWT/WYSIWYG-печати.
     */
-   private void printGraphic( ALTDoc doc, ALTDocPrintable printable, PrintService printer, PrintRequestAttributeSet dialogAttributes ) throws Exception
-   {
+   private void printGraphic(
+           ALTDoc doc,
+           ALTDocPrintable printable,
+           PrintService printer,
+           PrintRequestAttributeSet dialogAttributes
+   ) throws Exception {
+
       final PrinterJob job = PrinterJob.getPrinterJob();
 
       job.setPrintService(printer);
       job.setJobName("ALT: " + doc.getAltFile());
 
-      AltPrintPageResolver.ResolvedPageSetup setup = pageResolver.resolve( job, printer, doc.getPageConfig(), doc.getCopies().getValue() );
+      AltPrintPageResolver.ResolvedPageSetup setup =
+              pageResolver.resolve(
+                      job,
+                      printer,
+                      doc.getPageConfig(),
+                      doc.getCopies().getValue(),
+                      dialogAttributes
+              );
 
-      PrintRequestAttributeSet attrs = mergeAttributes( setup.getAttributes(), dialogAttributes );
+      PrintRequestAttributeSet attrs =
+              setup.getAttributes();
 
-      PageFormat pageFormat = job.getPageFormat(attrs);
+      PageFormat pageFormat =
+              setup.getPageFormat();
 
-      Printable fixedPrintable = new FixedPageFormatPrintable( printable, pageFormat );
+      Printable fixedPrintable =
+              new FixedPageFormatPrintable(
+                      printable,
+                      pageFormat
+              );
 
-      job.setPrintable( fixedPrintable, pageFormat );
+      job.setPrintable(
+              fixedPrintable,
+              pageFormat
+      );
 
       log.info(
               "Graphic print attrs before job.print: sides={}, copies={}, collate={}, quality={}, ranges={}",
