@@ -316,24 +316,20 @@ public class FruContext implements AutoCloseable {
     {
         try {
 
-            if( currentSection != null )
+            if( currentSection != null ) {
                 globalScriptContext.setValuesSupplier(new Function<String, Pair<Object, Boolean>>() {
                     @Override
-                    public Pair<Object, Boolean> apply( String name ) {
-                        //name -> currentSection.getFieldValue( FruContext.this, name )
+                    public Pair<Object, Boolean> apply(String name) {
                         return Pair.makePair (
-                            currentSection.getFieldValue( FruContext.this, name ),
-                            script.hasImportArg(name)
+                                currentSection.getFieldValue( FruContext.this, name ),
+                                script.hasImportArg(name)
                         );
                     }
                 });
-
+            }
 writer.marker = "scriptEngine";
 
                 script.beforeExecute();
-
-//                if( script.getExecuteCount() == 0 && !script.getImportArgs().isEmpty() )
-//                    script.getImportArgs().forEach(s->globalScriptContext.setAttribute(s,null,GLOBAL_SCOPE));
 
                 try {
                     scriptEngine.eval( script.getBody());

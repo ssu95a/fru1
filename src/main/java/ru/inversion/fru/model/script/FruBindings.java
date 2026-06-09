@@ -23,11 +23,11 @@ public class FruBindings extends SimpleBindings {
         {
             if( valuesSupplier != null )
             {
-                Pair<Object, Boolean> pair = valuesSupplier.apply((String) key);
+                Pair<Object, Boolean> pair = valuesSupplier.apply( (String) key );
                 if( pair != null )
                 {
                     v = pair.first;
-                    if( pair.second )
+                    if(!pair.second )
                         super.put( key.toString(), pair.first );
                 }
 //                if (v != null)
