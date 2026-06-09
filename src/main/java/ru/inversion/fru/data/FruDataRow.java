@@ -1,6 +1,7 @@
 package ru.inversion.fru.data;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class FruDataRow {
 
@@ -12,7 +13,29 @@ public class FruDataRow {
     public FruDataRow( int sectionNum, List<String> data )
     {
         this.sectionNum = sectionNum;
-        this.data = data != null ? new ArrayList<>(data) : new ArrayList<>();
+
+        if( data != null && !data.isEmpty() )
+        {
+            if( data.stream().anyMatch(s->s.indexOf('\n') >= 0 ) )
+                this.data = new ArrayList<>(data);
+            else
+            {
+                this.data = new ArrayList<>();
+
+                data.forEach( new Consumer<String>() {
+                    @Override
+                    public void accept(String s) {
+                        if( s.indexOf('\n') >=0 )
+                            FruDataRow.this.data.add( s.replace( '\n', ' ' ) );
+                        else
+                            FruDataRow.this.data.add( s );
+                    }
+                });
+            }
+        }
+        else
+            this.data = new ArrayList<>();
+
     }
 
     /** Номер секции из fru файла */
@@ -35,6 +58,6 @@ public class FruDataRow {
     /** */
     @Override
     public String toString() {
-        return String.format("FruDataRow[section=%d, data=%s]", sectionNum, data );
+        return String.format(" FruDataRow[ section=%d, data=%s ]", sectionNum, data );
     }
 }
