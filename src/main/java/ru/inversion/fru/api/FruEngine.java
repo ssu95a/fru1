@@ -203,7 +203,7 @@ public class FruEngine {
             if( logbackUrl != null )
                 System.setProperty( ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY, logbackUrl.toExternalForm() );
             else
-                System.err.println("Не найден /logback.xml внутри jar");
+                System.err.println( "Не найден /logback.xml внутри jar" );
 
             LogManager.getLogManager().reset();
 
@@ -213,7 +213,9 @@ public class FruEngine {
             StdOutRedirector.install();
             System.setErr( new PrintStream( System.err, true, "CP866" ) );
 
-            log.info("LastBuildTime={}", System.getProperty("app.lastBuildTime", BuildInfo.UNKNOWN));
+            log.info( System.getProperty( "app.lastBuildTime", BuildInfo.UNKNOWN) );
+            log.info( System.getProperty( "app.foreInfo",      BuildInfo.UNKNOWN) );
+            log.info( System.getProperty( "app.bilInfo",       BuildInfo.UNKNOWN) );
 
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );

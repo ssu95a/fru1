@@ -16,7 +16,7 @@ public class FruDataRow {
 
         if( data != null && !data.isEmpty() )
         {
-            if( data.stream().anyMatch(s->s.indexOf('\n') >= 0 ) )
+            if( data.stream().allMatch(s->s.indexOf('\n') < 0 ) )
                 this.data = new ArrayList<>(data);
             else
             {

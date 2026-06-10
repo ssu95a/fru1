@@ -17,6 +17,23 @@ public class FruBindings extends SimpleBindings {
         if( key == null )
             return null;
 
+        Object v = null;
+
+        if( valuesSupplier != null )
+        {
+            Pair<Object, Boolean> pair = valuesSupplier.apply( (String) key );
+            if( pair != null  )
+                v = pair.first;
+
+            if( v != null )
+                super.put( (String)key,v);
+        }
+
+        if( v == null )
+            v = super.get(key);
+
+
+/*
         Object v = super.get(key);
 
         if( v == null && !super.containsKey(key) )
@@ -27,13 +44,11 @@ public class FruBindings extends SimpleBindings {
                 if( pair != null )
                 {
                     v = pair.first;
-                    if(!pair.second )
                         super.put( key.toString(), pair.first );
                 }
-//                if (v != null)
-//                    names.add((String) key);
             }
         }
+*/
         return v;
     }
 
