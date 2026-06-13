@@ -3,9 +3,7 @@ package ru.inversion.fru.model.sections;
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -90,6 +88,18 @@ public class FruSectionTable extends FruSection {
             return null;
 
         return context.data().currentRow().data().get( index );
+    }
+
+    static final public String PLACEHOLDER_VALUE = String.valueOf(' ');
+
+    /** */
+    public List<String> makePlaceholderRow ()
+    {
+        List<String> placeholderRow = new ArrayList<>(fieldMap.size());
+        for( int i = 0; i < fieldMap.size(); i++ )
+             placeholderRow.add(PLACEHOLDER_VALUE);
+
+        return placeholderRow;
     }
 
 }

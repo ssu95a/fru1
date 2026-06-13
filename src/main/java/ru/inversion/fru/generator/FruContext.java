@@ -10,7 +10,6 @@ import ru.inversion.fru.generator.renderer.FruLineRenderSession;
 import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
-import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.fields.types.grp.DefaultFruLineFieldExtractor;
 import ru.inversion.fru.model.fields.types.grp.FruFieldGrpPlan;
@@ -28,10 +27,7 @@ import ru.inversion.utils.S;
 import javax.script.*;
 
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -82,6 +78,7 @@ public class FruContext implements AutoCloseable {
         return fieldGrpRuntimeRegistry.render(this, field);
     }
 
+    private List<Integer> numSectionsUse;
 
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
@@ -89,9 +86,34 @@ public class FruContext implements AutoCloseable {
         this.fru  = fru;
         this.data = new FruData(dataFile);
 
+        numSectionsUse = new ArrayList<>( this.fru.sections().size() );
+        fru.sections().values().forEach( s-> numSectionsUse.add(s.getNum()) );
+
         this.data.rowProperty().addListener(new IProperty.ChangeListener<FruDataRow>() {
             @Override
             public void changed(IProperty<? extends FruDataRow> property, FruDataRow oldValue, FruDataRow newValue) {
+
+                int index = numSectionsUse.indexOf(newValue.getSectionNum());
+
+                if( index >= 0  )
+                {
+                    if( index == 0 )
+                        numSectionsUse.remove(0);
+                    else
+                    {
+                        final List<Integer> sn = new ArrayList<>();
+
+                        for( int i = 0; i < index; i++ )
+                             sn.add( numSectionsUse.get(i) );
+
+                        for( int i = 0; i < index; i++ )
+                             numSectionsUse.remove(0);
+
+                        for( int v : sn )
+                             setCurrentRow( new FruDataRow(v, fru.getSectionPlaceholderRow(v) ));
+                    }
+                }
+
                 setCurrentRow( newValue );
             }
         });
@@ -190,8 +212,8 @@ public class FruContext implements AutoCloseable {
     final private Set<Integer> missingSectionsSet = new TreeSet<>();
 
 
-    private final FruFieldGrpPlanner fieldGrpPlanner =
-            new FruFieldGrpPlanner(new DefaultFruLineFieldExtractor());
+    private final FruFieldGrpPlanner fieldGrpPlanner = new FruFieldGrpPlanner(new DefaultFruLineFieldExtractor());
+
     /** */
     private void setCurrentRow( FruDataRow row )
     {
@@ -220,7 +242,8 @@ public class FruContext implements AutoCloseable {
                 setFieldGrpPlan(grpPlan);
                 currentSection.beforeUse(this);
             }
-            else {
+            else
+            {
                 if( missingSectionsSet.add(row.getSectionNum() ) )
                     log.warn("В файле формы не найдена секция с номером {}", row.getSectionNum() );
             }

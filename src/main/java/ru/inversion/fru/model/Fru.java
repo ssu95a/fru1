@@ -6,6 +6,7 @@ import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.fru.model.items.FruPaging;
 import ru.inversion.fru.model.script.FruScript;
 import ru.inversion.fru.model.sections.FruSection;
+import ru.inversion.fru.model.sections.FruSectionTable;
 import ru.inversion.utils.Pair;
 import ru.inversion.utils.S;
 import ru.inversion.utils.U;
@@ -14,6 +15,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static ru.inversion.fru.utils.constants.SectionTypeEnum.TABLE;
+import static ru.inversion.fru.utils.constants.SectionTypeEnum.TEXT;
 
 /** */
 public class Fru {
@@ -112,8 +116,18 @@ public class Fru {
         else
             paging = null;
 
-        this.sections = new HashMap<>();
+        this.sections = new LinkedHashMap<>();
         sectionsList.forEach( (fs)->sections.put( fs.getNum(), fs ) );
+    }
+
+   /** */
+    public List<String> getSectionPlaceholderRow( int sectionNum )
+    {
+       FruSection fruSection = sections.get(sectionNum);
+       if( !( fruSection instanceof  FruSectionTable ) )
+           return null;
+
+       return ((FruSectionTable)fruSection).makePlaceholderRow();
     }
 
     /** */

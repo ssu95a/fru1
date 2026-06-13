@@ -171,7 +171,6 @@ public class FruDataFile implements Iterator<Pair<Integer,List<String>>>, AutoCl
         return !entryEmitted || currentLine != null;
     }
 
-
     /** */
     private String normalize( String s )
     {

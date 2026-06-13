@@ -3,6 +3,8 @@ package ru.inversion.fru.data;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static ru.inversion.fru.model.sections.FruSectionTable.PLACEHOLDER_VALUE;
+
 public class FruDataRow {
 
     private final int sectionNum;
@@ -16,26 +18,28 @@ public class FruDataRow {
 
         if( data != null && !data.isEmpty() )
         {
-            if( data.stream().allMatch(s->s.indexOf('\n') < 0 ) )
-                this.data = new ArrayList<>(data);
+            if( data.get(0) == PLACEHOLDER_VALUE )
+                this.data = data;
             else
-            {
-                this.data = new ArrayList<>();
+                if( data.stream().allMatch(s->s.indexOf('\n') < 0 ) )
+                    this.data = new ArrayList<>(data);
+                else
+                {
+                    this.data = new ArrayList<>();
 
-                data.forEach( new Consumer<String>() {
-                    @Override
-                    public void accept(String s) {
-                        if( s.indexOf('\n') >=0 )
-                            FruDataRow.this.data.add( s.replace( '\n', ' ' ) );
-                        else
-                            FruDataRow.this.data.add( s );
-                    }
-                });
-            }
+                    data.forEach( new Consumer<String>() {
+                        @Override
+                        public void accept(String s) {
+                            if( s.indexOf('\n') >=0 )
+                                FruDataRow.this.data.add( s.replace( '\n', ' ' ) );
+                            else
+                                FruDataRow.this.data.add( s );
+                        }
+                    });
+                }
         }
         else
             this.data = new ArrayList<>();
-
     }
 
     /** Номер секции из fru файла */
@@ -53,7 +57,6 @@ public class FruDataRow {
     {
         return valIndex < data.size() ? data.get(valIndex) : null;
     }
-
 
     /** */
     @Override
