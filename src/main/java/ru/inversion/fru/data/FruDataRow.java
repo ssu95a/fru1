@@ -21,7 +21,7 @@ public class FruDataRow {
             if( data.get(0) == PLACEHOLDER_VALUE )
                 this.data = data;
             else
-                if( data.stream().allMatch(s->s.indexOf('\n') < 0 ) )
+                if( data.stream().allMatch(s-> ( s.indexOf('\n') < 0 && s.indexOf('`') < 0 ) ) )
                     this.data = new ArrayList<>(data);
                 else
                 {
@@ -29,11 +29,10 @@ public class FruDataRow {
 
                     data.forEach( new Consumer<String>() {
                         @Override
-                        public void accept(String s) {
-                            if( s.indexOf('\n') >=0 )
-                                FruDataRow.this.data.add( s.replace( '\n', ' ' ) );
-                            else
-                                FruDataRow.this.data.add( s );
+                        public void accept( String s )
+                        {
+                            String s1  = s.replace( '\n', ' ' ).replace( '`', '\'' );
+                            FruDataRow.this.data.add( s1 );
                         }
                     });
                 }

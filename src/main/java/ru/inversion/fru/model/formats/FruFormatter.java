@@ -257,7 +257,7 @@ public class FruFormatter extends FruItem {
         int width = getWidth();
 
         if( width <= 0 )
-            width = context.getWidth();
+            width = 0; //context.getWidth();
 
         return width;
     }

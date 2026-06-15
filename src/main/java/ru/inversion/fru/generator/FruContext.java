@@ -92,28 +92,7 @@ public class FruContext implements AutoCloseable {
         this.data.rowProperty().addListener(new IProperty.ChangeListener<FruDataRow>() {
             @Override
             public void changed(IProperty<? extends FruDataRow> property, FruDataRow oldValue, FruDataRow newValue) {
-
-                int index = numSectionsUse.indexOf(newValue.getSectionNum());
-
-                if( index >= 0  )
-                {
-                    if( index == 0 )
-                        numSectionsUse.remove(0);
-                    else
-                    {
-                        final List<Integer> sn = new ArrayList<>();
-
-                        for( int i = 0; i < index; i++ )
-                             sn.add( numSectionsUse.get(i) );
-
-                        for( int i = 0; i < index; i++ )
-                             numSectionsUse.remove(0);
-
-                        for( int v : sn )
-                             setCurrentRow( new FruDataRow(v, fru.getSectionPlaceholderRow(v) ));
-                    }
-                }
-
+                renderMissingSectionsBefore(newValue);
                 setCurrentRow( newValue );
             }
         });
@@ -145,6 +124,25 @@ public class FruContext implements AutoCloseable {
         scriptEngine.setContext( globalScriptContext );
     }
 
+    private void renderMissingSectionsBefore(FruDataRow row) {
+        int index = numSectionsUse.indexOf(row.getSectionNum());
+
+        if (index < 0)
+            return;
+
+        List<Integer> missing = new ArrayList<>();
+
+        for (int i = 0; i < index; i++)
+            missing.add(numSectionsUse.get(i));
+
+       numSectionsUse.subList(0, index + 1).clear();
+
+        for (int sectionNum : missing)
+            setCurrentRow(new FruDataRow(
+                    sectionNum,
+                    fru.getSectionPlaceholderRow(sectionNum)
+            ));
+    }
 
     public void clearLocalSplitState() {
         localSplitStates.clear();
@@ -312,11 +310,23 @@ public class FruContext implements AutoCloseable {
         return currentSection;
     }
 
+    private void renderRemainingMissingSections() {
+        while (!numSectionsUse.isEmpty()) {
+            int sectionNum = numSectionsUse.remove(0);
+
+            setCurrentRow(new FruDataRow(
+                    sectionNum,
+                    fru.getSectionPlaceholderRow(sectionNum)
+            ));
+        }
+    }
     /** */
     @Override
     public void close() throws Exception {
 
         try {
+
+            renderRemainingMissingSections();
 
             if( currentSection != null )
             {
