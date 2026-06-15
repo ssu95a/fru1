@@ -1,5 +1,6 @@
 package ru.inversion.fru.model.script;
 
+import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
 import ru.inversion.utils.Pair;
 
 import javax.script.SimpleBindings;
@@ -31,7 +32,6 @@ public class FruBindings extends SimpleBindings {
 
         if( v == null )
             v = super.get(key);
-
 
 /*
         Object v = super.get(key);

@@ -10,6 +10,7 @@ import ru.inversion.fru.generator.renderer.FruLineRenderSession;
 import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
+import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.fields.types.grp.DefaultFruLineFieldExtractor;
 import ru.inversion.fru.model.fields.types.grp.FruFieldGrpPlan;
@@ -353,10 +354,17 @@ public class FruContext implements AutoCloseable {
                 globalScriptContext.setValuesSupplier(new Function<String, Pair<Object, Boolean>>() {
                     @Override
                     public Pair<Object, Boolean> apply(String name) {
-                        return Pair.makePair (
-                                currentSection.getFieldValue( FruContext.this, name ),
-                                script.hasImportArg(name)
-                        );
+
+                        Object fieldValue = currentSection.getFieldValue(FruContext.this, name );
+
+                        if( fieldValue == null && currentSection.getFieldNum(name) == -1 )
+                        {
+                            BuiltinFunctionEnum f = BuiltinFunctionEnum.find(name);
+                            if( f != null )
+                                fieldValue = f.execute( FruContext.this, null );
+                        }
+
+                        return Pair.makePair( fieldValue, script.hasImportArg(name) );
                     }
                 });
             }
