@@ -2,6 +2,7 @@ package ru.inversion.fru.model.sections;
 
 import ru.inversion.fru.generator.FruContext;
 import ru.inversion.fru.utils.constants.SectionTypeEnum;
+import ru.inversion.fx.app.Tags;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
