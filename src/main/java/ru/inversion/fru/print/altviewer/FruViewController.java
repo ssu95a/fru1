@@ -310,7 +310,10 @@ public class FruViewController extends FruControllerBase {
 
     /** */
     private void editDocument() {
-        FruEditController.showEditor( getStage(), getAltDoc() );
+        if( FruEditController.showEditor( getStage(), getAltDoc() ) )
+        {
+            updateEncoding(null);
+        }
     }
 
 
@@ -587,12 +590,6 @@ public class FruViewController extends FruControllerBase {
         } catch (Exception e) {
             System.err.println("Even fallback mode failed: " + e.getMessage());
         }
-    }
-
-    /** */
-    private void setTitle( String title )
-    {
-        ((Stage)toolBar.getScene().getWindow()).setTitle( title );
     }
 
     /** */

@@ -1,5 +1,6 @@
 package ru.inversion.fru.print.altviewer;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -29,6 +30,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static ru.inversion.fru.print.altviewer.FruViewController.handleException;
@@ -67,6 +69,7 @@ public class FruEditController extends FruControllerBase {
    private Button btRedo;
 
    private ALTDoc altDoc;
+   private AtomicBoolean retValue;
 
    /** */
    @Override
@@ -74,6 +77,10 @@ public class FruEditController extends FruControllerBase {
    {
       initToolBar( );
       initEditor ( );
+      Platform.runLater( ()->
+         setTitle( "Редактирование - " + altDoc.getAltFile().toString() )
+      );
+
       // loadALTDoc(altDoc);
    }
 
@@ -93,7 +100,7 @@ public class FruEditController extends FruControllerBase {
 
       btCancelAndClose.setGraphic( fontAwesome.create( FontAwesome.Glyph.BAN).color(Color.WHITE) );
       btCancelAndClose.setStyle("-fx-background-color: #8c1e0a; -fx-text-fill: white;");
-      btCancelAndClose.setOnAction( e->getStage().close() );
+      btCancelAndClose.setOnAction( e->cancelAndClose() );
 
       btUndo.setGraphic   ( fontAwesome.create( FontAwesome.Glyph.UNDO ) );
       btUndo.setOnAction  ( (e)->editor.undo() );
@@ -105,7 +112,7 @@ public class FruEditController extends FruControllerBase {
 
       btSave.setGraphic   ( fontAwesome.create( FontAwesome.Glyph.SAVE  ) );
       btSave.setOnAction  ( e->saveFile(null) );
-      btSaveAs.setGraphic ( fontAwesome.create( FontAwesome.Glyph.SAVE  ) );
+      btSaveAs.setGraphic ( fontAwesome.create( FontAwesome.Glyph.FLOPPY_ALT  ) );
       btSaveAs.setOnAction( this::saveFileAs );
       btCut.setGraphic    ( fontAwesome.create( FontAwesome.Glyph.CUT   ) );
       btCut.setOnAction   ( (e)->editor.cut() );
@@ -200,11 +207,14 @@ public class FruEditController extends FruControllerBase {
       editor.setText( altDoc.readFile().toString() );
    }
 
+
    /** */
    private void cancelAndClose() {
-      if( yesNo("Сохранить и выйти?") )
+
+      if( yesNo("Отменить и закрыть редактор?") )
       {
          saveFile(null);
+         retValue.set(false);
          getStage().close();
       }
    }
@@ -212,19 +222,21 @@ public class FruEditController extends FruControllerBase {
 
    /** */
    private void saveAndClose() {
-      if( yesNo("Сохранить и выйти?") )
+      if( yesNo("Сохранить и закрыть редактор?") )
       {
          saveFile(null);
+         retValue.set(true);
          getStage().close();
       }
    }
 
 
-
    /** */
-   public static void showEditor( Stage primaryStage, ALTDoc altDoc )
+   public static boolean showEditor( Stage primaryStage, ALTDoc altDoc )
    {
       try {
+
+         final AtomicBoolean retValue = new AtomicBoolean(false);
 
          Stage editStage = new Stage();
          editStage.initModality(Modality.WINDOW_MODAL);
@@ -238,7 +250,8 @@ public class FruEditController extends FruControllerBase {
             public Object call(Class<?> type) {
                try {
                   FruEditController controller = (FruEditController) type.newInstance();
-                  controller.altDoc = altDoc;
+                  controller.retValue = retValue;
+                  controller.altDoc   = altDoc;
                   return controller;
                }
                catch ( Throwable th ) {
@@ -252,9 +265,13 @@ public class FruEditController extends FruControllerBase {
          editStage.setScene(scene);
          editStage.showAndWait();
 
+         return retValue.get();
+
       } catch( Exception e ) {
          handleException( primaryStage, e );
       }
+
+      return false;
    }
 
 

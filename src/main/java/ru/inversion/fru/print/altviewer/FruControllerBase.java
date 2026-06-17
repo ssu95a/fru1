@@ -43,7 +43,14 @@ public abstract class FruControllerBase implements Initializable {
       dialog.showAndWait();
    }
 
+   /** */
    protected abstract Stage getStage();
+
+   /** */
+   protected void setTitle( String title )
+   {
+      getStage().setTitle( title );
+   }
 
    /** */
    protected boolean yesNo( String text )
