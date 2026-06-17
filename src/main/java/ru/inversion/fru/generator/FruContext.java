@@ -79,7 +79,7 @@ public class FruContext implements AutoCloseable {
         return fieldGrpRuntimeRegistry.render(this, field);
     }
 
-    private List<Integer> numSectionsUse;
+    //private List<Integer> numSectionsUse;
 
     /** */
     public FruContext( Fru fru, Writer output, FruDataFile dataFile ) {
@@ -87,13 +87,13 @@ public class FruContext implements AutoCloseable {
         this.fru  = fru;
         this.data = new FruData(dataFile);
 
-        numSectionsUse = new ArrayList<>( this.fru.sections().size() );
-        fru.sections().values().forEach( s-> numSectionsUse.add(s.getNum()) );
+//        numSectionsUse = new ArrayList<>( this.fru.sections().size() );
+//        fru.sections().values().forEach( s-> numSectionsUse.add(s.getNum()) );
 
         this.data.rowProperty().addListener(new IProperty.ChangeListener<FruDataRow>() {
             @Override
             public void changed(IProperty<? extends FruDataRow> property, FruDataRow oldValue, FruDataRow newValue) {
-                renderMissingSectionsBefore(newValue);
+                // renderMissingSectionsBefore(newValue);
                 setCurrentRow( newValue );
             }
         });
@@ -125,26 +125,25 @@ public class FruContext implements AutoCloseable {
         scriptEngine.setContext( globalScriptContext );
     }
 
-    private void renderMissingSectionsBefore(FruDataRow row) {
+    /*
+    private void renderMissingSectionsBefore(FruDataRow row)
+    {
         int index = numSectionsUse.indexOf(row.getSectionNum());
 
-        if (index < 0)
+        if( index < 0 )
             return;
 
         List<Integer> missing = new ArrayList<>();
 
-        for (int i = 0; i < index; i++)
-            missing.add(numSectionsUse.get(i));
+        for( int i = 0; i < index; i++ )
+             missing.add( numSectionsUse.get(i) );
 
-       numSectionsUse.subList(0, index + 1).clear();
+        numSectionsUse.subList(0, index + 1).clear();
 
-        for (int sectionNum : missing)
-            setCurrentRow(new FruDataRow(
-                    sectionNum,
-                    fru.getSectionPlaceholderRow(sectionNum)
-            ));
+        for( int sectionNum : missing )
+             setCurrentRow(new FruDataRow( sectionNum, fru.getSectionPlaceholderRow(sectionNum) ));
     }
-
+    */
     public void clearLocalSplitState() {
         localSplitStates.clear();
         fieldGrpRuntimeRegistry.clearRecordLocalState();
@@ -220,11 +219,12 @@ public class FruContext implements AutoCloseable {
         {
             if( row.getSectionNum() == -1 )
             {
-                runEntry(row);
+                runEntry( row );
                 return; // entry не рендерим
             }
+
             // entry отсутствует — всё равно считаем его завершённым
-            runEntry(null);
+            runEntry( null );
         }
 
         clearLocalSplitState();
@@ -310,7 +310,7 @@ public class FruContext implements AutoCloseable {
     public FruSection currentSection() {
         return currentSection;
     }
-
+    /*
     private void renderRemainingMissingSections() {
         while (!numSectionsUse.isEmpty()) {
             int sectionNum = numSectionsUse.remove(0);
@@ -321,13 +321,15 @@ public class FruContext implements AutoCloseable {
             ));
         }
     }
+    */
+
     /** */
     @Override
     public void close() throws Exception {
 
         try {
 
-            renderRemainingMissingSections();
+            // renderRemainingMissingSections();
 
             if( currentSection != null )
             {

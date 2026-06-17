@@ -7,25 +7,80 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<VBox fx:id="rootBox" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.inversion.fru.print.altviewer.FruEditController">
+<VBox fx:id="rootBox" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ru.inversion.fru.print.altviewer.FruEditController">
       <ToolBar fx:id="toolBar">
-         <Button fx:id="btSave" mnemonicParsing="false" text="%edit.btn.save" />
-         <Button fx:id="btSaveAs" mnemonicParsing="false" text="%edit.btn.save_as" />
+
+          <Button fx:id="btSaveAndClose" mnemonicParsing="false">
+              <tooltip>
+                  <Tooltip text="%edit.btn.save_and_exit" />
+              </tooltip>
+          </Button>
+          <Button fx:id="btCancelAndClose" mnemonicParsing="false">
+              <tooltip>
+                  <Tooltip text="%edit.btn.cancel_and_exit" />
+              </tooltip>
+          </Button>
+
+          <Separator />
+
+         <Button fx:id="btSave" mnemonicParsing="false">
+             <tooltip>
+                 <Tooltip text="%edit.btn.save" />
+             </tooltip>
+      </Button>
+      <Button fx:id="btSaveAs" mnemonicParsing="false" >
+          <tooltip>
+            <Tooltip text="%edit.btn.save_as" />
+          </tooltip>
+      </Button>
          <Separator />
-         <Button fx:id="btCut" mnemonicParsing="false" text="%edit.btn.cut" />
-         <Button fx:id="btCopy" mnemonicParsing="false" text="%edit.btn.copy" />
-         <Button fx:id="btPaste" mnemonicParsing="false" text="%edit.btn.paste" />
-         <Button fx:id="btDelete" mnemonicParsing="false" text="%edit.btn.delete" />
+          <Button fx:id="btUndo" mnemonicParsing="false">
+              <tooltip>
+                  <Tooltip text="%edit.btn.undo" />
+              </tooltip>
+          </Button>
+          <Button fx:id="btRedo" mnemonicParsing="false">
+              <tooltip>
+                  <Tooltip text="%edit.btn.redo" />
+              </tooltip>
+          </Button>
+         <Separator />
+         <Button fx:id="btCut" mnemonicParsing="false">
+             <tooltip>
+                 <Tooltip text="%edit.btn.cut" />
+             </tooltip>
+         </Button>
+         <Button fx:id="btCopy" mnemonicParsing="false" >
+             <tooltip>
+                 <Tooltip  text="%edit.btn.copy" />
+             </tooltip>
+         </Button>
+         <Button fx:id="btPaste" mnemonicParsing="false">
+             <tooltip>
+                 <Tooltip text="%edit.btn.paste" />
+             </tooltip>
+         </Button>
+         <Button fx:id="btDelete" mnemonicParsing="false" >
+             <tooltip>
+                 <Tooltip text="%edit.btn.delete" />
+             </tooltip>
+         </Button>
          <Separator />
          <Label text="%edit.lbl.commands" />
          <ChoiceBox fx:id="cbCommands" prefWidth="150.0" />
       </ToolBar>
-<TextArea fx:id="editor" wrapText="true" VBox.vgrow="ALWAYS">
+      <TextArea fx:id="editor" wrapText="true" VBox.vgrow="ALWAYS">
       <VBox.margin>
          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
       </VBox.margin>
+      <font>
+         <Font name="Monospaced Regular" size="12.0" />
+      </font>
 </TextArea>
 
 </VBox>

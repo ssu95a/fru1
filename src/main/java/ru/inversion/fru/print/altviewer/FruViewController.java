@@ -65,9 +65,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static ru.inversion.fru.print.altprint.AltPrinter.*;
 
 /** */
-public class FruViewController implements Initializable {
-
-    private static final Logger log = getLogger( MethodHandles.lookup().lookupClass() );
+public class FruViewController extends FruControllerBase {
 
     /** */
     private enum ViewModeEnum {
@@ -75,20 +73,11 @@ public class FruViewController implements Initializable {
         Formatted
     }
 
-    /** Доступные кодировки */
-    private static final Charset[] charsets = {
-        Charset.forName("windows-1251"),
-        Charset.forName("IBM866"),
-        StandardCharsets.UTF_8
-    };
-
     /** Уровни масштабирования */
     private static final String[] zoomLevels = {"50%", "75%", "100%", "125%", "150%", "200%"};
 
     /** Размер шрифта */
     private static final String[] fontSize = {"8", "9", "10", "12", "14", "16", "20", "22", "24"};
-
-    final private GlyphFont fontAwesome = GlyphFontRegistry.font("FontAwesome");
 
     @FXML
     private ToolBar toolBar;
@@ -105,12 +94,10 @@ public class FruViewController implements Initializable {
 
     private ComboBox<String> fontComboBox;
     private ComboBox<String> sizeComboBox;
+    private ComboBox<Charset> encodingComboBox;
 
     /** */
     final private Scale currentScale = new Scale( 1.0, 1.0 );
-
-    /** */
-    private ComboBox<Charset> encodingComboBox;
 
     /** */
     private ALTDoc altDoc;
@@ -309,16 +296,21 @@ public class FruViewController implements Initializable {
         printButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         printButton.setOnAction(e -> printDocument());
 
-//        Button printButton2 = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.PRINT).color(Color.BLUEVIOLET) );
-//        printButton2.setOnAction(e -> printWysiwygDoc());
+        Button editButton = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.EDIT) );
+        editButton.setOnAction(e -> editDocument());
 
         toolBar.getItems( ).addAll (
             printButton, new Separator(), loadButton,
             new Label("Шрифт:" ),    fontComboBox,
             new Label("Размер:"),    sizeComboBox,
-            new Label("Кодировка:"), encodingComboBox
-            //new Label("Масштаб:"  ), zoomComboBox
+            new Label("Кодировка:"), encodingComboBox,
+            new Separator(), editButton
         );
+    }
+
+    /** */
+    private void editDocument() {
+        FruEditController.showEditor( getStage(), getAltDoc() );
     }
 
 
@@ -522,7 +514,6 @@ public class FruViewController implements Initializable {
     {
         fruArea = new CodeArea();
         fruArea.getStyleClass().add("code-area");
-        fruArea.getTransforms().add(currentScale);
         fruArea.setEditable(false);
         fruArea.setWrapText(false);
         fruArea.setUseInitialStyleForInsertion(true);
@@ -638,19 +629,6 @@ public class FruViewController implements Initializable {
         Platform.runLater( ()->
             setTitle( "Предварительный просмотр - " + altDoc.getAltFile().toString() )
         );
-    }
-
-    /** */
-    static public void handleException( Window window, Throwable th )
-    {
-        th.printStackTrace();
-
-        ExceptionDialog dialog = new ExceptionDialog(th);
-        if( window != null )
-            dialog.initOwner( window );
-        dialog.initModality(Modality.WINDOW_MODAL);
-        dialog.setTitle("Ошибка");
-        dialog.showAndWait();
     }
 
     /** */

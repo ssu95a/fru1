@@ -95,7 +95,7 @@ public class FruSectionHeaderHandler extends AbstractTokenHandler<String> {
                sb.append( t.current() );
         }
 
-        String line = sb.toString();
+        String line = sb.toString().trim();
 
         final Matcher matcher = SCRIPT_PATTERN.matcher(line);
 
