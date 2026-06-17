@@ -327,7 +327,7 @@ public class FruViewController extends FruControllerBase {
     }
 
     /** */
-    private Stage getStage()
+    protected Stage getStage()
     {
         return toolBar == null ? null : (Stage) toolBar.getScene().getWindow();
     }
