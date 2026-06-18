@@ -20,6 +20,7 @@ import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.logging.LogManager;
 
 import org.slf4j.Logger;
@@ -216,7 +217,7 @@ public class FruEngine {
             log.info( System.getProperty( "app.lastBuildTime", BuildInfo.UNKNOWN) );
             log.info( System.getProperty( "app.foreInfo",      BuildInfo.UNKNOWN) );
             log.info( System.getProperty( "app.bilInfo",       BuildInfo.UNKNOWN) );
-
+            Locale.setDefault(new Locale("ru")); // или Locale.forLanguageTag("ru")
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );
             log.info("FRU finished successfully");

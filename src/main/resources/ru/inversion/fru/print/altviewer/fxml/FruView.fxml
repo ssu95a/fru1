@@ -7,7 +7,8 @@
 <?import org.controlsfx.control.StatusBar?>
 
 <?import javafx.scene.control.Label?>
-<VBox fx:id="rootBox" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.inversion.fru.print.altviewer.FruViewController">
+<VBox fx:id="rootBox" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ru.inversion.fru.print.altviewer.FruViewController">
       <ToolBar fx:id="toolBar" />
 <Label fx:id="stub"/>
 <!--      <CodeArea fx:id="fruArea" editable="false"  />-->

@@ -35,6 +35,7 @@ import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
+import ru.inversion.fru.api.FruEngineConfig;
 import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.ALTPrintException;
 import ru.inversion.fru.print.altprint.AltPrintPageConfig;
@@ -299,12 +300,22 @@ public class FruViewController extends FruControllerBase {
         Button editButton = new Button( S.EMPTY_STRING, fontAwesome.create( FontAwesome.Glyph.EDIT) );
         editButton.setOnAction(e -> editDocument());
 
+        boolean allowEditing = FruEngineConfig.instance().isAllowEditing();
+
         toolBar.getItems( ).addAll (
-            printButton, new Separator(), loadButton,
+            printButton, new Separator()
+        );
+
+        if( allowEditing )
+            toolBar.getItems( ).addAll (
+                editButton,  new Separator()
+            );
+
+        toolBar.getItems( ).addAll (
+            //loadButton,  new Separator(),
             new Label("Шрифт:" ),    fontComboBox,
             new Label("Размер:"),    sizeComboBox,
-            new Label("Кодировка:"), encodingComboBox,
-            new Separator(), editButton
+            new Label("Кодировка:"), encodingComboBox
         );
     }
 
@@ -493,7 +504,7 @@ public class FruViewController extends FruControllerBase {
     /** */
     private void initStatusBar() {
 
-        //statusBar.textProperty().bind( stateProperty.asString() );
+        statusBar.textProperty().set( S.EMPTY_STRING );
 
         Label fontLabel     = new Label( S.EMPTY_STRING ); fontLabel.textProperty().bind( fontComboBox.valueProperty().asString() );
         Label encodingLabel = new Label( S.EMPTY_STRING ); encodingLabel.textProperty().bind( encodingComboBox.valueProperty().asString() );
@@ -501,8 +512,8 @@ public class FruViewController extends FruControllerBase {
         //Label zoomLabel     = new Label( S.EMPTY_STRING ); zoomLabel.textProperty().bind( zoomComboBox.valueProperty().asString() );
 
         statusBar.getRightItems().addAll (
-                new Label("Режим: "), modeLabel,     new Separator(Orientation.VERTICAL),
-            new Label("Шрифт: "),     fontLabel,     new Separator(Orientation.VERTICAL),
+            new Label("Режим: "), modeLabel,     new Separator(Orientation.VERTICAL),
+            new Label("Шрифт: "), fontLabel,     new Separator(Orientation.VERTICAL),
             new Label("Кодировка: "), encodingLabel, new Separator(Orientation.VERTICAL)
             //new Label("Масштаб: "),   zoomLabel
         );

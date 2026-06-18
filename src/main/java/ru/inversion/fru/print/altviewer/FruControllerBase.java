@@ -59,7 +59,10 @@ public abstract class FruControllerBase implements Initializable {
       alert.initOwner( getStage() );
       alert.initModality(Modality.APPLICATION_MODAL);
       alert.setHeaderText(text);
+      alert.setTitle("Информация");
+      alert.getButtonTypes().clear();
+      alert.getButtonTypes().addAll(ButtonType.YES,ButtonType.NO);
 
-      return alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK;
+      return alert.showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
    }
 }
