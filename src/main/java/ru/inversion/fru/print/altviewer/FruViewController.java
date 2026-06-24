@@ -346,6 +346,74 @@ public class FruViewController extends FruControllerBase {
         return toolBar == null ? null : (Stage) toolBar.getScene().getWindow();
     }
 
+    /** */
+    private static PageOrientation toFxOrientation( OrientationRequested orientation )
+    {
+        if( orientation == null )
+            return PageOrientation.PORTRAIT;
+
+        if( OrientationRequested.LANDSCAPE.equals(orientation) )
+            return PageOrientation.LANDSCAPE;
+
+        if (OrientationRequested.REVERSE_LANDSCAPE.equals(orientation))
+            return PageOrientation.REVERSE_LANDSCAPE;
+
+        if (OrientationRequested.REVERSE_PORTRAIT.equals(orientation))
+            return PageOrientation.REVERSE_PORTRAIT;
+
+        return PageOrientation.PORTRAIT;
+    }
+
+    private void applyDocumentOrientation(
+            javafx.print.PrinterJob fxJob
+    ) {
+        JobSettings settings =
+                fxJob.getJobSettings();
+
+        Printer printer =
+                fxJob.getPrinter();
+
+        PageOrientation orientation =
+                toFxOrientation(
+                        altDoc.getOrientation()
+                );
+
+        PageLayout currentLayout =
+                settings.getPageLayout();
+
+        Paper paper =
+                currentLayout == null
+                        ? printer
+                          .getDefaultPageLayout()
+                          .getPaper()
+                        : currentLayout.getPaper();
+
+        PageLayout newLayout;
+
+        if (currentLayout == null) {
+            newLayout =
+                    printer.createPageLayout(
+                            paper,
+                            orientation,
+                            Printer.MarginType.DEFAULT
+                    );
+        }
+        else {
+            newLayout =
+                    printer.createPageLayout(
+                            paper,
+                            orientation,
+                            currentLayout.getLeftMargin(),
+                            currentLayout.getRightMargin(),
+                            currentLayout.getTopMargin(),
+                            currentLayout.getBottomMargin()
+                    );
+        }
+
+        settings.setPageLayout(
+                newLayout
+        );
+    }
 
     /** */
     private void printDocument( )
@@ -362,6 +430,8 @@ public class FruViewController extends FruControllerBase {
                 };
 
             fxJob.getJobSettings().setJobName( altDoc.getAltFile().toString() );
+
+            applyDocumentOrientation( fxJob );
 
             if(!fxJob.showPrintDialog(getStage()) ) {
                 fxJob.endJob();
@@ -411,7 +481,7 @@ public class FruViewController extends FruControllerBase {
 
             final PrintableTask printTask = new PrintableTask ( context );
 
-            Thread thread = new Thread(printTask);
+            Thread thread = new Thread(printTask, "fru-print" );
             thread.setDaemon(true);
             thread.start();
         }

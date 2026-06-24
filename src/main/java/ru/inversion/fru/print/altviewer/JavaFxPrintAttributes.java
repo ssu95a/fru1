@@ -20,8 +20,7 @@ public final class JavaFxPrintAttributes {
 
    public static PrintRequestAttributeSet toAwt(JobSettings settings) {
 
-      PrintRequestAttributeSet attrs =
-              new HashPrintRequestAttributeSet();
+      PrintRequestAttributeSet attrs = new HashPrintRequestAttributeSet();
 
       if (settings == null)
          return attrs;
