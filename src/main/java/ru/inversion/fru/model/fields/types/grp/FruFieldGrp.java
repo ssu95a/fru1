@@ -2,6 +2,7 @@ package ru.inversion.fru.model.fields.types.grp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 
 import java.util.ArrayList;
@@ -14,13 +15,13 @@ public final class FruFieldGrp {
    private static final Logger log = LoggerFactory.getLogger(FruFieldGrp.class);
 
    private final int sectionNum;
-   private final int valIndex;
+   private final String key;
 
    private final List<FruFieldGrpSlot> slots;
 
    public FruFieldGrp (
         int sectionNum,
-        int valIndex,
+        String key,
         List<FruFieldGrpSlot> slots
    )
    {
@@ -28,7 +29,7 @@ public final class FruFieldGrp {
           throw new IllegalArgumentException("slots is empty");
 
       this.sectionNum = sectionNum;
-      this.valIndex   = valIndex;
+      this.key        = key;
       this.slots      = Collections.unmodifiableList( new ArrayList<>(slots) );
 
       // log.debug( "FruFieldGrp created: section={}, valIndex={}, slots={}", sectionNum, valIndex, slots.size() );
@@ -38,15 +39,15 @@ public final class FruFieldGrp {
       return sectionNum;
    }
 
-   public int getValIndex() {
-      return valIndex;
+   public String getKey() {
+      return key;
    }
 
    public List<FruFieldGrpSlot> getSlots() {
       return slots;
    }
 
-   public boolean contains( FruFieldVal field) {
+   public boolean contains( FruField field) {
 
       for( FruFieldGrpSlot slot : slots )
       {
@@ -56,7 +57,7 @@ public final class FruFieldGrp {
       return false;
    }
 
-   public FruFieldGrpSlot slotOf(FruFieldVal field) {
+   public FruFieldGrpSlot slotOf(FruField field) {
       for (FruFieldGrpSlot slot : slots) {
          if (slot.getField() == field) {
             return slot;

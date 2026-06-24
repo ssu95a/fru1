@@ -2,6 +2,7 @@ package ru.inversion.fru.model.fields;
 
 
 import ru.inversion.fru.generator.FruContext;
+import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.exceptions.FruModelException;
 import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
@@ -10,6 +11,7 @@ import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.fru.model.items.FruItem;
 import ru.inversion.fru.model.items.FruText;
+import ru.inversion.fru.parser.model.SectionNode;
 import ru.inversion.utils.S;
 
 /** */
@@ -62,11 +64,38 @@ public abstract class FruField extends FruItem {
     /** */
     public String getValue( FruContext context )
     {
+        // Обычное поле без /z не должно попадать в local split-flow.
+        if( !hasFieldSplit() )
+            return getValueImpl(context);
+
+        // LocalSplitState state = context.getOrCreateLocalSplitState(this);
+        LocalSplitState state = context.findLocalSplitState(this);
+
+        if( state != null && state.isActive() )
+        {
+            if( S.isNotNullOrEmpty(state.getPending()) )
+                return state.getPending();
+
+            if( state.isConsumed() )
+                return S.EMPTY_STRING;
+        }
+
         return getValueImpl(context);
     }
 
+    @Override
+    public String toString() {
+        return "FruField{name='" + name + "', type = " + getType() + " }";
+    }
+
     /** */
-    public static FruField make( FruBuilder fruBuilder, String name, FruFormatter formatter, int dataIndex )
+    public String getKey()
+    {
+        return name + ":" + getType();
+    }
+
+    /** */
+    public static FruField make( FruBuilder fruBuilder, String name, FruFormatter formatter, int dataIndex, SectionNode sectionNode)
     {
         try {
 
@@ -106,6 +135,9 @@ public abstract class FruField extends FruItem {
 
             // Аргумент скрипта
             if( fruBuilder.findScriptParameter(name) )
+                return new FruFieldScr( name, formatter);
+
+            if( sectionNode != null  && sectionNode.findScriptParameter(name) )
                 return new FruFieldScr( name, formatter);
 
             return new FruFieldArg( name, formatter );

@@ -1,6 +1,8 @@
 package ru.inversion.fru.model.fields.types.grp;
 
 import ru.inversion.fru.generator.FruContext;
+import ru.inversion.fru.model.fields.FruField;
+import ru.inversion.fru.model.fields.types.FruFieldScr;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.formats.FruFormatter;
 import ru.inversion.utils.Pair;
@@ -15,7 +17,7 @@ public final class FruFieldGrpRuntime {
    private boolean initialized;
    private String pending;
 
-   private final IdentityHashMap<FruFieldVal, String> rendered = new IdentityHashMap<FruFieldVal, String>();
+   private final IdentityHashMap<FruField, String> rendered = new IdentityHashMap<>();
 
 
    public FruFieldGrpRuntime( FruFieldGrp group ) {
@@ -25,26 +27,32 @@ public final class FruFieldGrpRuntime {
    }
 
    /** */
-   public String renderSlot(FruContext context, FruFieldVal field) {
+   public String renderSlot( FruContext context, FruField field) {
 
-      if (field == null) {
+      if( field == null )
          throw new IllegalArgumentException("field == null");
-      }
 
       FruFieldGrpSlot slot = group.slotOf(field);
 
       if( slot == null )
-         throw new IllegalStateException("Field is not part of group");
+          throw new IllegalStateException("Field is not part of group");
 
       String cached = rendered.get(field);
-      if (cached != null) {
-         return cached;
-      }
+      if( cached != null )
+          return cached;
 
-      if(!initialized) {
+      if(!initialized)
+      {
          initialized = true;
 
-         String raw = context.data().currentRow().getValue(group.getValIndex());
+         String raw = null;
+
+         if( field instanceof FruFieldVal ) {
+             raw = context.data().currentRow().getValue( ((FruFieldVal)field).getValIndex() );
+         }
+         else if( field instanceof FruFieldScr) {
+            raw = context.globalScriptContext().getAttribute(field.getName()).toString();
+         }
          pending = raw == null ? S.EMPTY_STRING : raw;
       }
 
@@ -85,7 +93,7 @@ public final class FruFieldGrpRuntime {
       return result;
    }
 
-   private String formatEmptySlot(FruContext context, FruFieldVal field) {
+   private String formatEmptySlot(FruContext context, FruField field) {
       if (field.getFormatter() == null) {
          return S.EMPTY_STRING;
       }
@@ -100,7 +108,7 @@ public final class FruFieldGrpRuntime {
 
    private Pair<String, String> formatSlot(
            FruContext context,
-           FruFieldVal field,
+           FruField field,
            String value
    ) {
       if (field.getFormatter() == null) {

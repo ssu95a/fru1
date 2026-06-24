@@ -15,12 +15,12 @@ public class Renderers {
         return field instanceof FruFieldVal && field.getFormatter() != null && ( field.getFormatter().getSplitMode() == 1 /*|| field.getFormatter().getSplitMode() == 2*/ );
     }
 
-    private final IRenderer<FruFieldVal> fieldGrpRenderer = new FruFieldGrpRenderer();
+    private final IRenderer<FruField> fieldGrpRenderer = new FruFieldGrpRenderer();
 
-    private static final class FruFieldGrpRenderer implements IRenderer<FruFieldVal> {
+    private static final class FruFieldGrpRenderer implements IRenderer<FruField> {
 
         @Override
-        public void render(FruContext context, FruFieldVal field) {
+        public void render(FruContext context, FruField field) {
 
             if (context == null) {
                 throw new IllegalArgumentException("context == null");
@@ -74,20 +74,18 @@ public class Renderers {
         @Override
         public void render(FruContext context, FruField field) {
 
-            if (context == null) {
+            if( context == null )
                 throw new IllegalArgumentException("context == null");
-            }
 
-            if (field == null) {
+            if( field == null )
                 return;
-            }
 
-            if( field instanceof FruFieldVal )
+            //if( field instanceof FruFieldVal )
             {
-                FruFieldVal fv = (FruFieldVal) field;
+                //FruFieldVal fv = (FruFieldVal) field;
 
-                if (context.hasFieldGroup(fv)) {
-                    fieldGrpRenderer.render(context, fv);
+                if( context.hasFieldGroup(field) ) {
+                    fieldGrpRenderer.render(context, field);
                     return;
                 }
             }
@@ -98,41 +96,41 @@ public class Renderers {
                     ? lineSession.resolveValue(context, field)
                     : field.getValue(context);
 
-            if (field.getFormatter() != null) {
-                Pair<String, String> pv = field.getFormatter().format(context, value, field);
+            if (field.getFormatter() != null)
+            {
+                Pair<String, String> pv = field.getFormatter().format( context, value, field );
 
                 context.writer().print(pv.first);
 
-                if (lineSession != null && isLineContinuationField(field)) {
-                    if (S.isNotNullOrEmpty(pv.second)
-                            && !pv.second.equals(value)
-                            && pv.second.length() < value.length()) {
+                if( lineSession != null && isLineContinuationField(field))
+                {
+                    if( S.isNotNullOrEmpty(pv.second) && !pv.second.equals(value) && pv.second.length() < value.length() )
+                    {
                         lineSession.storeRemainder(field, pv.second);
                     }
                 }
 
-                if (isRecordLocalSplitField(field)) {
-                    FruFieldVal fv = (FruFieldVal) field;
+                if( isRecordLocalSplitField(field) )
+                {
+                    FruField fv = field;
 
-                    LocalSplitState state = context.getOrCreateLocalSplitState(fv.getValIndex());
-                    state.setActive(true);
+                    LocalSplitState state = context.getOrCreateLocalSplitState(fv);
+                    state.setActive  (true);
                     state.setConsumed(true);
-                    state.setPending(S.isNotNullOrEmpty(pv.second) ? pv.second : null);
+
+                    state.setPending( S.isNotNullOrEmpty(pv.second) ? pv.second : null );
                 }
             }
-            else {
+            else
+            {
                 context.writer().print(value);
             }
         }
 
         private boolean isLineContinuationField(FruField field) {
-            if (!(field instanceof FruFieldVal)) {
-                return false;
-            }
 
-            if (field.getFormatter() == null) {
+            if( field.getFormatter() == null )
                 return false;
-            }
 
             int splitMode = field.getFormatter().getSplitMode();
 
@@ -148,9 +146,7 @@ public class Renderers {
         }
 
         private boolean isRecordLocalSplitField(FruField field) {
-            return field instanceof FruFieldVal
-                    && field.getFormatter() != null
-                    && field.getFormatter().getSplitMode() == 1;
+            return  field.getFormatter() != null && field.getFormatter().getSplitMode() == 1;
         }
     };
 

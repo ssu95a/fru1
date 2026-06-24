@@ -1,5 +1,6 @@
 package ru.inversion.fru.model.fields.types.grp;
 
+import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.items.FruLine;
 import ru.inversion.fru.model.sections.FruSection;
@@ -24,35 +25,33 @@ public final class FruFieldGrpPlanner {
       this.fieldExtractor = fieldExtractor;
    }
 
-   public FruFieldGrpPlan plan(FruSection section) {
-      if (section == null || section.getLines() == null || section.getLines().isEmpty()) {
-         return new FruFieldGrpPlan(Collections.<FruFieldGrp>emptyList());
-      }
+   public FruFieldGrpPlan plan(FruSection section)
+   {
+      if( section == null || section.getLines() == null || section.getLines().isEmpty() )
+          return new FruFieldGrpPlan(Collections.<FruFieldGrp>emptyList());
 
       List<FruLine> lines = section.getLines();
 
-      List<List<FruFieldVal>> fieldsByLine =
-              new ArrayList<List<FruFieldVal>>(lines.size());
+      List<List<FruField>> fieldsByLine = new ArrayList<>(lines.size());
 
-      for (FruLine line : lines) {
-         List<FruFieldVal> fields = fieldExtractor.extract(line);
+      for( FruLine line : lines )
+      {
+         List<FruField> fields = fieldExtractor.extract(line);
 
-         if (fields == null) {
-            fields = Collections.emptyList();
-         }
+         if( fields == null )
+             fields = Collections.emptyList();
 
          fieldsByLine.add(fields);
       }
 
       List<FruFieldGrp> groups = new ArrayList<FruFieldGrp>();
-      IdentityHashMap<FruFieldVal, Boolean> assigned =
-              new IdentityHashMap<FruFieldVal, Boolean>();
+      IdentityHashMap<FruField, Boolean> assigned = new IdentityHashMap<>();
 
       for (int lineIndex = 0; lineIndex < fieldsByLine.size(); lineIndex++) {
-         List<FruFieldVal> fields = fieldsByLine.get(lineIndex);
+         List<FruField> fields = fieldsByLine.get(lineIndex);
 
          for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            FruFieldVal field = fields.get(fieldIndex);
+            FruField field = fields.get(fieldIndex);
 
             if (field == null) {
                continue;
@@ -90,37 +89,16 @@ public final class FruFieldGrpPlanner {
       return new FruFieldGrpPlan(groups);
    }
 
-   private void debugGroup(FruFieldGrp group) {
-      System.out.println(
-              "FruFieldGrp CREATED section=" + group.getSectionNum()
-                      + " valIndex=" + group.getValIndex()
-                      + " slots=" + group.getSlots().size()
-      );
-
-      for (FruFieldGrpSlot slot : group.getSlots()) {
-         FruFieldVal f = slot.getField();
-
-         System.out.println(
-                 "  slot fieldId=" + System.identityHashCode(f)
-                         + " valIndex=" + f.getValIndex()
-                         + " splitMode=" + f.getFormatter().getSplitMode()
-                         + " line=" + slot.getLineIndex()
-                         + " field=" + slot.getFieldIndex()
-                         + " splitSlot=" + slot.isSplitSlot()
-                         + " tailSlot=" + slot.isTailSlot()
-         );
-      }
-   }
-
    private FruFieldGrp tryBuildGroup(
            int sectionNum,
-           FruFieldVal firstField,
+           FruField firstField,
            int startLineIndex,
            int startFieldIndex,
-           List<List<FruFieldVal>> fieldsByLine,
-           IdentityHashMap<FruFieldVal, Boolean> assigned
-   ) {
-      int valIndex = firstField.getValIndex();
+           List<List<FruField>> fieldsByLine,
+           IdentityHashMap<FruField, Boolean> assigned
+   )
+   {
+      String key = firstField.getKey();
 
       List<FruFieldGrpSlot> slots = new ArrayList<FruFieldGrpSlot>();
 
@@ -139,18 +117,17 @@ public final class FruFieldGrpPlanner {
               startLineIndex + MAX_GROUP_SCAN_LINES
       );
 
-      for (int lineIndex = startLineIndex; lineIndex <= maxLineIndex; lineIndex++) {
-         List<FruFieldVal> fields = fieldsByLine.get(lineIndex);
+      for( int lineIndex = startLineIndex; lineIndex <= maxLineIndex; lineIndex++ )
+      {
+         List<FruField> fields = fieldsByLine.get(lineIndex);
 
-         int fromFieldIndex = lineIndex == startLineIndex
-                 ? startFieldIndex + 1
-                 : 0;
+         int fromFieldIndex = lineIndex == startLineIndex ? startFieldIndex + 1 : 0;
 
          boolean lineHasSameValIndex = false;
          boolean lineAddedSlot = false;
 
          for (int fieldIndex = fromFieldIndex; fieldIndex < fields.size(); fieldIndex++) {
-            FruFieldVal candidate = fields.get(fieldIndex);
+            FruField candidate = fields.get(fieldIndex);
 
             if (candidate == null) {
                continue;
@@ -164,9 +141,8 @@ public final class FruFieldGrpPlanner {
                continue;
             }
 
-            if (candidate.getValIndex() != valIndex) {
-               continue;
-            }
+            if( !key.equals( candidate.getKey() ) )
+                 continue;
 
             lineHasSameValIndex = true;
 
@@ -239,16 +215,16 @@ public final class FruFieldGrpPlanner {
          return null;
       }
 
-      return new FruFieldGrp(sectionNum, valIndex, slots);
+      return new FruFieldGrp(sectionNum, key, slots);
    }
 
-   private boolean isLocalSplitField(FruFieldVal field) {
+   private boolean isLocalSplitField(FruField field) {
       return field != null
               && field.getFormatter() != null
               && field.getFormatter().getSplitMode() == 1;
    }
 
-   private boolean isPlainTailCandidate(FruFieldVal field) {
+   private boolean isPlainTailCandidate(FruField field) {
       return field != null
               && field.getFormatter() != null
               && field.getFormatter().getSplitMode() == 0;

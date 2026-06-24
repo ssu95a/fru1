@@ -10,6 +10,7 @@ import ru.inversion.fru.generator.renderer.FruLineRenderSession;
 import ru.inversion.fru.generator.renderer.LocalSplitState;
 import ru.inversion.fru.generator.renderer.Renderers;
 import ru.inversion.fru.model.Fru;
+import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.fields.functions.BuiltinFunctionEnum;
 import ru.inversion.fru.model.fields.types.FruFieldVal;
 import ru.inversion.fru.model.fields.types.grp.DefaultFruLineFieldExtractor;
@@ -62,7 +63,7 @@ public class FruContext implements AutoCloseable {
     private FruLineRenderSession lineRenderSession;
 
     /** */
-    private final Map<Integer, LocalSplitState> localSplitStates = new HashMap<Integer, LocalSplitState>();
+    private final Map<String, LocalSplitState> localSplitStates = new HashMap<>();
 
     private final FruFieldGrpRuntimeRegistry fieldGrpRuntimeRegistry = new FruFieldGrpRuntimeRegistry();
 
@@ -71,11 +72,11 @@ public class FruContext implements AutoCloseable {
         fieldGrpRuntimeRegistry.setPlan(plan);
     }
 
-    public boolean hasFieldGroup(FruFieldVal field) {
+    public boolean hasFieldGroup(FruField field) {
         return fieldGrpRuntimeRegistry.hasGroup(field);
     }
 
-    public String renderFieldGroupSlot(FruFieldVal field) {
+    public String renderFieldGroupSlot(FruField field) {
         return fieldGrpRuntimeRegistry.render(this, field);
     }
 
@@ -125,42 +126,20 @@ public class FruContext implements AutoCloseable {
         scriptEngine.setContext( globalScriptContext );
     }
 
-    /*
-    private void renderMissingSectionsBefore(FruDataRow row)
-    {
-        int index = numSectionsUse.indexOf(row.getSectionNum());
-
-        if( index < 0 )
-            return;
-
-        List<Integer> missing = new ArrayList<>();
-
-        for( int i = 0; i < index; i++ )
-             missing.add( numSectionsUse.get(i) );
-
-        numSectionsUse.subList(0, index + 1).clear();
-
-        for( int sectionNum : missing )
-             setCurrentRow(new FruDataRow( sectionNum, fru.getSectionPlaceholderRow(sectionNum) ));
-    }
-    */
     public void clearLocalSplitState() {
         localSplitStates.clear();
         fieldGrpRuntimeRegistry.clearRecordLocalState();
 
     }
 
-    public LocalSplitState findLocalSplitState(int valIndex) {
-        return localSplitStates.get(valIndex);
+    public LocalSplitState findLocalSplitState(FruField f) {
+        return localSplitStates.get(f.getKey());
     }
 
-    public LocalSplitState getOrCreateLocalSplitState(int valIndex) {
-        LocalSplitState state = localSplitStates.get(valIndex);
-        if (state == null) {
-            state = new LocalSplitState();
-            localSplitStates.put(valIndex, state);
-        }
-        return state;
+    /** */
+    public LocalSplitState getOrCreateLocalSplitState(FruField f) {
+       //System.out.println( "createLocalSplitState: " + f );
+       return localSplitStates.computeIfAbsent(f.getKey(), k -> new LocalSplitState());
     }
 
 

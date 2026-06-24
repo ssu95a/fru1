@@ -51,7 +51,7 @@ public class SectionNode extends AbstractSectionNode {
                 if( l instanceof FruScript )
                     section.addLine( new FruLine( Collections.singletonList((FruScript)l)) );
                 else
-                    section.addLine( FruLine.make( fruBuilder, l.toString(), dataIndex) );
+                    section.addLine( FruLine.make( fruBuilder, l.toString(), dataIndex, this) );
             }
         }
         else
@@ -62,4 +62,24 @@ public class SectionNode extends AbstractSectionNode {
 
         fruBuilder.addSection( section );
     }
+
+    /** */
+    public boolean findScriptParameter(String name)
+    {
+        if( lines != null )
+        {
+            for( Object o : lines )
+            {
+                if( !(o instanceof FruScript) )
+                    continue;
+
+                FruScript fruScript = (FruScript) o;
+
+                if( fruScript.hasExportArg(name) )
+                    return true;
+            }
+        }
+        return false;
+    }
+
 }

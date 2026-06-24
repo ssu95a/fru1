@@ -104,7 +104,7 @@ public class FruBuilder {
     /** */
     public boolean findScriptParameter( String name )
     {
-        if( S.isNullOrEmpty(name) || ( initScript == null && sections.isEmpty() ) )
+        if( S.isNullOrEmpty(name) || sections.isEmpty() )
             return false;
 
         if( initScript != null )

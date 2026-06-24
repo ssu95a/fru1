@@ -25,26 +25,10 @@ public class FruFieldVal extends FruField {
     }
 
     @Override
-    protected String getValueImpl(FruContext context) {
+    protected String getValueImpl( FruContext context ) {
+
         if (valIndex == -1)
             return null;
-
-        // Обычное поле без /z не должно попадать в local split-flow.
-        if (!hasFieldSplit()) {
-            return context.data().currentRow().getValue(valIndex);
-        }
-
-        LocalSplitState state = context.findLocalSplitState(valIndex);
-
-        if (state != null && state.isActive()) {
-            if (S.isNotNullOrEmpty(state.getPending())) {
-                return state.getPending();
-            }
-
-            if (state.isConsumed()) {
-                return S.EMPTY_STRING;
-            }
-        }
 
         return context.data().currentRow().getValue(valIndex);
     }

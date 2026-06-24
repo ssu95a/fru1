@@ -13,6 +13,8 @@ import ru.inversion.fru.print.altprint.doc.ALTDoc;
 import ru.inversion.fru.print.altprint.AltPrinter;
 import ru.inversion.fru.print.altviewer.FruApp;
 
+import org.mozilla.universalchardet.UniversalDetector;
+
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -57,9 +59,59 @@ public class FruEngine {
         }
     }
 
-    /** Парсит FRU форму из файла */
-    private static Fru parseFru(Path fruFile, Charset charset) {
 
+    public static String detectCharset(byte[] data) {
+
+        UniversalDetector detector = new UniversalDetector(null);
+
+        // Отправляем данные детектору
+        detector.handleData(data, 0, data.length);
+
+        // Сообщаем, что данные закончились
+        detector.dataEnd();
+
+        // Получаем результат
+        String encoding = detector.getDetectedCharset();
+
+        // Сбрасываем детектор для возможного переиспользования
+        detector.reset();
+
+        return encoding; // например, "windows-1251", "IBM866", "UTF-8" или null
+    }
+
+    /** Получение {@code reader} с телом fru формы
+     *  <p>
+     *  Логика:
+     *  Если приходит команда -O, что данные и fru должна быть в дос 866 кодировке
+     *  Но при этом сам файл {@code fruFile} в кодировке win-1251, то перекодируем
+     *  файл fru в кодировку дос 866.
+     * */
+    private static Reader getFruReader( Path fruFile, Charset charset ) throws IOException {
+
+        try {
+
+            byte[] data = Files.readAllBytes(fruFile);
+
+            final Charset detectedCharset = Charset.forName( detectCharset(data) );
+
+            if( !detectedCharset.equals(charset) )
+            {
+                String text = new String(data, detectedCharset);
+                data = text.getBytes(charset);
+            }
+
+            return new InputStreamReader(new ByteArrayInputStream(data), charset );
+
+        } catch( Exception e ) {
+            log.error( "Ошибка при попытке распознать кодировку файла: ");
+            log.error( e.getLocalizedMessage() );
+        }
+        return Files.newBufferedReader(fruFile, charset);
+    }
+
+    /** Парсит FRU форму из файла */
+    private static Fru parseFru( Path fruFile, Charset charset )
+    {
         boolean repeat = false;
 
         do {
@@ -72,14 +124,15 @@ public class FruEngine {
                 if( entryImplicit )
                     log.debug("FRU {}: explicit #entry not found, entryImplicit=true", fruFile );
 
-                try (Reader reader = Files.newBufferedReader(fruFile, charset)) {
-                    FruBuilder fruBuilder = new FruBuilder(fruFile, charset);
+                //try( Reader reader = Files.newBufferedReader(fruFile, charset))
+                try( Reader reader = getFruReader(fruFile, charset ))
+                {
+                     FruBuilder fruBuilder = new FruBuilder(fruFile, charset );
 
-                    FruParser.parseFru(reader, fruBuilder, entryImplicit);
+                     FruParser.parseFru( reader, fruBuilder, entryImplicit );
 
-                    return fruBuilder.build();
+                     return fruBuilder.build();
                 }
-
             }
             catch (Throwable th) {
 
@@ -211,13 +264,15 @@ public class FruEngine {
             SLF4JBridgeHandler.removeHandlersForRootLogger();
             SLF4JBridgeHandler.install();
 
-            StdOutRedirector.install();
-            System.setErr( new PrintStream( System.err, true, "CP866" ) );
+            //StdOutRedirector.install();
+            //System.setErr( new PrintStream( System.err, true, "CP866" ) );
 
             log.info( System.getProperty( "app.lastBuildTime", BuildInfo.UNKNOWN) );
             log.info( System.getProperty( "app.foreInfo",      BuildInfo.UNKNOWN) );
             log.info( System.getProperty( "app.bilInfo",       BuildInfo.UNKNOWN) );
-            Locale.setDefault(new Locale("ru")); // или Locale.forLanguageTag("ru")
+
+            Locale.setDefault( new Locale("ru")); // или Locale.forLanguageTag("ru")
+
             log.info( "FRU started, args={}", Arrays.toString(args) );
             print( args );
             log.info("FRU finished successfully");

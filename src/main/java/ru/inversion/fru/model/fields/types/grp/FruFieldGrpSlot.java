@@ -1,26 +1,27 @@
 package ru.inversion.fru.model.fields.types.grp;
 
-import ru.inversion.fru.model.fields.types.FruFieldVal;
+import ru.inversion.fru.model.fields.FruField;
 
+/** */
 public final class FruFieldGrpSlot {
 
-   private final FruFieldVal field;
-   private final int lineIndex;
-   private final int fieldIndex;
+   private final FruField field;
+   private final int      lineIndex;
+   private final int      fieldIndex;
 
-   private final boolean splitSlot;
-   private final boolean tailSlot;
+   private final boolean  splitSlot;
+   private final boolean  tailSlot;
 
    public FruFieldGrpSlot(
-           FruFieldVal field,
+           FruField field,
            int lineIndex,
            int fieldIndex,
            boolean splitSlot,
            boolean tailSlot
-   ) {
-      if (field == null) {
+   )
+   {
+      if( field == null )
          throw new IllegalArgumentException("field == null");
-      }
 
       this.field = field;
       this.lineIndex = lineIndex;
@@ -29,7 +30,7 @@ public final class FruFieldGrpSlot {
       this.tailSlot = tailSlot;
    }
 
-   public FruFieldVal getField() {
+   public FruField getField() {
       return field;
    }
 

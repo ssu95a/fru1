@@ -4,6 +4,7 @@ import ru.inversion.fru.model.FruBuilder;
 import ru.inversion.fru.model.fields.FruField;
 import ru.inversion.fru.model.formats.FruFormat;
 import ru.inversion.fru.model.formats.FruFormatter;
+import ru.inversion.fru.parser.model.SectionNode;
 import ru.inversion.utils.S;
 
 import java.util.*;
@@ -52,7 +53,7 @@ public class FruLine extends FruItem {
                     "(?<flags>(?:/[A-Za-z_]\\w*)*)$"
     );
     /** */
-    private static FruItem makeItem( FruBuilder fruBuilder, String fieldStr, Function<String,Integer> dataIndex )
+    private static FruItem makeItem( FruBuilder fruBuilder, String fieldStr, Function<String,Integer> dataIndex, SectionNode sectionNode )
     {
         final Matcher matcher = FORMAT_CALL_PATTERN.matcher( fieldStr );
 
@@ -66,11 +67,11 @@ public class FruLine extends FruItem {
 
             if( fruFormat != null )
             {
-                final List<String> fl = Arrays.stream(fields.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+                final List<String> fl = Arrays.stream( fields.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList() );
                 final List<FruField> fieldList = new ArrayList<>( fl.size() );
 
                 final AtomicInteger fldIndex = new AtomicInteger(0);
-                fl.forEach( fs->fieldList.add( FruField.make( fruBuilder, fs, fruFormat.getFormatter(fldIndex.getAndIncrement()), dataIndex.apply(fs) ) ) );
+                fl.forEach( fs->fieldList.add( FruField.make( fruBuilder, fs, fruFormat.getFormatter(fldIndex.getAndIncrement()), dataIndex.apply(fs), sectionNode ) ) );
 
                 return new FruFormatCall( fruFormat, fieldList, S.isNullOrEmpty(flags) ? null : FruFormatter.make(flags) );
             }
@@ -81,15 +82,15 @@ public class FruLine extends FruItem {
         {
             int index = fieldStr.indexOf('/');
             if( index == -1 )
-                return FruField.make( fruBuilder, fieldStr.trim(), null, dataIndex.apply(fieldStr.trim()) );
+                return FruField.make( fruBuilder, fieldStr.trim(), null, dataIndex.apply(fieldStr.trim()), sectionNode );
 
-            return FruField.make( fruBuilder, fieldStr.substring( 0, index ).trim(), FruFormatter.make( fieldStr.substring(index) ), dataIndex.apply( fieldStr.substring( 0, index ).trim() ) );
+            return FruField.make( fruBuilder, fieldStr.substring( 0, index ).trim(), FruFormatter.make( fieldStr.substring(index) ), dataIndex.apply( fieldStr.substring( 0, index ).trim() ), sectionNode );
         }
     }
 
 
     /** */
-    public static FruLine make( FruBuilder fruBuilder, String line, Function<String,Integer> dataIndex )
+    public static FruLine make( FruBuilder fruBuilder, String line, Function<String,Integer> dataIndex, SectionNode sectionNode )
     {
         final LinkedList<FruItem> result = new LinkedList<>();
         StringBuilder sb = new StringBuilder();
@@ -106,7 +107,7 @@ public class FruLine extends FruItem {
                 {
                     if( insideAt ) {
                         String fieldStr = sb.toString();
-                        result.add( makeItem( fruBuilder, fieldStr, dataIndex ) );
+                        result.add( makeItem( fruBuilder, fieldStr, dataIndex, sectionNode ) );
                     }
                     else
                         result.add( new FruText(sb.toString()) );
@@ -126,7 +127,7 @@ public class FruLine extends FruItem {
         {
             if( insideAt ) {
                 String fieldStr = sb.toString();
-                result.add( makeItem( fruBuilder, fieldStr, dataIndex ) );
+                result.add( makeItem( fruBuilder, fieldStr, dataIndex, sectionNode ) );
             }
             else
                 result.add( new FruText( sb.toString() ) );

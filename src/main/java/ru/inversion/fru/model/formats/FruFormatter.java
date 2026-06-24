@@ -273,7 +273,7 @@ public class FruFormatter extends FruItem {
     /** */
     private boolean isSplitMode1FieldValueOverflow(String value, int width, FruField fruField)
     {
-        return getSplitMode() == 1 && fruField instanceof FruFieldVal && value.length() > width;
+        return getSplitMode() == 1 && value.length() > width;
     }
 
     /** */
